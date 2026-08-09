@@ -5,7 +5,7 @@ import type { RequestHandler } from "./$types.js";
 
 const SITE_URL = "https://novira.id";
 
-const staticRoutes = ["/login", "/register", "/pricing"];
+const staticRoutes = ["/login", "/register"];
 
 export const GET: RequestHandler = async () => {
 	const publishedPages = await db
