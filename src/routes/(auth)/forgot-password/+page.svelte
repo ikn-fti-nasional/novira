@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Forgot Password - SvelteForge Admin</title>
+	<title>Forgot Password - Novira</title>
 </svelte:head>
 
 <div class="bg-background flex min-h-screen items-center justify-center p-4">

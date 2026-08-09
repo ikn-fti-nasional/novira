@@ -3,7 +3,7 @@ import { pages } from "$lib/server/db/schema.js";
 import { eq } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
 
-const SITE_URL = "https://svelteforge-admin.dev";
+const SITE_URL = "https://novira.id";
 
 const staticRoutes = ["/login", "/register", "/pricing"];
 

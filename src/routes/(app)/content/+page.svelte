@@ -141,7 +141,7 @@
 </script>
 
 <svelte:head>
-	<title>Content - SvelteForge Admin</title>
+	<title>Content - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">

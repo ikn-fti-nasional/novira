@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SvelteForge Admin is a SvelteKit admin dashboard using Svelte 5, Tailwind CSS v4, custom session-based auth with Arctic OAuth, and Drizzle ORM with SQLite.
+Novira is the web dashboard for **EcoVision**, a CCTV-based street litter detection system for local governments (see `README.md` for the product background). This repo is the SvelteKit admin dashboard: map of monitored cameras, live incident feed, area cleanliness ranking, and officer/notification management. Built with Svelte 5, Tailwind CSS v4, custom session-based auth with Arctic OAuth, and Drizzle ORM with SQLite.
 
 ## Commands
 
@@ -48,10 +48,9 @@ pnpm format:check     # Prettier (check only)
 
 Routes use SvelteKit route groups for layout separation:
 
-- `(app)/` — Protected routes behind the app shell. Auth guard in `(app)/+layout.server.ts` redirects unauthenticated users to `/login`. Features: dashboard (`+page`), `users/`, `roles/`, `content/` (CMS — list, `new/`, `[id]/edit/`), `analytics/`, `notifications/`, `database/`, `settings/`
+- `(app)/` — Protected routes behind the app shell. Auth guard in `(app)/+layout.server.ts` redirects unauthenticated users to `/login`. Features: dashboard (`+page`), `cameras/`, `incidents/`, `hotspots/`, `area-ranking/`, `laporan-wilayah/`, `officers/`, `monitoring/`, `users/`, `roles/`, `content/` (CMS — list, `new/`, `[id]/edit/`), `analytics/`, `notifications/`, `database/`, `settings/`, `audit/`
 - `(auth)/` — Public auth routes: `login/` (+ OAuth callbacks at `login/google/`, `login/github/`), `register/`, `forgot-password/`, `reset-password/`, `lock/` (re-auth screen, requires an existing session)
-- `(public)/` — Public pages (pricing)
-- `docs/` — **Ungrouped, so NOT auth-guarded** — a public, statically-rendered documentation site (its own `+layout.svelte`, ~16 pages). Anything placed outside a `(group)/` is reachable without a session
+- `(public)/` — Public marketing/landing pages
 - `logout/` — Standalone logout action (server-only)
 - `api/search/` — Search endpoint for command palette
 - `sitemap.xml/` — Auto-generated sitemap
@@ -80,7 +79,7 @@ The `(app)/+layout.server.ts` guard also enforces **maintenance mode**: when `ap
 
 ### Database
 
-SQLite database file: `svelteforge.db` (project root, gitignored). Roles enum: `admin | editor | viewer`. First registered user gets `admin` role.
+SQLite database file: `novira.db` (project root, gitignored). Roles enum: `admin | editor | viewer`. First registered user gets `admin` role.
 
 **Notifications with `userId = NULL` are global** — every user sees them. Per-user notifications set `userId` to the recipient. The `(app)/+layout.server.ts` filter (`eq(userId, X) OR isNull(userId)`) is the canonical pattern for any notification query.
 
@@ -121,19 +120,6 @@ After modifying `schema.ts`, also update the `SCHEMA_SQL` in `test-utils.ts` and
 - `seed.ts` runs outside SvelteKit context — use relative imports (not `$lib/`) and `generateId()` from `$lib/server/id.js`
 - LayerChart and `svelte-ux` must stay in `ssr.noExternal` in `vite.config.ts` — without it, SSR breaks on chart pages
 
-### Free vs Premium split
-
-This is the **free** repo (public, MIT). A separate private repo holds the **premium** tier as a superset (clones this repo, adds premium-only modules). Sync direction is one-way: free → premium, never the other way.
-
-**Reserved paths in this repo** — never commit files matching these patterns; CI (`.github/workflows/no-premium-leak.yml`) will reject the push:
-
-- Any directory named `premium/` (e.g. `src/lib/premium/`, `src/lib/server/premium/`)
-- Any route group starting with `(premium` (e.g. `src/routes/(premium)/`, `(premium-app)/`)
-
-If a feature request sounds premium-tier (multi-tenancy, billing, 2FA, passkeys, AI/RAG, audit log, impersonation, advanced apps like Mail/Chat/Kanban/Calendar/File-Manager/Invoice/eCommerce/CRM), say so and stop — it belongs in the premium repo, not here.
-
 ### Deployment
 
-Builds with `@sveltejs/adapter-node`. `.github/workflows/deploy.yml` deploys on push to `main`: rebuilds the `better-sqlite3` native module, runs `pnpm build`, then rsyncs `build/` **and** `src/` to a Hetzner box and `pm2 restart`s. `src/` is synced (not just `build/`) so the demo-reset cron can run `seed.ts` against the latest schema. Set `DEMO_MODE` via a PM2 ecosystem file (not `pm2 start build/index.js`) so it survives restarts.
-
-`scripts/` holds Playwright tooling for marketing screenshots (`screenshot.ts`, `add-browser-frame.ts`) — outputs to `screenshots/`, unrelated to the app runtime.
+Builds with `@sveltejs/adapter-node` (`pnpm build` → `build/`, run with `node build`). No deploy workflow is wired up yet — add one for your target host (Docker, a VPS with pm2, etc.) when the project is ready to ship. Local government pilots will most likely need on-premise/self-hosted deployment (see `README.md`), so plan the deploy target accordingly.

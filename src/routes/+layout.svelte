@@ -26,20 +26,20 @@
 </script>
 
 <MetaTags
-	title="SvelteForge Admin"
-	titleTemplate="%s | SvelteForge Admin"
+	title="Novira"
+	titleTemplate="%s | Novira"
 	description="A full-featured admin dashboard built with SvelteKit 2, Svelte 5, Tailwind CSS 4, Drizzle ORM, and session-based auth."
 	openGraph={{
 		type: "website",
-		url: "https://svelteforge-admin.dev",
-		title: "SvelteForge Admin",
+		url: "https://novira.id",
+		title: "Novira",
 		description:
 			"A full-featured admin dashboard built with SvelteKit 2, Svelte 5, Tailwind CSS 4, Drizzle ORM, and session-based auth.",
-		siteName: "SvelteForge Admin",
+		siteName: "Novira",
 	}}
 	twitter={{
 		cardType: "summary",
-		title: "SvelteForge Admin",
+		title: "Novira",
 		description:
 			"A full-featured admin dashboard built with SvelteKit 2, Svelte 5, Tailwind CSS 4, Drizzle ORM, and session-based auth.",
 	}}

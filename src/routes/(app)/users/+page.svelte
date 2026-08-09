@@ -163,7 +163,7 @@
 </script>
 
 <svelte:head>
-	<title>Users - SvelteForge Admin</title>
+	<title>Users - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">

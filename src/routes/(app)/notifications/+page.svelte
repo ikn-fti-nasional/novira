@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>Notifications - SvelteForge Admin</title>
+	<title>Notifications - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">

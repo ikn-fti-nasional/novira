@@ -19,8 +19,8 @@
 	<Card.Root class="w-full max-w-md border-border/80 shadow-lg">
 		<Card.Header class="space-y-2 text-center">
 			<div class="flex justify-center">
-				<div class="size-20 overflow-hidden rounded-2xl border border-emerald-500/30 shadow-md bg-white dark:bg-slate-900 p-1">
-					<img src="/novira-logo.jpg" alt="Logo NOVIRA" class="h-full w-full object-contain" />
+				<div class="size-20">
+					<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
 				</div>
 			</div>
 			<div>

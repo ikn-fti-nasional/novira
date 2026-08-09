@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Get DB file size
 	let dbSizeBytes = 0;
 	try {
-		const dbPath = resolve("svelteforge.db");
+		const dbPath = resolve("novira.db");
 		const stats = statSync(dbPath);
 		dbSizeBytes = stats.size;
 	} catch {

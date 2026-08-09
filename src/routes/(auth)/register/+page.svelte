@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Register - SvelteForge Admin</title>
+	<title>Register - Novira</title>
 </svelte:head>
 
 <div class="bg-background flex min-h-screen items-center justify-center p-4">
@@ -24,7 +24,7 @@
 				</div>
 			</div>
 			<Card.Title class="text-2xl font-bold">Create an account</Card.Title>
-			<Card.Description>Get started with SvelteForge Admin</Card.Description>
+			<Card.Description>Get started with Novira</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			{#if form?.message}

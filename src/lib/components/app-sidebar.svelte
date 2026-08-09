@@ -106,8 +106,8 @@
 				<Sidebar.MenuButton size="lg">
 					{#snippet child({ props })}
 						<a href="/" {...props} onclick={handleNavigate} class="flex items-center gap-3">
-							<div class="flex aspect-square size-10 items-center justify-center rounded-lg overflow-hidden border border-emerald-500/20 shadow-sm bg-white dark:bg-slate-900 p-0.5">
-								<img src="/novira-logo.jpg" alt="Logo NOVIRA" class="h-full w-full object-contain" />
+							<div class="flex aspect-square size-10 items-center justify-center">
+								<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
 							</div>
 							<div class="flex flex-col gap-0.5 leading-none">
 								<span class="font-extrabold tracking-tight text-emerald-950 dark:text-emerald-50 text-base">NOVIRA</span>

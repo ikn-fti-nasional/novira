@@ -10,7 +10,7 @@
 		<div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
 			<a href="/" class="flex items-center gap-2 font-semibold">
 				<HammerIcon class="size-5" />
-				SvelteForge Admin
+				Novira
 			</a>
 			<Button href="/login" variant="outline" size="sm">Sign In</Button>
 		</div>

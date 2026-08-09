@@ -41,7 +41,7 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 	const githubUserResponse = await fetch("https://api.github.com/user", {
 		headers: {
 			Authorization: `Bearer ${accessToken}`,
-			"User-Agent": "SvelteForge-Admin",
+			"User-Agent": "Novira",
 		},
 	});
 
@@ -63,7 +63,7 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 		const emailsResponse = await fetch("https://api.github.com/user/emails", {
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
-				"User-Agent": "SvelteForge-Admin",
+				"User-Agent": "Novira",
 			},
 		});
 		if (emailsResponse.ok) {
