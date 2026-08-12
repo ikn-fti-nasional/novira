@@ -1,7 +1,8 @@
 import { db } from "$lib/server/db/index.js";
 import { notifications } from "$lib/server/db/schema.js";
+import { visibleTo } from "$lib/server/db/notification-visibility.js";
 import { fail, redirect } from "@sveltejs/kit";
-import { eq, and, or, isNull, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -10,8 +11,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const items = await db
 		.select()
 		.from(notifications)
-		.where(or(eq(notifications.userId, locals.user.id), isNull(notifications.userId)))
-		.orderBy(desc(notifications.createdAt));
+		.where(visibleTo(locals.user.id))
+		.orderBy(desc(notifications.createdAt))
+		.limit(100);
 
 	return { notifications: items };
 };
@@ -29,10 +31,7 @@ export const actions: Actions = {
 			.update(notifications)
 			.set({ read: true })
 			.where(
-				and(
-					eq(notifications.id, id),
-					or(eq(notifications.userId, locals.user!.id), isNull(notifications.userId))
-				)
+				and(eq(notifications.id, id), visibleTo(locals.user!.id))
 			);
 
 		return { success: true };
@@ -43,10 +42,7 @@ export const actions: Actions = {
 			.update(notifications)
 			.set({ read: true })
 			.where(
-				and(
-					eq(notifications.read, false),
-					or(eq(notifications.userId, locals.user!.id), isNull(notifications.userId))
-				)
+				and(eq(notifications.read, false), visibleTo(locals.user!.id))
 			);
 
 		return { success: true };
@@ -63,10 +59,7 @@ export const actions: Actions = {
 		await db
 			.delete(notifications)
 			.where(
-				and(
-					eq(notifications.id, id),
-					or(eq(notifications.userId, locals.user!.id), isNull(notifications.userId))
-				)
+				and(eq(notifications.id, id), visibleTo(locals.user!.id))
 			);
 
 		return { success: true };

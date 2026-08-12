@@ -1,38 +1,29 @@
 import { db } from "$lib/server/db/index.js";
 import { users, sessions, pages, notifications, appSettings } from "$lib/server/db/schema.js";
+import { requireRoleOrRedirect } from "$lib/server/authorize.js";
+import { countAll } from "$lib/server/db/helpers.js";
 import { sql } from "drizzle-orm";
-import { error, redirect } from "@sveltejs/kit";
-import { statSync } from "fs";
-import { resolve } from "path";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) redirect(302, "/login");
-	if (locals.user.role !== "admin") {
-		error(403, "Admin access required");
-	}
+	requireRoleOrRedirect(locals.user, ["admin"]);
 
 	// Get table row counts
-	const [usersCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
-	const [sessionsCount] = await db.select({ count: sql<number>`count(*)` }).from(sessions);
-	const [pagesCount] = await db.select({ count: sql<number>`count(*)` }).from(pages);
-	const [notificationsCount] = await db
-		.select({ count: sql<number>`count(*)` })
-		.from(notifications);
-	const [settingsCount] = await db.select({ count: sql<number>`count(*)` }).from(appSettings);
+	const [usersCount] = await db.select({ count: countAll }).from(users);
+	const [sessionsCount] = await db.select({ count: countAll }).from(sessions);
+	const [pagesCount] = await db.select({ count: countAll }).from(pages);
+	const [notificationsCount] = await db.select({ count: countAll }).from(notifications);
+	const [settingsCount] = await db.select({ count: countAll }).from(appSettings);
 
-	// Get journal mode
-	const journalResult = db.$client.pragma("journal_mode") as { journal_mode: string }[];
+	// Get replication/WAL mode (Postgres equivalent of SQLite's journal_mode)
+	const [walResult] = await db.execute<{ wal_level: string }>(sql`SHOW wal_level`);
 
-	// Get DB file size
-	let dbSizeBytes = 0;
-	try {
-		const dbPath = resolve("novira.db");
-		const stats = statSync(dbPath);
-		dbSizeBytes = stats.size;
-	} catch {
-		// DB file not found at expected path
-	}
+	// Get DB size directly from Postgres — there's no local file to stat on Neon.
+	// pg_database_size returns bigint; ::int would overflow past ~2 GB, so cast to
+	// text and parse into a JS number.
+	const [sizeResult] = await db.execute<{ size: string }>(
+		sql`SELECT pg_database_size(current_database())::text AS size`
+	);
 
 	const tables = [
 		{ name: "users", rows: usersCount.count },
@@ -43,8 +34,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	];
 
 	return {
-		dbSize: dbSizeBytes,
-		journalMode: journalResult?.[0]?.journal_mode ?? "unknown",
+		dbSize: Number(sizeResult?.size ?? 0),
+		walLevel: walResult?.wal_level ?? "unknown",
 		tables,
 		totalRows: tables.reduce((sum, t) => sum + t.rows, 0),
 	};

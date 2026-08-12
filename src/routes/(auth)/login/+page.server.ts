@@ -1,16 +1,16 @@
 import { generateSessionToken, createSession, setSessionCookie } from "$lib/server/auth.js";
-import { getEnabledProviders } from "$lib/server/oauth.js";
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
+import { verifyPassword } from "$lib/server/password.js";
 import { fail, redirect } from "@sveltejs/kit";
-import { verify } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) redirect(302, "/");
 	return {
-		enabledProviders: getEnabledProviders(),
+		// Only surface pre-filled demo credentials when the public demo is on.
+		demoMode: process.env.DEMO_MODE === "true",
 	};
 };
 
@@ -35,12 +35,7 @@ export const actions: Actions = {
 			return fail(400, { message: "Incorrect username or password" });
 		}
 
-		const validPassword = await verify(existingUser.passwordHash, password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
+		const validPassword = await verifyPassword(existingUser.passwordHash, password);
 
 		if (!validPassword) {
 			return fail(400, { message: "Incorrect username or password" });

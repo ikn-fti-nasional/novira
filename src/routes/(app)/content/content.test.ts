@@ -33,7 +33,7 @@ async function seedPage(db: any, authorId: string, overrides: Partial<any> = {})
 
 describe("Content page server", () => {
 	it("loads pages for authenticated user", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		await seedPage(db, userId, { title: "My Page" });
@@ -47,7 +47,7 @@ describe("Content page server", () => {
 	});
 
 	it("loads multiple pages", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		await seedPage(db, userId, { title: "Page 1", slug: "page-1" });
@@ -61,7 +61,7 @@ describe("Content page server", () => {
 	});
 
 	it("delete with nonexistent id returns success", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		const locals = createMockLocals(userId);
@@ -75,7 +75,7 @@ describe("Content page server", () => {
 	});
 
 	it("deletes a page", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		const pageId = await seedPage(db, userId);
@@ -90,7 +90,7 @@ describe("Content page server", () => {
 	});
 
 	it("bulk deletes pages", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		const p1 = await seedPage(db, userId, { slug: "page-1" });

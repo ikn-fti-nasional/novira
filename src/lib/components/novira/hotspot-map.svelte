@@ -11,7 +11,10 @@
 		insidenList: Insiden[];
 	};
 
-	let { kameraList, insidenList }: Props = $props();
+	// Data belum dipakai — peta masih placeholder statis. Props dipertahankan
+	// sebagai kontrak saat integrasi Leaflet/OSM dirender, ditandai `_` agar
+	// tidak kedeteksi sebagai "unused" oleh linter.
+	let { kameraList: _kameraList, insidenList: _insidenList }: Props = $props();
 
 	let lapisanAktif = $state<"semua" | "peta_panas" | "kamera">("semua");
 </script>

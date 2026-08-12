@@ -1,8 +1,8 @@
 import { db } from "$lib/server/db/index.js";
 import { users, passwordResetTokens } from "$lib/server/db/schema.js";
+import { hashPassword } from "$lib/server/password.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
-import { hash } from "@node-rs/argon2";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ url }) => {
@@ -53,12 +53,7 @@ export const actions: Actions = {
 		}
 
 		// Update password
-		const passwordHash = await hash(password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
+		const passwordHash = await hashPassword(password);
 
 		await db
 			.update(users)

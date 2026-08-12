@@ -4,11 +4,8 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
-	import { Separator } from "$lib/components/ui/separator/index.js";
 
 	let { form, data } = $props();
-
-	const providers = $derived(data.enabledProviders ?? []);
 </script>
 
 <svelte:head>
@@ -30,19 +27,21 @@
 				</p>
 			</div>
 			<Card.Description class="text-xs">
-				Masukkan kredensial Super Admin untuk mengakses Komando Pemantauan Lingkungan
+				Masukkan kredensial untuk mengakses Komando Pemantauan Lingkungan
 			</Card.Description>
 		</Card.Header>
 
 		<Card.Content>
-			<div class="bg-emerald-500/10 border border-emerald-500/20 mb-4 rounded-md p-3 text-xs">
-				<p class="font-bold text-emerald-800 dark:text-emerald-300">Akses Masuk Super Admin Demo</p>
-				<p class="text-muted-foreground mt-1">
-					Kredensial sudah terisi otomatis: Nama Pengguna <span class="font-mono font-bold text-foreground">demo</span> /
-					Kata Sandi <span class="font-mono font-bold text-foreground">SvelteDemo2026!</span> — klik tombol
-					<strong>Masuk Sekarang</strong>.
-				</p>
-			</div>
+			{#if data.demoMode}
+				<div class="bg-emerald-500/10 border border-emerald-500/20 mb-4 rounded-md p-3 text-xs">
+					<p class="font-bold text-emerald-800 dark:text-emerald-300">Akses Masuk Demo</p>
+					<p class="text-muted-foreground mt-1">
+						Kredensial sudah terisi otomatis: Nama Pengguna <span class="font-mono font-bold text-foreground">demo</span> /
+						Kata Sandi <span class="font-mono font-bold text-foreground">NoviraDemo2026!</span> — klik tombol
+						<strong>Masuk Sekarang</strong>.
+					</p>
+				</div>
+			{/if}
 
 			{#if form?.message}
 				<div class="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
@@ -60,7 +59,7 @@
 						placeholder="Masukkan nama pengguna"
 						required
 						autocomplete="username"
-						value="demo"
+						value={data.demoMode ? "demo" : ""}
 					/>
 				</div>
 				<div class="space-y-2">
@@ -72,7 +71,7 @@
 						placeholder="Masukkan kata sandi"
 						required
 						autocomplete="current-password"
-						value="SvelteDemo2026!"
+						value={data.demoMode ? "NoviraDemo2026!" : ""}
 					/>
 				</div>
 				<Button type="submit" class="w-full bg-emerald-600 font-bold text-white hover:bg-emerald-700">

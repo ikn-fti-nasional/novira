@@ -2,8 +2,9 @@ import { invalidateSession } from "$lib/server/auth.js";
 import { db } from "$lib/server/db/index.js";
 import { users, sessions, appSettings } from "$lib/server/db/schema.js";
 import { seedDemo } from "$lib/server/db/seed.js";
+import { hashPassword, verifyPassword } from "$lib/server/password.js";
+import { requireRoleOrFail } from "$lib/server/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
-import { hash, verify } from "@node-rs/argon2";
 import { eq, and, ne } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
@@ -152,23 +153,13 @@ export const actions: Actions = {
 			.from(users)
 			.where(eq(users.id, locals.user!.id));
 
-		const valid = await verify(user.passwordHash, currentPassword, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
+		const valid = await verifyPassword(user.passwordHash, currentPassword);
 
 		if (!valid) {
 			return fail(400, { message: "Current password is incorrect" });
 		}
 
-		const passwordHash = await hash(newPassword, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
+		const passwordHash = await hashPassword(newPassword);
 
 		await db
 			.update(users)
@@ -179,9 +170,8 @@ export const actions: Actions = {
 	},
 
 	updateSettings: async ({ request, locals }) => {
-		if (locals.user!.role !== "admin") {
-			return fail(403, { message: "Admin access required" });
-		}
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		if (denied) return denied;
 
 		const formData = await request.formData();
 		const siteName = formData.get("siteName");
@@ -257,9 +247,8 @@ export const actions: Actions = {
 		if (!DEMO_MODE) {
 			return fail(403, { message: "Demo reset is disabled on this instance" });
 		}
-		if (locals.user?.role !== "admin") {
-			return fail(403, { message: "Admin access required" });
-		}
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		if (denied) return denied;
 
 		try {
 			await seedDemo();

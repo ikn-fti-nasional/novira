@@ -8,7 +8,7 @@
 	import GlobeIcon from "@lucide/svelte/icons/globe";
 	import FilterIcon from "@lucide/svelte/icons/filter";
 	import PrinterIcon from "@lucide/svelte/icons/printer";
-	import { MOCK_PROVINSI, MOCK_KABUPATEN_KOTA, MOCK_SKOR_WILAYAH } from "$lib/mock/novira.js";
+	let { data } = $props();
 
 	let provinsiFilter = $state("SEMUA");
 	let kabupatenFilter = $state("SEMUA");
@@ -51,7 +51,7 @@
 				<span class="text-xs font-bold">Pilih Provinsi:</span>
 				<select bind:value={provinsiFilter} class="h-9 rounded-md border px-3 py-1 text-xs font-semibold bg-background">
 					<option value="SEMUA">Semua Provinsi (Nasional)</option>
-					{#each MOCK_PROVINSI as prov (prov.id)}
+					{#each data.provinsiList as prov (prov.id)}
 						<option value={prov.nama}>{prov.nama}</option>
 					{/each}
 				</select>
@@ -62,7 +62,7 @@
 				<span class="text-xs font-bold">Pilih Kabupaten/Kota:</span>
 				<select bind:value={kabupatenFilter} class="h-9 rounded-md border px-3 py-1 text-xs font-semibold bg-background">
 					<option value="SEMUA">Semua Kabupaten/Kota</option>
-					{#each MOCK_KABUPATEN_KOTA as kab (kab.id)}
+					{#each data.kabupatenKotaList as kab (kab.id)}
 						<option value={kab.nama}>{kab.nama}</option>
 					{/each}
 				</select>
@@ -108,7 +108,7 @@
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each MOCK_SKOR_WILAYAH as row (row.kelurahan)}
+					{#each data.skorWilayahList as row (row.kelurahan)}
 						<Table.Row class="text-xs">
 							<Table.Cell class="font-bold">{row.provinsi}</Table.Cell>
 							<Table.Cell>{row.kabupatenKota}</Table.Cell>

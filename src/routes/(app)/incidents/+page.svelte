@@ -1,8 +1,9 @@
 <script lang="ts">
 	import IncidentTable from "$lib/components/novira/incident-table.svelte";
-	import { MOCK_INSIDEN } from "$lib/mock/novira.js";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import { Badge } from "$lib/components/ui/badge/index.js";
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -21,5 +22,5 @@
 		</p>
 	</div>
 
-	<IncidentTable insidenList={MOCK_INSIDEN} />
+	<IncidentTable insidenList={data.insidenList} />
 </div>

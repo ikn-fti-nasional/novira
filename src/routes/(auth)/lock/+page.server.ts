@@ -1,7 +1,7 @@
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
+import { verifyPassword } from "$lib/server/password.js";
 import { fail, redirect } from "@sveltejs/kit";
-import { verify } from "@node-rs/argon2";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
@@ -39,12 +39,7 @@ export const actions: Actions = {
 			return fail(400, { message: "User not found" });
 		}
 
-		const valid = await verify(user.passwordHash, password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
+		const valid = await verifyPassword(user.passwordHash, password);
 
 		if (!valid) {
 			return fail(400, { message: "Incorrect password" });

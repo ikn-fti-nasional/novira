@@ -36,18 +36,18 @@
 			</Card.Header>
 			<Card.Content>
 				<div class="text-2xl font-bold">{formatBytes(data.dbSize)}</div>
-				<p class="text-muted-foreground text-xs">SQLite file size</p>
+				<p class="text-muted-foreground text-xs">Postgres database size</p>
 			</Card.Content>
 		</Card.Root>
 
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Journal Mode</Card.Title>
+				<Card.Title class="text-sm font-medium">WAL Level</Card.Title>
 				<DatabaseIcon class="text-muted-foreground size-4" />
 			</Card.Header>
 			<Card.Content>
-				<div class="text-2xl font-bold uppercase">{data.journalMode}</div>
-				<p class="text-muted-foreground text-xs">Write-ahead logging</p>
+				<div class="text-2xl font-bold uppercase">{data.walLevel}</div>
+				<p class="text-muted-foreground text-xs">Postgres write-ahead log level</p>
 			</Card.Content>
 		</Card.Root>
 

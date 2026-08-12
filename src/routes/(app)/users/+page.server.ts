@@ -1,13 +1,36 @@
 import { db } from "$lib/server/db/index.js";
-import { users } from "$lib/server/db/schema.js";
-import { fail, redirect } from "@sveltejs/kit";
-import { hash } from "@node-rs/argon2";
-import { generateId } from "$lib/server/auth.js";
-import { eq, sql, inArray } from "drizzle-orm";
+import {
+	users,
+	sessions,
+	notifications,
+	pages,
+	passwordResetTokens,
+} from "$lib/server/db/schema.js";
+import { createUser } from "$lib/server/db/users.js";
+import { fail } from "@sveltejs/kit";
+import { hashPassword } from "$lib/server/password.js";
+import { requireRoleOrRedirect, requireRoleOrFail } from "$lib/server/authorize.js";
+import { countAll } from "$lib/server/db/helpers.js";
+import { eq, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
+/**
+ * Delete a user and everything that references them. Postgres enforces FKs
+ * (unlike the old SQLite setup), so child rows must be removed first or the
+ * delete fails. Pages are authored by the user and author_id is NOT NULL, so
+ * the user's pages are deleted too.
+ */
+async function deleteUserRows(ids: string[]) {
+	if (ids.length === 0) return;
+	await db.delete(passwordResetTokens).where(inArray(passwordResetTokens.userId, ids));
+	await db.delete(sessions).where(inArray(sessions.userId, ids));
+	await db.delete(notifications).where(inArray(notifications.userId, ids));
+	await db.delete(pages).where(inArray(pages.authorId, ids));
+	await db.delete(users).where(inArray(users.id, ids));
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) redirect(302, "/login");
+	requireRoleOrRedirect(locals.user, ["admin"]);
 
 	const allUsers = await db
 		.select({
@@ -24,16 +47,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return { users: allUsers, currentUserId: locals.user.id };
 };
 
-function requireAdmin(locals: App.Locals) {
-	if (locals.user?.role !== "admin") {
-		return fail(403, { message: "Admin access required" });
-	}
-	return null;
-}
-
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
-		const denied = requireAdmin(locals);
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const name = formData.get("name");
@@ -66,22 +82,14 @@ export const actions: Actions = {
 			return fail(400, { message: "Invalid role" });
 		}
 
-		const passwordHash = await hash(password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
-
-		const userId = generateId(10);
+		const passwordHash = await hashPassword(password);
 
 		try {
-			await db.insert(users).values({
-				id: userId,
-				email: email.toLowerCase(),
-				username: username.toLowerCase(),
-				passwordHash,
+			await createUser({
 				name,
+				email,
+				username,
+				passwordHash,
 				role: role as "admin" | "editor" | "viewer",
 			});
 		} catch {
@@ -92,7 +100,7 @@ export const actions: Actions = {
 	},
 
 	update: async ({ request, locals }) => {
-		const denied = requireAdmin(locals);
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const id = formData.get("id");
@@ -117,7 +125,7 @@ export const actions: Actions = {
 		const [existing] = await db.select({ role: users.role }).from(users).where(eq(users.id, id));
 		if (existing?.role === "admin" && role !== "admin") {
 			const [adminCount] = await db
-				.select({ count: sql<number>`count(*)` })
+				.select({ count: countAll })
 				.from(users)
 				.where(eq(users.role, "admin"));
 			if (adminCount.count <= 1) {
@@ -143,7 +151,7 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ request, locals }) => {
-		const denied = requireAdmin(locals);
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const id = formData.get("id");
@@ -161,7 +169,7 @@ export const actions: Actions = {
 		const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id));
 		if (target?.role === "admin") {
 			const [adminCount] = await db
-				.select({ count: sql<number>`count(*)` })
+				.select({ count: countAll })
 				.from(users)
 				.where(eq(users.role, "admin"));
 			if (adminCount.count <= 1) {
@@ -169,17 +177,13 @@ export const actions: Actions = {
 			}
 		}
 
-		try {
-			await db.delete(users).where(eq(users.id, id));
-		} catch {
-			return fail(400, { message: "Cannot delete user — they may have related content" });
-		}
+		await deleteUserRows([id]);
 
 		return { success: true };
 	},
 
 	bulkDelete: async ({ request, locals }) => {
-		const denied = requireAdmin(locals);
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const idsRaw = formData.get("ids");
@@ -204,11 +208,7 @@ export const actions: Actions = {
 			return fail(400, { message: "Cannot delete all admin users" });
 		}
 
-		try {
-			await db.delete(users).where(inArray(users.id, toDelete));
-		} catch {
-			return fail(400, { message: "Cannot delete some users — they may have related content" });
-		}
+		await deleteUserRows(toDelete);
 
 		return { success: true };
 	},

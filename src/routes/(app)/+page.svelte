@@ -27,6 +27,11 @@
 
 	let { data } = $props();
 
+	// Sapaan berdasarkan waktu setempat
+	const jam = new Date().getHours();
+	const sapaan =
+		jam < 11 ? "Selamat Pagi" : jam < 15 ? "Selamat Siang" : jam < 18 ? "Selamat Sore" : "Selamat Malam";
+
 	// Scope Filter Super Admin
 	let provinsiDipilih = $state<string>("SEMUA");
 	let kabupatenDipilih = $state<string>("SEMUA");
@@ -104,16 +109,27 @@
 		class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-border/60 pb-4"
 	>
 		<div>
+			{#if data.demoData}
+				<div
+					class="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
+				>
+					<AlertTriangleIcon class="mt-0.5 size-3.5 shrink-0" />
+					<p>
+						Data CCTV, insiden, skor wilayah, petugas, dan tren sampah pada halaman ini adalah
+						<strong>data demo/simulasi</strong>, belum terhubung ke sistem EcoVision yang sebenarnya.
+					</p>
+				</div>
+			{/if}
 			<div class="flex items-center gap-2">
 				<h1 class="text-3xl font-extrabold tracking-tight text-foreground">
-					Selamat Pagi, Super Admin
+					{sapaan}, {data.user.name}
 				</h1>
 				<Badge
 					variant="outline"
 					class="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 text-xs"
 				>
 					<ShieldCheckIcon class="mr-1 size-3.5" />
-					Akses Super Admin
+					{data.user.role === "admin" ? "Akses Admin" : data.user.role === "editor" ? "Akses Editor" : "Akses Viewer"}
 				</Badge>
 			</div>
 			<p class="text-muted-foreground text-sm mt-1">

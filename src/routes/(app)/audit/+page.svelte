@@ -5,7 +5,8 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 	import DownloadIcon from "@lucide/svelte/icons/download";
-	import { MOCK_AUDIT_LOG } from "$lib/mock/novira.js";
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -46,7 +47,7 @@
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each MOCK_AUDIT_LOG as log (log.id)}
+					{#each data.auditLogList as log (log.id)}
 						<Table.Row class="text-xs">
 							<Table.Cell class="font-mono font-bold text-muted-foreground">{log.id}</Table.Cell>
 							<Table.Cell class="font-mono text-xs">{new Date(log.waktu).toLocaleString()}</Table.Cell>

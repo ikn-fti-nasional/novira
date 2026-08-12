@@ -15,9 +15,6 @@
 	import LogOutIcon from "@lucide/svelte/icons/log-out";
 	import UserIcon from "@lucide/svelte/icons/user";
 	import BellRingIcon from "@lucide/svelte/icons/bell-ring";
-	import LockIcon from "@lucide/svelte/icons/lock";
-	import KeyboardIcon from "@lucide/svelte/icons/keyboard";
-	import HelpCircleIcon from "@lucide/svelte/icons/help-circle";
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
@@ -35,6 +32,10 @@
 	};
 
 	let { user, notificationCount = 0 }: Props = $props();
+
+	const roleLabel = $derived(
+		user.role === "admin" ? "Admin" : user.role === "editor" ? "Editor" : "Viewer"
+	);
 
 	const sidebar = Sidebar.useSidebar();
 
@@ -163,7 +164,7 @@
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
 									<span class="truncate font-bold">{user.name}</span>
-									<span class="text-muted-foreground truncate text-xs">Super Admin (Nasional)</span>
+									<span class="text-muted-foreground truncate text-xs">NOVIRA</span>
 								</div>
 								<ChevronDownIcon class="ml-auto size-4" />
 							</Sidebar.MenuButton>
@@ -172,7 +173,7 @@
 					<DropdownMenu.Content class="w-56" align="end" side="top">
 						<DropdownMenu.Label class="flex items-center gap-2">
 							Akun Pengguna
-							<Badge variant="outline" class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Super Admin</Badge>
+							<Badge variant="outline" class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">{roleLabel}</Badge>
 						</DropdownMenu.Label>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item onclick={handleNavigate}>

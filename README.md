@@ -45,18 +45,18 @@ The detection side (what the model actually does, dataset strategy, tracking/per
 
 - **SvelteKit 2** + **Svelte 5** (runes API)
 - **Tailwind CSS v4** with `shadcn-svelte` components
-- **Drizzle ORM** over SQLite (swap for Postgres/PostGIS as the system scales — see below)
-- Custom session-based auth (Argon2id) with optional Google/GitHub OAuth via Arctic
+- **Drizzle ORM** over **Postgres** (deployed on [Neon](https://neon.tech))
+- Custom session-based auth (Argon2id, username/password)
 - **LayerChart** (D3-based) for charts
 
-> Note: the broader EcoVision system plan (inference service, message queue, object storage, notifications) targets Python/FastAPI for inference and PostgreSQL + PostGIS for geospatial data at production scale. This dashboard can be pointed at that stack once the API contract is in place; SQLite is fine for local development and small pilots.
+> Note: the broader EcoVision system plan (inference service, message queue, object storage, notifications) targets Python/FastAPI for inference. For geospatial data at scale, consider adding the [PostGIS](https://postgis.net) extension on top of this same Postgres/Neon database rather than a separate store.
 
 ## Getting started
 
 ```bash
 pnpm install
-cp .env.example .env      # fill in ORIGIN and, optionally, OAuth credentials
-pnpm db:push               # create the local SQLite schema
+cp .env.example .env      # fill in ORIGIN
+pnpm db:push               # push the schema to your Postgres/Neon database
 pnpm db:seed                # optional: seed sample data
 pnpm dev
 ```

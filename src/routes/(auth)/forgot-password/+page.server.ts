@@ -3,6 +3,7 @@ import { users, passwordResetTokens } from "$lib/server/db/schema.js";
 import { fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import { generateId } from "$lib/server/auth.js";
+import { dev } from "$app/environment";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -48,9 +49,12 @@ export const actions: Actions = {
 				expiresAt,
 			});
 
-			// Log the reset URL (no email service in dev)
-			console.log(`\n[Password Reset] Token for ${user.email}: ${token}`);
-			console.log(`[Password Reset] URL: /reset-password?token=${token}\n`);
+			// No email service is wired up, so in dev only, surface the reset URL
+			// on the server console. Never log the raw token in production.
+			if (dev) {
+				console.log(`\n[Password Reset] Token for ${user.email}: ${token}`);
+				console.log(`[Password Reset] URL: /reset-password?token=${token}\n`);
+			}
 		}
 
 		return { success: true };

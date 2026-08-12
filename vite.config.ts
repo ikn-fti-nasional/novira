@@ -9,5 +9,9 @@ export default defineConfig({
 	},
 	test: {
 		include: ["src/**/*.test.ts"],
+		// PGlite (WASM Postgres) cold-start is ~8-10s per fresh instance;
+		// defaults of 5s/10s cause spurious timeouts on the test DB hook.
+		testTimeout: 30_000,
+		hookTimeout: 30_000,
 	},
 });

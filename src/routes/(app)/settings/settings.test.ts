@@ -21,7 +21,7 @@ vi.mock("$lib/server/auth.js", () => ({
 
 describe("Settings page server", () => {
 	it("loads profile data and settings", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin", name: "Admin User" });
 		const locals = createMockLocals(userId, "admin");
@@ -37,7 +37,7 @@ describe("Settings page server", () => {
 	});
 
 	it("updates profile successfully", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { name: "Old Name" });
 		const locals = createMockLocals(userId);
@@ -52,7 +52,7 @@ describe("Settings page server", () => {
 	});
 
 	it("rejects empty name on profile update", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db);
 		const locals = createMockLocals(userId);
@@ -66,7 +66,7 @@ describe("Settings page server", () => {
 	});
 
 	it("changes password with valid credentials", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db);
 		const locals = createMockLocals(userId);
@@ -85,7 +85,7 @@ describe("Settings page server", () => {
 	});
 
 	it("rejects mismatched passwords", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db);
 		const locals = createMockLocals(userId);
@@ -103,7 +103,7 @@ describe("Settings page server", () => {
 	});
 
 	it("saves notification preferences", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db);
 		const locals = createMockLocals(userId);

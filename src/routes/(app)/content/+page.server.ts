@@ -1,5 +1,6 @@
 import { db } from "$lib/server/db/index.js";
 import { pages, users } from "$lib/server/db/schema.js";
+import { requireRoleOrFail } from "$lib/server/authorize.js";
 import { fail } from "@sveltejs/kit";
 import { eq, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
@@ -25,7 +26,10 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		if (denied) return denied;
+
 		const formData = await request.formData();
 		const id = formData.get("id");
 
@@ -38,7 +42,10 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	bulkDelete: async ({ request }) => {
+	bulkDelete: async ({ request, locals }) => {
+		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		if (denied) return denied;
+
 		const formData = await request.formData();
 		const idsRaw = formData.get("ids");
 

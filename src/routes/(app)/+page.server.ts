@@ -1,60 +1,79 @@
 import { redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { users, notifications, appSettings } from "$lib/server/db/schema.js";
-import { sql, eq } from "drizzle-orm";
-import type { PageServerLoad } from "./$types.js";
+import { visibleTo } from "$lib/server/db/notification-visibility.js";
+import { countAll } from "$lib/server/db/helpers.js";
 import {
-	MOCK_PROVINSI,
-	MOCK_KABUPATEN_KOTA,
-	MOCK_KAMERA,
-	MOCK_INSIDEN,
-	MOCK_SKOR_WILAYAH,
-	MOCK_PETUGAS,
-	MOCK_TREN_SAMPAH,
-	MOCK_AUDIT_LOG,
-} from "$lib/mock/novira.js";
+	ringkasanKpi,
+	listProvinsi,
+	listKabupatenKota,
+	listKamera,
+	listInsiden,
+	listSkorWilayah,
+	listPetugas,
+	listTrenSampah,
+	listAuditLog,
+} from "$lib/server/novira/index.js";
+import { eq, and } from "drizzle-orm";
+import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(302, "/login");
 
 	// Statistic DB
-	const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+	const [userCount] = await db.select({ count: countAll }).from(users);
+	// Unread badge must be scoped to this user's visible notifications (their own
+	// plus global), not the site-wide total — otherwise a viewer sees other
+	// users' notification volume.
 	const [unreadCount] = await db
-		.select({ count: sql<number>`count(*)` })
+		.select({ count: countAll })
 		.from(notifications)
-		.where(eq(notifications.read, false));
+		.where(and(eq(notifications.read, false), visibleTo(locals.user.id)));
 
 	const maintenanceSetting = await db.query.appSettings.findFirst({
 		where: eq(appSettings.key, "maintenanceMode"),
 	});
 
-	// Hitung Metrik Utama Super Admin NOVIRA
-	const insidenAktifCount = MOCK_INSIDEN.filter((i) => i.status === "AKTIF").length;
-	const cctvOnlineCount = MOCK_KAMERA.filter((c) => c.status === "ONLINE").length;
-	const totalCctvCount = MOCK_KAMERA.length;
-	const slaMelanggarCount = MOCK_INSIDEN.filter((i) => i.statusSla === "MELANGGAR_SLA").length;
-	const volumeSampahHariIni = 142; // Kg
+	// Metrik domain NOVIRA (CCTV/insiden/skor/tren) datang lewat seam data
+	// domain (saat ini adapter mock) — lihat flag `demoData` agar UI bisa
+	// memberi tahu pengguna bahwa ini bukan data produksi.
+	const domainKpi = await ringkasanKpi();
+	const [
+		provinsiList,
+		kabupatenKotaList,
+		kameraList,
+		insidenList,
+		skorWilayahList,
+		petugasList,
+		trenSampahList,
+		auditLogList,
+	] = await Promise.all([
+		listProvinsi(),
+		listKabupatenKota(),
+		listKamera(),
+		listInsiden(),
+		listSkorWilayah(),
+		listPetugas(),
+		listTrenSampah(),
+		listAuditLog(),
+	]);
 
 	return {
 		user: locals.user,
+		demoData: true,
 		kpi: {
-			insidenAktif: insidenAktifCount,
-			cctvOnline: cctvOnlineCount,
-			totalCctv: totalCctvCount,
-			persentaseUptimeCctv: Math.round((cctvOnlineCount / totalCctvCount) * 100),
-			volumeSampahHariIniKg: volumeSampahHariIni,
-			slaMelanggar: slaMelanggarCount,
+			...domainKpi,
 			totalPengguna: userCount.count,
 			notifikasiBelumDibaca: unreadCount.count,
 		},
-		provinsiList: MOCK_PROVINSI,
-		kabupatenKotaList: MOCK_KABUPATEN_KOTA,
-		kameraList: MOCK_KAMERA,
-		insidenList: MOCK_INSIDEN,
-		skorWilayahList: MOCK_SKOR_WILAYAH,
-		petugasList: MOCK_PETUGAS,
-		trenSampahList: MOCK_TREN_SAMPAH,
-		auditLogList: MOCK_AUDIT_LOG,
+		provinsiList,
+		kabupatenKotaList,
+		kameraList,
+		insidenList,
+		skorWilayahList,
+		petugasList,
+		trenSampahList,
+		auditLogList,
 		systemStatus: {
 			maintenanceMode: maintenanceSetting?.value === "true",
 		},

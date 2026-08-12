@@ -1,9 +1,10 @@
 <script lang="ts">
 	import CctvPlayer from "$lib/components/novira/cctv-player.svelte";
-	import { MOCK_KAMERA } from "$lib/mock/novira.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import VideoIcon from "@lucide/svelte/icons/video";
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -22,11 +23,11 @@
 		</p>
 	</div>
 
-	<CctvPlayer kameraList={MOCK_KAMERA} kameraIdDipilih="CAM-003" />
+	<CctvPlayer kameraList={data.kameraList} kameraIdDipilih="CAM-003" />
 
 	<!-- Grid Semua Kamera CCTV -->
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-		{#each MOCK_KAMERA as cam (cam.id)}
+		{#each data.kameraList as cam (cam.id)}
 			<Card.Root class="overflow-hidden border-border/80 shadow-xs hover:shadow-md transition-shadow">
 				<div class="relative aspect-video bg-slate-950">
 					{#if cam.urlSnapshot}

@@ -1,5 +1,6 @@
 import { db } from "$lib/server/db/index.js";
 import { users, pages, notifications } from "$lib/server/db/schema.js";
+import { countAll } from "$lib/server/db/helpers.js";
 import { sql, eq } from "drizzle-orm";
 import type { PageServerLoad } from "./$types.js";
 
@@ -7,28 +8,28 @@ export const load: PageServerLoad = async () => {
 	// User signups per month
 	const signupsPerMonth = await db
 		.select({
-			month: sql<string>`strftime('%Y-%m-01', created_at, 'unixepoch')`,
-			count: sql<number>`count(*)`,
+			month: sql<string>`to_char(created_at, 'YYYY-MM-01')`,
+			count: countAll,
 		})
 		.from(users)
-		.groupBy(sql`strftime('%Y-%m', created_at, 'unixepoch')`)
-		.orderBy(sql`strftime('%Y-%m', created_at, 'unixepoch')`);
+		.groupBy(sql`to_char(created_at, 'YYYY-MM-01')`)
+		.orderBy(sql`to_char(created_at, 'YYYY-MM-01')`);
 
 	// Content creation per month
 	const pagesPerMonth = await db
 		.select({
-			month: sql<string>`strftime('%Y-%m-01', created_at, 'unixepoch')`,
-			count: sql<number>`count(*)`,
+			month: sql<string>`to_char(created_at, 'YYYY-MM-01')`,
+			count: countAll,
 		})
 		.from(pages)
-		.groupBy(sql`strftime('%Y-%m', created_at, 'unixepoch')`)
-		.orderBy(sql`strftime('%Y-%m', created_at, 'unixepoch')`);
+		.groupBy(sql`to_char(created_at, 'YYYY-MM-01')`)
+		.orderBy(sql`to_char(created_at, 'YYYY-MM-01')`);
 
 	// Pages by status
 	const pagesByStatus = await db
 		.select({
 			status: pages.status,
-			count: sql<number>`count(*)`,
+			count: countAll,
 		})
 		.from(pages)
 		.groupBy(pages.status);
@@ -37,7 +38,7 @@ export const load: PageServerLoad = async () => {
 	const notificationsByType = await db
 		.select({
 			type: notifications.type,
-			count: sql<number>`count(*)`,
+			count: countAll,
 		})
 		.from(notifications)
 		.groupBy(notifications.type);
@@ -46,7 +47,7 @@ export const load: PageServerLoad = async () => {
 	const topAuthors = await db
 		.select({
 			name: users.name,
-			pageCount: sql<number>`count(${pages.id})`,
+			pageCount: sql<number>`count(${pages.id})::int`,
 		})
 		.from(pages)
 		.innerJoin(users, eq(pages.authorId, users.id))

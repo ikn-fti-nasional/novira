@@ -1,7 +1,9 @@
 import { redirect, error } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { notifications, appSettings } from "$lib/server/db/schema.js";
-import { eq, and, or, isNull, sql, desc } from "drizzle-orm";
+import { visibleTo } from "$lib/server/db/notification-visibility.js";
+import { countAll } from "$lib/server/db/helpers.js";
+import { eq, and, desc } from "drizzle-orm";
 import type { LayoutServerLoad } from "./$types.js";
 
 export const load: LayoutServerLoad = async ({ locals }) => {
@@ -17,13 +19,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		error(503, "The application is currently under maintenance. Please check back later.");
 	}
 
-	const userNotificationFilter = or(
-		eq(notifications.userId, locals.user.id),
-		isNull(notifications.userId)
-	);
+	const userNotificationFilter = visibleTo(locals.user.id);
 
 	const [countResult] = await db
-		.select({ count: sql<number>`count(*)` })
+		.select({ count: countAll })
 		.from(notifications)
 		.where(and(eq(notifications.read, false), userNotificationFilter));
 

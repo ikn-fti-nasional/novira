@@ -1,7 +1,8 @@
 <script lang="ts">
 	import AreaSummary from "$lib/components/novira/area-summary.svelte";
-	import { MOCK_SKOR_WILAYAH } from "$lib/mock/novira.js";
 	import TrophyIcon from "@lucide/svelte/icons/trophy";
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -19,5 +20,5 @@
 		</p>
 	</div>
 
-	<AreaSummary skorWilayahList={MOCK_SKOR_WILAYAH} />
+	<AreaSummary skorWilayahList={data.skorWilayahList} />
 </div>

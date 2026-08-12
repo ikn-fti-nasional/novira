@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { MOCK_KAMERA } from "$lib/mock/novira.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
@@ -8,6 +7,8 @@
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import PencilIcon from "@lucide/svelte/icons/pencil";
 	import TrashIcon from "@lucide/svelte/icons/trash";
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -47,7 +48,7 @@
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each MOCK_KAMERA as cam (cam.id)}
+					{#each data.kameraList as cam (cam.id)}
 						<Table.Row class="text-xs">
 							<Table.Cell class="font-bold">{cam.id} - {cam.nama}</Table.Cell>
 							<Table.Cell>{cam.lokasi} ({cam.kelurahan})</Table.Cell>

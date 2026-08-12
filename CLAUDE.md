@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Novira is the web dashboard for **EcoVision**, a CCTV-based street litter detection system for local governments (see `README.md` for the product background). This repo is the SvelteKit admin dashboard: map of monitored cameras, live incident feed, area cleanliness ranking, and officer/notification management. Built with Svelte 5, Tailwind CSS v4, custom session-based auth with Arctic OAuth, and Drizzle ORM with SQLite.
+Novira is the web dashboard for **EcoVision**, a CCTV-based street litter detection system for local governments (see `README.md` for the product background). This repo is the SvelteKit admin dashboard: map of monitored cameras, live incident feed, area cleanliness ranking, and officer/notification management. Built with Svelte 5, Tailwind CSS v4, custom username/password session-based auth, and Drizzle ORM over Postgres (Neon).
 
 ## Commands
 
@@ -39,8 +39,8 @@ pnpm format:check     # Prettier (check only)
 - **Svelte 5** with runes API (`$props`, `$state`, `$derived`, `{@render}`)
 - **Tailwind CSS v4** — native CSS with `@theme` directive in `src/app.css`, no JS config file. OKLCH color system
 - **shadcn-svelte** — UI components in `$lib/components/ui/`, added via `npx shadcn-svelte@latest add <component>`
-- **Custom session auth** — SHA-256 hashed tokens with @oslojs/crypto, Argon2id password hashing, optional OAuth via Arctic (Google, GitHub)
-- **Drizzle ORM** — SQLite with better-sqlite3, WAL mode. Schema in `src/lib/server/db/schema.ts`
+- **Custom session auth** — SHA-256 hashed tokens with @oslojs/crypto, Argon2id password hashing
+- **Drizzle ORM** — Postgres via `postgres` (postgres.js), pointed at a Neon connection string in production. Schema in `src/lib/server/db/schema.ts`
 - **LayerChart v2** — D3-based charts. Marked `noExternal` in `vite.config.ts` alongside `svelte-ux` for SSR compatibility
 - **Package manager:** pnpm
 
@@ -49,13 +49,13 @@ pnpm format:check     # Prettier (check only)
 Routes use SvelteKit route groups for layout separation:
 
 - `(app)/` — Protected routes behind the app shell. Auth guard in `(app)/+layout.server.ts` redirects unauthenticated users to `/login`. Features: dashboard (`+page`), `cameras/`, `incidents/`, `hotspots/`, `area-ranking/`, `laporan-wilayah/`, `officers/`, `monitoring/`, `users/`, `roles/`, `content/` (CMS — list, `new/`, `[id]/edit/`), `analytics/`, `notifications/`, `database/`, `settings/`, `audit/`
-- `(auth)/` — Public auth routes: `login/` (+ OAuth callbacks at `login/google/`, `login/github/`), `register/`, `forgot-password/`, `reset-password/`, `lock/` (re-auth screen, requires an existing session)
+- `(auth)/` — Public auth routes: `login/`, `register/`, `forgot-password/`, `reset-password/`, `lock/` (re-auth screen, requires an existing session)
 - `(public)/` — Public marketing/landing pages
 - `logout/` — Standalone logout action (server-only)
 - `api/search/` — Search endpoint for command palette
 - `sitemap.xml/` — Auto-generated sitemap
 
-Session validation runs on every request via `hooks.server.ts`, populating `event.locals.user` and `event.locals.session`. OAuth providers are environment-driven — see `.env.example` for configuration.
+Session validation runs on every request via `hooks.server.ts`, populating `event.locals.user` and `event.locals.session`.
 
 `event.locals.user` is `SessionUser` (a subset of `User` — no `passwordHash`, no timestamps). Use the full `User` type only when querying the DB directly.
 
@@ -65,10 +65,9 @@ The `(app)/+layout.server.ts` guard also enforces **maintenance mode**: when `ap
 
 ### Key Directories
 
-- `src/lib/server/` — Server-only code (auth, OAuth, database). Never import from client-side code
+- `src/lib/server/` — Server-only code (auth, database). Never import from client-side code
 - `src/lib/server/auth.ts` — Session management (create, validate, invalidate, cookies)
-- `src/lib/server/oauth.ts` — Arctic OAuth providers (conditional on env vars)
-- `src/lib/server/db/schema.ts` — Drizzle schema (users, sessions, pages, notifications, oauthAccounts, appSettings, passwordResetTokens)
+- `src/lib/server/db/schema.ts` — Drizzle schema (users, sessions, pages, notifications, appSettings, passwordResetTokens)
 - `src/lib/server/db/seed.ts` — Database seeder (run via `pnpm db:seed`, uses `npx tsx` not SvelteKit aliases)
 - `src/lib/server/id.ts` — Crypto ID generator (`generateId()`)
 - `src/lib/components/ui/` — shadcn-svelte components (don't edit directly, re-add to update)
@@ -79,7 +78,7 @@ The `(app)/+layout.server.ts` guard also enforces **maintenance mode**: when `ap
 
 ### Database
 
-SQLite database file: `novira.db` (project root, gitignored). Roles enum: `admin | editor | viewer`. First registered user gets `admin` role.
+Database connection comes from `DATABASE_URL` (Postgres/Neon connection string, gitignored via `.env`). Roles enum: `admin | editor | viewer`. First registered user gets `admin` role.
 
 **Notifications with `userId = NULL` are global** — every user sees them. Per-user notifications set `userId` to the recipient. The `(app)/+layout.server.ts` filter (`eq(userId, X) OR isNull(userId)`) is the canonical pattern for any notification query.
 
@@ -96,7 +95,7 @@ Leave it unset on real deployments. For a hands-off public demo, an hourly cron 
 
 Tests co-locate with their route: e.g., `src/routes/(app)/users/users.test.ts` tests the `users/+page.server.ts` load and actions.
 
-**Test DB pattern:** Tests mock `$lib/server/db/index.js` with a getter that returns an in-memory SQLite database created via `createTestDb()` from `test-utils.ts`. The mock must be set up before dynamically importing the server module:
+**Test DB pattern:** Tests mock `$lib/server/db/index.js` with a getter that returns an in-memory Postgres database (via [PGlite](https://pglite.dev/), a WASM Postgres) created via `await createTestDb()` from `test-utils.ts`. The mock must be set up before dynamically importing the server module:
 
 ```ts
 vi.mock("$lib/server/db/index.js", () => ({

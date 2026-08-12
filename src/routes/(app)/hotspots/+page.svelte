@@ -1,7 +1,8 @@
 <script lang="ts">
 	import HotspotMap from "$lib/components/novira/hotspot-map.svelte";
-	import { MOCK_KAMERA, MOCK_INSIDEN } from "$lib/mock/novira.js";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -19,5 +20,5 @@
 		</p>
 	</div>
 
-	<HotspotMap kameraList={MOCK_KAMERA} insidenList={MOCK_INSIDEN} />
+	<HotspotMap kameraList={data.kameraList} insidenList={data.insidenList} />
 </div>

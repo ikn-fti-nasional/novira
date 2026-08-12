@@ -1,7 +1,9 @@
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
+import { requireRoleOrRedirect, requireRoleOrFail } from "$lib/server/authorize.js";
+import { countAll } from "$lib/server/db/helpers.js";
 import { fail } from "@sveltejs/kit";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 const roleDefinitions = [
@@ -28,7 +30,9 @@ const roleDefinitions = [
 	},
 ];
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	requireRoleOrRedirect(locals.user, ["admin"]);
+
 	const allUsers = await db
 		.select({
 			id: users.id,
@@ -49,7 +53,10 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	changeRole: async ({ request }) => {
+	changeRole: async ({ request, locals }) => {
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		if (denied) return denied;
+
 		const formData = await request.formData();
 		const userId = formData.get("userId");
 		const newRole = formData.get("newRole");
@@ -65,7 +72,7 @@ export const actions: Actions = {
 		const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId));
 		if (target?.role === "admin" && newRole !== "admin") {
 			const [adminCount] = await db
-				.select({ count: sql<number>`count(*)` })
+				.select({ count: countAll })
 				.from(users)
 				.where(eq(users.role, "admin"));
 			if (adminCount.count <= 1) {

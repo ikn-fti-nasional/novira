@@ -7,7 +7,7 @@ import {
 	createMockRequest,
 } from "$lib/server/db/test-utils.js";
 
-let testDb: ReturnType<typeof createTestDb>;
+let testDb: Awaited<ReturnType<typeof createTestDb>>;
 let adminId: string;
 
 vi.mock("$lib/server/db/index.js", () => ({
@@ -20,7 +20,7 @@ const { load, actions } = await import("./+page.server.js");
 
 describe("Users page", () => {
 	beforeEach(async () => {
-		testDb = createTestDb();
+		testDb = await createTestDb();
 		adminId = await createTestUser(testDb, {
 			name: "Admin",
 			email: "admin@test.com",
@@ -129,7 +129,7 @@ describe("Users page", () => {
 				role: "viewer",
 			});
 
-			// /users mutations are gated on the admin role (requireAdmin), so a
+			// /users mutations are gated on the admin role (requireRoleOrFail), so a
 			// viewer is rejected with 403 before reaching any deletion guard.
 			const formData = createFormData({ id: adminId });
 

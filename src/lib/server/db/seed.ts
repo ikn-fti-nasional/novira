@@ -1,15 +1,16 @@
 import { fileURLToPath } from "node:url";
 import { db } from "./index.js";
-import { users, pages, notifications, appSettings, sessions } from "./schema.js";
-import { hash } from "@node-rs/argon2";
+import {
+	users,
+	pages,
+	notifications,
+	appSettings,
+	sessions,
+	passwordResetTokens,
+} from "./schema.js";
+import { hashPassword } from "../password.js";
 import { generateId } from "../id.js";
-
-const ARGON2_CONFIG = {
-	memoryCost: 19456,
-	timeCost: 2,
-	outputLen: 32,
-	parallelism: 1,
-};
+import { createUser } from "./users.js";
 
 function daysAgo(n: number): Date {
 	return new Date(Date.now() - n * 86400000);
@@ -25,16 +26,20 @@ function randomInt(min: number, max: number): number {
 
 export async function seedDemo() {
 	console.log("Clearing existing data...");
-	db.delete(notifications).run();
-	db.delete(pages).run();
-	db.delete(sessions).run();
-	db.delete(appSettings).run();
-	db.delete(users).run();
+	// Delete children before parents — users is referenced by every other table.
+	// password_reset_tokens must be cleared too or the users delete below fails
+	// with a foreign-key violation.
+	await db.delete(notifications);
+	await db.delete(pages);
+	await db.delete(sessions);
+	await db.delete(passwordResetTokens);
+	await db.delete(appSettings);
+	await db.delete(users);
 
 	// --- USERS ---
 	// ~50 users with accelerating signups over 12 months (realistic growth curve)
 	console.log("Creating users...");
-	const passwordHash = await hash("password123", ARGON2_CONFIG);
+	const passwordHash = await hashPassword("password123");
 
 	const userData = [
 		// Demo account — what the login page pre-fills. Viewer role so visitors
@@ -44,7 +49,7 @@ export async function seedDemo() {
 			name: "Demo User",
 			email: "demo@novira.dev",
 			username: "demo",
-			password: "SvelteDemo2026!",
+			password: "NoviraDemo2026!",
 			role: "viewer" as const,
 			daysAgo: 365,
 		},
@@ -416,15 +421,9 @@ export async function seedDemo() {
 	const editorIds: string[] = [];
 
 	for (const u of userData) {
-		const id = generateId(10);
-		userIds.push(id);
-		if (u.role === "editor" || u.role === "admin") {
-			editorIds.push(id);
-		}
 		const userPasswordHash =
-			"password" in u && u.password ? await hash(u.password, ARGON2_CONFIG) : passwordHash;
-		await db.insert(users).values({
-			id,
+			"password" in u && u.password ? await hashPassword(u.password) : passwordHash;
+		const id = await createUser({
 			name: u.name,
 			email: u.email,
 			username: u.username,
@@ -433,6 +432,10 @@ export async function seedDemo() {
 			createdAt: daysAgo(u.daysAgo),
 			updatedAt: daysAgo(u.daysAgo),
 		});
+		userIds.push(id);
+		if (u.role === "editor" || u.role === "admin") {
+			editorIds.push(id);
+		}
 	}
 	console.log(`  Created ${userData.length} users (default password: password123)`);
 
@@ -1276,7 +1279,7 @@ export async function seedDemo() {
 	);
 	console.log(`  ${notificationData.length} notifications`);
 	console.log(
-		"Login: username 'demo' / password 'SvelteDemo2026!' (viewer, what the UI pre-fills)"
+		"Login: username 'demo' / password 'NoviraDemo2026!' (viewer, what the UI pre-fills)"
 	);
 	console.log(
 		"       username 'admin' / password 'password123' (admin — use to access demo reset)"

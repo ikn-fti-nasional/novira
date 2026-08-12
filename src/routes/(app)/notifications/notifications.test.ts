@@ -31,7 +31,7 @@ async function seedNotification(db: any, userId: string | null, overrides: Parti
 
 describe("Notifications page server", () => {
 	it("loads notifications for user", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		await seedNotification(db, userId, { title: "My Alert" });
@@ -44,7 +44,7 @@ describe("Notifications page server", () => {
 	});
 
 	it("marks notification as read", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		const notifId = await seedNotification(db, userId);
@@ -59,7 +59,7 @@ describe("Notifications page server", () => {
 	});
 
 	it("deletes a notification", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		const notifId = await seedNotification(db, userId);
@@ -74,7 +74,7 @@ describe("Notifications page server", () => {
 	});
 
 	it("marks all notifications as read", async () => {
-		const db = createTestDb();
+		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db, { role: "admin" });
 		await seedNotification(db, userId, { title: "Notif 1" });

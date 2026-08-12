@@ -2,12 +2,13 @@ import {
 	generateSessionToken,
 	createSession,
 	setSessionCookie,
-	generateId,
 } from "$lib/server/auth.js";
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
+import { createUser } from "$lib/server/db/users.js";
+import { hashPassword } from "$lib/server/password.js";
+import { countAll } from "$lib/server/db/helpers.js";
 import { fail, redirect } from "@sveltejs/kit";
-import { hash } from "@node-rs/argon2";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -43,23 +44,20 @@ export const actions: Actions = {
 			return fail(400, { message: "Password must be 6-255 characters" });
 		}
 
-		const passwordHash = await hash(password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1,
-		});
+		const passwordHash = await hashPassword(password);
 
-		const userId = generateId(10);
-
+		let userId: string;
 		try {
-			await db.insert(users).values({
-				id: userId,
-				email: email.toLowerCase(),
-				username: username.toLowerCase(),
-				passwordHash,
+			// Only the very first registered user becomes admin; everyone else is a viewer.
+			const [existing] = await db
+				.select({ count: countAll })
+				.from(users);
+			userId = await createUser({
 				name,
-				role: "admin", // First user gets admin role
+				email,
+				username,
+				passwordHash,
+				role: existing.count === 0 ? "admin" : "viewer",
 			});
 		} catch {
 			return fail(400, { message: "Username or email already taken" });

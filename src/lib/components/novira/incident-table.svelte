@@ -3,7 +3,6 @@
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
-	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
 	import ClockIcon from "@lucide/svelte/icons/clock";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";

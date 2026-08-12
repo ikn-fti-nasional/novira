@@ -7,7 +7,6 @@
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import ScanIcon from "@lucide/svelte/icons/scan";
-	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
 	import type { Kamera } from "$lib/types/novira.js";
 
 	type Props = {
@@ -15,14 +14,38 @@
 		kameraIdDipilih?: string;
 	};
 
-	let { kameraList, kameraIdDipilih = "CAM-003" }: Props = $props();
+	// $bindable: kameraIdDipilih dapat di-ubah dua arah — mengalir turun saat
+	// induk mengganti kamera, dan bisa di-set lokal lewat <select bind:value>.
+	let { kameraList, kameraIdDipilih = $bindable("CAM-003") }: Props = $props();
 
-	let idKameraAktif = $state(kameraIdDipilih);
 	let tampilkanOverlayAi = $state(true);
+	let mengunduhTangkapan = $state(false);
 
 	let kameraAktif = $derived(
-		kameraList.find((k) => k.id === idKameraAktif) ?? kameraList[0]
+		kameraList.find((k) => k.id === kameraIdDipilih) ?? kameraList[0]
 	);
+
+	async function tangkapTangkapanLayar() {
+		const snapshotUrl = kameraAktif.urlSnapshot;
+		if (!snapshotUrl || mengunduhTangkapan) return;
+		mengunduhTangkapan = true;
+		try {
+			const res = await fetch(snapshotUrl);
+			if (!res.ok) throw new Error("fetch failed");
+			const blob = await res.blob();
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${kameraAktif.id}-snapshot.jpg`;
+			a.click();
+			URL.revokeObjectURL(url);
+		} catch {
+			// Cross-origin tanpa CORS — buka snapshot langsung di tab baru.
+			window.open(snapshotUrl, "_blank", "noopener");
+		} finally {
+			mengunduhTangkapan = false;
+		}
+	}
 </script>
 
 <Card.Root class="overflow-hidden border-border/80 shadow-md">
@@ -48,7 +71,7 @@
 		<!-- Pemilih Kamera CCTV -->
 		<div class="flex items-center gap-2">
 			<select
-				bind:value={idKameraAktif}
+				bind:value={kameraIdDipilih}
 				class="h-9 rounded-md border border-input bg-background px-3 py-1 text-xs font-medium shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
 			>
 				{#each kameraList as kam (kam.id)}
@@ -172,13 +195,15 @@
 			</span>
 		</div>
 		<div class="flex items-center gap-2">
-			<Button variant="outline" size="sm" class="h-7 text-xs">
+			<Button
+				variant="outline"
+				size="sm"
+				class="h-7 text-xs"
+				onclick={tangkapTangkapanLayar}
+				disabled={mengunduhTangkapan || !kameraAktif.urlSnapshot}
+			>
 				<CameraIcon class="mr-1 size-3.5" />
-				Tangkap Tangkapan Layar
-			</Button>
-			<Button variant="default" size="sm" class="h-7 bg-emerald-600 text-xs hover:bg-emerald-700 text-white font-semibold">
-				<ShieldAlertIcon class="mr-1 size-3.5" />
-				Kirim Petugas Lapangan
+				{mengunduhTangkapan ? "Mengunduh…" : "Tangkap Tangkapan Layar"}
 			</Button>
 		</div>
 	</Card.Footer>

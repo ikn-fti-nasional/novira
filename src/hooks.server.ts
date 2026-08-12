@@ -24,13 +24,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// Refresh cookie with current expiresAt (handles auto-extension)
 			setSessionCookie(event.cookies, token, session.expiresAt);
 
-			// Update session metadata
-			const ua = event.request.headers.get("user-agent");
+			// Update session metadata only when it actually changed, to avoid a
+			// DB write on every single request from a returning user.
+			const ua = event.request.headers.get("user-agent") ?? null;
 			const ip = event.getClientAddress();
-			await db
-				.update(sessions)
-				.set({ userAgent: ua, ipAddress: ip })
-				.where(eq(sessions.id, session.id));
+			if (ua !== session.userAgent || ip !== session.ipAddress) {
+				await db
+					.update(sessions)
+					.set({ userAgent: ua, ipAddress: ip })
+					.where(eq(sessions.id, session.id));
+			}
 		} else {
 			deleteSessionCookie(event.cookies);
 		}
@@ -38,8 +41,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.user = user;
 		event.locals.session = session;
 	} catch {
-		// DB error or corrupt session — clear the cookie and continue as unauthenticated
-		deleteSessionCookie(event.cookies);
+		// Unexpected error (e.g. DB hiccup) — treat as unauthenticated for this
+		// request but keep the cookie so the user isn't logged out on a transient
+		// failure. Expired/corrupt sessions are cleaned up inside validateSession.
 		event.locals.user = null;
 		event.locals.session = null;
 	}
