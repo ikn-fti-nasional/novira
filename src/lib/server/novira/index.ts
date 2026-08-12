@@ -7,6 +7,11 @@ import {
 	MOCK_PETUGAS,
 	MOCK_TREN_SAMPAH,
 	MOCK_AUDIT_LOG,
+	MOCK_EKSEKUTIF_KPI,
+	MOCK_KECAMATAN_LIST,
+	MOCK_TREN_KECAMATAN_MINGGUAN,
+	MOCK_TREN_KECAMATAN_BULANAN,
+	MOCK_LEADERBOARD_EXPANDED,
 } from "$lib/mock/novira.js";
 import type {
 	Kamera,
@@ -15,6 +20,8 @@ import type {
 	PetugasLapangan,
 	TrenSampahJam,
 	LogAuditSistem,
+	TrenSkorKecamatan,
+	EksekutifKpiStats,
 } from "$lib/types/novira.js";
 
 /**
@@ -62,6 +69,27 @@ export async function listTrenSampah(): Promise<TrenSampahJam[]> {
 
 export async function listAuditLog(): Promise<LogAuditSistem[]> {
 	return MOCK_AUDIT_LOG;
+}
+
+/** Data dashboard eksekutif (kepala dinas/walikota) — KPI ringkas + tren + leaderboard. */
+export async function listEksekutifKpi(): Promise<EksekutifKpiStats> {
+	return MOCK_EKSEKUTIF_KPI;
+}
+
+export async function listKecamatanList(): Promise<string[]> {
+	return MOCK_KECAMATAN_LIST;
+}
+
+export async function listTrenKecamatanMingguan(): Promise<TrenSkorKecamatan[]> {
+	return MOCK_TREN_KECAMATAN_MINGGUAN;
+}
+
+export async function listTrenKecamatanBulanan(): Promise<TrenSkorKecamatan[]> {
+	return MOCK_TREN_KECAMATAN_BULANAN;
+}
+
+export async function listLeaderboardExpanded(): Promise<SkorKebersihanWilayah[]> {
+	return MOCK_LEADERBOARD_EXPANDED;
 }
 
 /** KPI domain NOVIRA — diturunkan dari data kamera/insiden/tren (bukan DB user). */

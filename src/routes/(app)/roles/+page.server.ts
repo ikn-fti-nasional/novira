@@ -1,10 +1,24 @@
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
-import { requireRoleOrRedirect, requireRoleOrFail } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, requireRoleOrFail, type Role } from "$lib/server/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
+
+const VALID_ROLES: readonly Role[] = [
+	"admin",
+	"admin_dlh",
+	"kepala_dinas",
+	"walikota",
+	"petugas_lapangan",
+	"editor",
+	"viewer",
+];
+
+function isRole(value: string): value is Role {
+	return VALID_ROLES.includes(value as Role);
+}
 
 const roleDefinitions = [
 	{
@@ -17,6 +31,44 @@ const roleDefinitions = [
 			"View database",
 			"Manage roles",
 		],
+	},
+	{
+		name: "admin_dlh" as const,
+		description: "Super admin lingkungan hidup nasional. Akses penuh operasional dan tata kelola.",
+		permissions: [
+			"Manage cameras",
+			"Manage officers",
+			"Manage incidents",
+			"Manage settings",
+			"View analytics",
+		],
+	},
+	{
+		name: "kepala_dinas" as const,
+		description: "Kepala Dinas Lingkungan Hidup — dashboard eksekutif read-only.",
+		permissions: [
+			"View executive dashboard",
+			"View area ranking",
+			"View analytics",
+			"View reports",
+			"Export reports",
+		],
+	},
+	{
+		name: "walikota" as const,
+		description: "Wali Kota — dashboard eksekutif read-only.",
+		permissions: [
+			"View executive dashboard",
+			"View area ranking",
+			"View analytics",
+			"View reports",
+			"Export reports",
+		],
+	},
+	{
+		name: "petugas_lapangan" as const,
+		description: "Petugas lapangan — memantau penugasan dan insiden di wilayahnya.",
+		permissions: ["View assigned incidents", "View cameras", "Update incident status"],
 	},
 	{
 		name: "editor" as const,
@@ -64,7 +116,7 @@ export const actions: Actions = {
 		if (typeof userId !== "string") {
 			return fail(400, { message: "User ID is required" });
 		}
-		if (typeof newRole !== "string" || !["admin", "editor", "viewer"].includes(newRole)) {
+		if (typeof newRole !== "string" || !isRole(newRole)) {
 			return fail(400, { message: "Invalid role" });
 		}
 
@@ -82,7 +134,7 @@ export const actions: Actions = {
 
 		await db
 			.update(users)
-			.set({ role: newRole as "admin" | "editor" | "viewer", updatedAt: new Date() })
+			.set({ role: newRole, updatedAt: new Date() })
 			.where(eq(users.id, userId));
 
 		return { success: true };

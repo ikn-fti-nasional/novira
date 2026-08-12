@@ -9,10 +9,24 @@ import {
 import { createUser } from "$lib/server/db/users.js";
 import { fail } from "@sveltejs/kit";
 import { hashPassword } from "$lib/server/password.js";
-import { requireRoleOrRedirect, requireRoleOrFail } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, requireRoleOrFail, type Role } from "$lib/server/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { eq, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
+
+const VALID_ROLES: readonly Role[] = [
+	"admin",
+	"admin_dlh",
+	"kepala_dinas",
+	"walikota",
+	"petugas_lapangan",
+	"editor",
+	"viewer",
+];
+
+function isRole(value: string): value is Role {
+	return VALID_ROLES.includes(value as Role);
+}
 
 /**
  * Delete a user and everything that references them. Postgres enforces FKs
@@ -78,7 +92,7 @@ export const actions: Actions = {
 		if (typeof password !== "string" || password.length < 6 || password.length > 255) {
 			return fail(400, { message: "Password must be 6-255 characters" });
 		}
-		if (typeof role !== "string" || !["admin", "editor", "viewer"].includes(role)) {
+		if (typeof role !== "string" || !isRole(role)) {
 			return fail(400, { message: "Invalid role" });
 		}
 
@@ -90,7 +104,7 @@ export const actions: Actions = {
 				email,
 				username,
 				passwordHash,
-				role: role as "admin" | "editor" | "viewer",
+				role,
 			});
 		} catch {
 			return fail(400, { message: "Username or email already taken" });
@@ -117,7 +131,7 @@ export const actions: Actions = {
 		if (typeof email !== "string" || !email.includes("@") || email.length > 255) {
 			return fail(400, { message: "Valid email is required" });
 		}
-		if (typeof role !== "string" || !["admin", "editor", "viewer"].includes(role)) {
+		if (typeof role !== "string" || !isRole(role)) {
 			return fail(400, { message: "Invalid role" });
 		}
 
@@ -139,7 +153,7 @@ export const actions: Actions = {
 				.set({
 					name,
 					email: email.toLowerCase(),
-					role: role as "admin" | "editor" | "viewer",
+					role,
 					updatedAt: new Date(),
 				})
 				.where(eq(users.id, id));

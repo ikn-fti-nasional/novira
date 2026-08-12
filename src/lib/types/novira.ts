@@ -102,3 +102,25 @@ export interface LogAuditSistem {
 	wilayah: string;
 	tipe: "DETEKSI_AI" | "TUGAS_PETUGAS" | "UBAH_STATUS" | "KONFIGURASI";
 }
+
+export interface TrenSkorKecamatan {
+	label: string; // "Senin", "Selasa" or "Jan", "Feb"
+	rataRataKota: number;
+	lengkong: number;
+	cicendo: number;
+	regol: number;
+	coblong: number;
+	andir: number;
+	bandungWetan: number;
+}
+
+export interface EksekutifKpiStats {
+	skorRataRata: number;
+	kategoriSkor: string;
+	trenSkor: string; // "+3.2%"
+	insidenAktif: number;
+	trenInsiden: string; // "-12%"
+	persentaseSlaMelanggar: number;
+	trenSla: string; // "-1.5%"
+	indeksTrenMingguan: string; // "+5.4%"
+}

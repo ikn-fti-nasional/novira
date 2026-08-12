@@ -53,6 +53,23 @@ export async function seedDemo() {
 			role: "viewer" as const,
 			daysAgo: 365,
 		},
+		// Executive demo accounts — login redirects these to /eksekutif.
+		{
+			name: "Dr. H. Bambang Tirto",
+			email: "walikota@bandung.go.id",
+			username: "walikota",
+			password: "password123",
+			role: "walikota" as const,
+			daysAgo: 365,
+		},
+		{
+			name: "Ir. Dedi Kusnadi, M.Si",
+			email: "kepala.dinas@bandung.go.id",
+			username: "kepala_dinas",
+			password: "password123",
+			role: "kepala_dinas" as const,
+			daysAgo: 365,
+		},
 		// 12 months ago (2 users)
 		{
 			name: "Admin User",

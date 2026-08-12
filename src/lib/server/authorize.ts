@@ -2,7 +2,14 @@ import { error, fail, redirect } from "@sveltejs/kit";
 import type { ActionFailure } from "@sveltejs/kit";
 import type { SessionUser } from "$lib/server/auth.js";
 
-export type Role = "admin" | "editor" | "viewer";
+export type Role =
+	| "admin"
+	| "admin_dlh"
+	| "kepala_dinas"
+	| "walikota"
+	| "petugas_lapangan"
+	| "editor"
+	| "viewer";
 
 function capitalize(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);

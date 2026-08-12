@@ -80,7 +80,14 @@ export async function createTestUser(
 		name: string;
 		email: string;
 		username: string;
-		role: "admin" | "editor" | "viewer";
+		role:
+			| "admin"
+			| "admin_dlh"
+			| "kepala_dinas"
+			| "walikota"
+			| "petugas_lapangan"
+			| "editor"
+			| "viewer";
 	}> = {}
 ) {
 	const id = overrides.id ?? generateId(10);
