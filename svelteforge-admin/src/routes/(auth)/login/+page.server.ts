@@ -55,6 +55,10 @@ export const actions: Actions = {
 		});
 		setSessionCookie(cookies, token, session.expiresAt);
 
+		if (existingUser.role === "kepala_dinas" || existingUser.role === "walikota") {
+			redirect(302, "/eksekutif");
+		}
+
 		redirect(302, "/");
 	},
 };

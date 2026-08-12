@@ -17,6 +17,10 @@ import {
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(302, "/login");
 
+	if (locals.user.role === "kepala_dinas" || locals.user.role === "walikota") {
+		redirect(302, "/eksekutif");
+	}
+
 	// Statistic DB
 	const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
 	const [unreadCount] = await db

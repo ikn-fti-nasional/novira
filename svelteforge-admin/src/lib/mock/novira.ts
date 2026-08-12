@@ -5,6 +5,8 @@ import type {
 	PetugasLapangan,
 	TrenSampahJam,
 	LogAuditSistem,
+	TrenSkorKecamatan,
+	EksekutifKpiStats,
 } from "../types/novira.js";
 
 export const MOCK_PROVINSI = [
@@ -455,3 +457,130 @@ export const MOCK_AUDIT_LOG: LogAuditSistem[] = [
 		tipe: "UBAH_STATUS",
 	},
 ];
+
+export const MOCK_KECAMATAN_LIST = [
+	"Bandung Wetan",
+	"Coblong",
+	"Regol",
+	"Andir",
+	"Cicendo",
+	"Lengkong",
+];
+
+export const MOCK_EKSEKUTIF_KPI: EksekutifKpiStats = {
+	skorRataRata: 83.4,
+	kategoriSkor: "Sangat Baik",
+	trenSkor: "+3.2%",
+	insidenAktif: 14,
+	trenInsiden: "-12%",
+	persentaseSlaMelanggar: 4.8,
+	trenSla: "-1.5%",
+	indeksTrenMingguan: "+5.4%",
+};
+
+export const MOCK_TREN_KECAMATAN_MINGGUAN: TrenSkorKecamatan[] = [
+	{ label: "Senin", rataRataKota: 79, lengkong: 54, cicendo: 66, regol: 74, coblong: 86, andir: 63, bandungWetan: 92 },
+	{ label: "Selasa", rataRataKota: 81, lengkong: 52, cicendo: 68, regol: 75, coblong: 88, andir: 64, bandungWetan: 93 },
+	{ label: "Rabu", rataRataKota: 80, lengkong: 50, cicendo: 65, regol: 76, coblong: 87, andir: 65, bandungWetan: 94 },
+	{ label: "Kamis", rataRataKota: 82, lengkong: 53, cicendo: 70, regol: 77, coblong: 89, andir: 67, bandungWetan: 94 },
+	{ label: "Jumat", rataRataKota: 84, lengkong: 55, cicendo: 72, regol: 78, coblong: 90, andir: 68, bandungWetan: 95 },
+	{ label: "Sabtu", rataRataKota: 83, lengkong: 52, cicendo: 71, regol: 76, coblong: 88, andir: 65, bandungWetan: 94 },
+	{ label: "Minggu", rataRataKota: 83.4, lengkong: 52, cicendo: 72, regol: 76, coblong: 88, andir: 65, bandungWetan: 94 },
+];
+
+export const MOCK_TREN_KECAMATAN_BULANAN: TrenSkorKecamatan[] = [
+	{ label: "Maret", rataRataKota: 74, lengkong: 45, cicendo: 58, regol: 68, coblong: 80, andir: 55, bandungWetan: 88 },
+	{ label: "April", rataRataKota: 76, lengkong: 48, cicendo: 60, regol: 70, coblong: 82, andir: 58, bandungWetan: 90 },
+	{ label: "Mei", rataRataKota: 78, lengkong: 50, cicendo: 63, regol: 72, coblong: 85, andir: 60, bandungWetan: 91 },
+	{ label: "Juni", rataRataKota: 80, lengkong: 51, cicendo: 66, regol: 74, coblong: 86, andir: 62, bandungWetan: 92 },
+	{ label: "Juli", rataRataKota: 82, lengkong: 52, cicendo: 69, regol: 75, coblong: 87, andir: 64, bandungWetan: 93 },
+	{ label: "Agustus", rataRataKota: 83.4, lengkong: 52, cicendo: 72, regol: 76, coblong: 88, andir: 65, bandungWetan: 94 },
+];
+
+export const MOCK_LEADERBOARD_EXPANDED: SkorKebersihanWilayah[] = [
+	{
+		peringkat: 1,
+		kelurahan: "Cihapit",
+		kecamatan: "Bandung Wetan",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 2,
+		rataRataDurasiSampahJam: 0.6,
+		skorKebersihan: 94,
+		tren: "membaik",
+		persentaseTren: 4.2,
+	},
+	{
+		peringkat: 2,
+		kelurahan: "Lebak Siliwangi",
+		kecamatan: "Coblong",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 4,
+		rataRataDurasiSampahJam: 1.1,
+		skorKebersihan: 88,
+		tren: "stabil",
+		persentaseTren: 0.5,
+	},
+	{
+		peringkat: 3,
+		kelurahan: "Tamansari",
+		kecamatan: "Bandung Wetan",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 5,
+		rataRataDurasiSampahJam: 1.4,
+		skorKebersihan: 84,
+		tren: "membaik",
+		persentaseTren: 3.1,
+	},
+	{
+		peringkat: 4,
+		kelurahan: "Balonggede",
+		kecamatan: "Regol",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 8,
+		rataRataDurasiSampahJam: 1.8,
+		skorKebersihan: 76,
+		tren: "membaik",
+		persentaseTren: 2.8,
+	},
+	{
+		peringkat: 5,
+		kelurahan: "Pasir Kaliki",
+		kecamatan: "Cicendo",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 10,
+		rataRataDurasiSampahJam: 2.2,
+		skorKebersihan: 72,
+		tren: "stabil",
+		persentaseTren: 0.0,
+	},
+	{
+		peringkat: 6,
+		kelurahan: "Kebon Jeruk",
+		kecamatan: "Andir",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 14,
+		rataRataDurasiSampahJam: 2.9,
+		skorKebersihan: 65,
+		tren: "menurun",
+		persentaseTren: -3.5,
+	},
+	{
+		peringkat: 7,
+		kelurahan: "Malabar",
+		kecamatan: "Lengkong",
+		kabupatenKota: "Kota Bandung",
+		provinsi: "Jawa Barat",
+		jumlahInsiden: 23,
+		rataRataDurasiSampahJam: 4.2,
+		skorKebersihan: 52,
+		tren: "menurun",
+		persentaseTren: -6.8,
+	},
+];
+

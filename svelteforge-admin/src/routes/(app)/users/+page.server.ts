@@ -62,7 +62,8 @@ export const actions: Actions = {
 		if (typeof password !== "string" || password.length < 6 || password.length > 255) {
 			return fail(400, { message: "Password must be 6-255 characters" });
 		}
-		if (typeof role !== "string" || !["admin", "editor", "viewer"].includes(role)) {
+		const validRoles = ["admin", "admin_dlh", "kepala_dinas", "walikota", "petugas_lapangan", "editor", "viewer"];
+		if (typeof role !== "string" || !validRoles.includes(role)) {
 			return fail(400, { message: "Invalid role" });
 		}
 
@@ -82,7 +83,7 @@ export const actions: Actions = {
 				username: username.toLowerCase(),
 				passwordHash,
 				name,
-				role: role as "admin" | "editor" | "viewer",
+				role: role as any,
 			});
 		} catch {
 			return fail(400, { message: "Username or email already taken" });
@@ -109,7 +110,7 @@ export const actions: Actions = {
 		if (typeof email !== "string" || !email.includes("@") || email.length > 255) {
 			return fail(400, { message: "Valid email is required" });
 		}
-		if (typeof role !== "string" || !["admin", "editor", "viewer"].includes(role)) {
+		if (typeof role !== "string" || !validRoles.includes(role)) {
 			return fail(400, { message: "Invalid role" });
 		}
 
@@ -131,7 +132,7 @@ export const actions: Actions = {
 				.set({
 					name,
 					email: email.toLowerCase(),
-					role: role as "admin" | "editor" | "viewer",
+					role: role as any,
 					updatedAt: new Date(),
 				})
 				.where(eq(users.id, id));

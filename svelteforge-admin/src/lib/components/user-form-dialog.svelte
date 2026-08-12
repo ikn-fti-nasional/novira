@@ -82,6 +82,10 @@
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="admin">Admin</Select.Item>
+							<Select.Item value="admin_dlh">Admin DLH</Select.Item>
+							<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
+							<Select.Item value="walikota">Wali Kota Bandung</Select.Item>
+							<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
 							<Select.Item value="editor">Editor</Select.Item>
 							<Select.Item value="viewer">Viewer</Select.Item>
 						</Select.Content>

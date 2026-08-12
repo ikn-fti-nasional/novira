@@ -57,7 +57,8 @@ export const actions: Actions = {
 		if (typeof userId !== "string") {
 			return fail(400, { message: "User ID is required" });
 		}
-		if (typeof newRole !== "string" || !["admin", "editor", "viewer"].includes(newRole)) {
+		const validRoles = ["admin", "admin_dlh", "kepala_dinas", "walikota", "petugas_lapangan", "editor", "viewer"];
+		if (typeof newRole !== "string" || !validRoles.includes(newRole)) {
 			return fail(400, { message: "Invalid role" });
 		}
 
@@ -75,7 +76,7 @@ export const actions: Actions = {
 
 		await db
 			.update(users)
-			.set({ role: newRole as "admin" | "editor" | "viewer", updatedAt: new Date() })
+			.set({ role: newRole as any, updatedAt: new Date() })
 			.where(eq(users.id, userId));
 
 		return { success: true };

@@ -51,6 +51,26 @@
 			.slice(0, 2);
 	}
 
+	const isExecutive = $derived(
+		user.role === "kepala_dinas" || user.role === "walikota"
+	);
+
+	function getRoleTitle(role: string) {
+		switch (role) {
+			case "walikota":
+				return "Wali Kota Bandung (Eksekutif)";
+			case "kepala_dinas":
+				return "Kepala Dinas LH (Eksekutif)";
+			case "admin_dlh":
+			case "admin":
+				return "Super Admin (Nasional)";
+			case "petugas_lapangan":
+				return "Petugas Lapangan";
+			default:
+				return role.toUpperCase();
+		}
+	}
+
 	type NavItem = {
 		title: string;
 		url: string;
@@ -63,40 +83,66 @@
 		items: NavItem[];
 	};
 
-	const navigation: NavGroup[] = $derived([
-		{
-			label: "Ringkasan Eksekutif",
-			items: [
-				{ title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
-				{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
-				{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
-				{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
-				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
-			],
-		},
-		{
-			label: "Manajemen Operasional",
-			items: [
-				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
-				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
-				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-			],
-		},
-		{
-			label: "Super Admin & Tata Kelola",
-			items: [
-				{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-				{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
-				{
-					title: "Notifikasi Sistem",
-					url: "/notifications",
-					icon: BellIcon,
-					badge: notificationCount > 0 ? String(notificationCount) : undefined,
-				},
-				{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
-			],
-		},
-	]);
+	const navigation: NavGroup[] = $derived(
+		isExecutive
+			? [
+					{
+						label: "Ringkasan Eksekutif",
+						items: [
+							{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: LayoutDashboardIcon },
+							{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+							{ title: "Laporan Eksekutif", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
+							{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+						],
+					},
+					{
+						label: "Tata Kelola & Alert",
+						items: [
+							{
+								title: "Notifikasi Sistem",
+								url: "/notifications",
+								icon: BellIcon,
+								badge: notificationCount > 0 ? String(notificationCount) : undefined,
+							},
+						],
+					},
+				]
+			: [
+					{
+						label: "Ringkasan Eksekutif",
+						items: [
+							{ title: "Dashboard Utama", url: "/", icon: LayoutDashboardIcon },
+							{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: TrophyIcon },
+							{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
+							{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
+							{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
+							{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+						],
+					},
+					{
+						label: "Manajemen Operasional",
+						items: [
+							{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
+							{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
+							{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+						],
+					},
+					{
+						label: "Super Admin & Tata Kelola",
+						items: [
+							{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
+							{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
+							{
+								title: "Notifikasi Sistem",
+								url: "/notifications",
+								icon: BellIcon,
+								badge: notificationCount > 0 ? String(notificationCount) : undefined,
+							},
+							{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
+						],
+					},
+				]
+	);
 </script>
 
 <Sidebar.Root>
@@ -163,7 +209,7 @@
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
 									<span class="truncate font-bold">{user.name}</span>
-									<span class="text-muted-foreground truncate text-xs">Super Admin (Nasional)</span>
+									<span class="text-muted-foreground truncate text-xs">{getRoleTitle(user.role)}</span>
 								</div>
 								<ChevronDownIcon class="ml-auto size-4" />
 							</Sidebar.MenuButton>
@@ -172,7 +218,7 @@
 					<DropdownMenu.Content class="w-56" align="end" side="top">
 						<DropdownMenu.Label class="flex items-center gap-2">
 							Akun Pengguna
-							<Badge variant="outline" class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Super Admin</Badge>
+							<Badge variant="outline" class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">{getRoleTitle(user.role)}</Badge>
 						</DropdownMenu.Label>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item onclick={handleNavigate}>

@@ -4,9 +4,18 @@ import { notifications, appSettings } from "$lib/server/db/schema.js";
 import { eq, and, or, isNull, sql, desc } from "drizzle-orm";
 import type { LayoutServerLoad } from "./$types.js";
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
 		redirect(302, "/login");
+	}
+
+	// Read-only access guard for executive roles
+	const isExecutive = locals.user.role === "kepala_dinas" || locals.user.role === "walikota";
+	if (isExecutive) {
+		const restrictedPaths = ["/cameras", "/users", "/settings", "/roles", "/database", "/monitoring", "/incidents"];
+		if (restrictedPaths.some((path) => url.pathname.startsWith(path))) {
+			redirect(302, "/eksekutif");
+		}
 	}
 
 	// Check maintenance mode
