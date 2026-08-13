@@ -34,6 +34,12 @@
 		keywords: string[];
 	};
 
+	type Props = {
+		role: string;
+	};
+
+	let { role }: Props = $props();
+
 	let open = $state(false);
 	let query = $state("");
 	let searchResults = $state<SearchResult[]>([]);
@@ -45,7 +51,7 @@
 		isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 	});
 
-	const navItems: NavItem[] = [
+	const navItems: NavItem[] = $derived([
 		{
 			label: "Dashboard",
 			href: "/",
@@ -58,43 +64,55 @@
 			icon: BarChart3Icon,
 			keywords: ["charts", "stats", "reports"],
 		},
-		{
-			label: "Users",
-			href: "/users",
-			icon: UsersIcon,
-			keywords: ["accounts", "members", "people"],
-		},
+		...(role === "admin"
+			? [
+					{
+						label: "Users",
+						href: "/users",
+						icon: UsersIcon,
+						keywords: ["accounts", "members", "people"],
+					},
+				]
+			: []),
 		{
 			label: "Content",
 			href: "/content",
 			icon: FileTextIcon,
 			keywords: ["pages", "blog", "articles"],
 		},
-		{
-			label: "Roles",
-			href: "/roles",
-			icon: ShieldIcon,
-			keywords: ["permissions", "access", "admin"],
-		},
+		...(role === "admin"
+			? [
+					{
+						label: "Roles",
+						href: "/roles",
+						icon: ShieldIcon,
+						keywords: ["permissions", "access", "admin"],
+					},
+				]
+			: []),
 		{
 			label: "Notifications",
 			href: "/notifications",
 			icon: BellIcon,
 			keywords: ["alerts", "messages"],
 		},
-		{
-			label: "Database",
-			href: "/database",
-			icon: DatabaseIcon,
-			keywords: ["tables", "sql", "storage"],
-		},
+		...(role === "admin"
+			? [
+					{
+						label: "Database",
+						href: "/database",
+						icon: DatabaseIcon,
+						keywords: ["tables", "sql", "storage"],
+					},
+				]
+			: []),
 		{
 			label: "Settings",
 			href: "/settings",
 			icon: SettingsIcon,
 			keywords: ["preferences", "profile", "config"],
 		},
-	];
+	]);
 
 	function resultIcon(type: string) {
 		switch (type) {

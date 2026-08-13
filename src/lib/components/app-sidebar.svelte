@@ -39,6 +39,96 @@
 	const isSystemUser = $derived(
 		user.role === "admin" || user.role === "operator" || user.role === "kepala_seksi"
 	);
+	const isFieldOfficer = $derived(user.role === "petugas_lapangan");
+
+	const fullNavigation: NavGroup[] = $derived([
+		{
+			label: "Ringkasan Eksekutif",
+			items: [
+				{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
+				{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: TrophyIcon },
+				{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
+				{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
+				{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
+				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+			],
+		},
+		{
+			label: "Manajemen Operasional",
+			items: [
+				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
+				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
+				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+			],
+		},
+		{
+			label: "Tata Kelola",
+			items: [
+				{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
+				...(isAdmin
+					? [{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon }]
+					: []),
+				{
+					title: "Notifikasi Sistem",
+					url: "/notifications",
+					icon: BellIcon,
+					badge: notificationCount > 0 ? String(notificationCount) : undefined,
+				},
+				{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
+			],
+		},
+	]);
+
+	const executiveNavigation: NavGroup[] = $derived([
+		{
+			label: "Ringkasan Eksekutif",
+			items: [
+				{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: LayoutDashboardIcon },
+				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+				{ title: "Laporan Eksekutif", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
+				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+			],
+		},
+		{
+			label: "Tata Kelola & Alert",
+			items: [
+				{
+					title: "Notifikasi Sistem",
+					url: "/notifications",
+					icon: BellIcon,
+					badge: notificationCount > 0 ? String(notificationCount) : undefined,
+				},
+			],
+		},
+	]);
+
+	const fieldOfficerNavigation: NavGroup[] = $derived([
+		{
+			label: "Ringkasan Eksekutif",
+			items: [
+				{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
+				{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
+				{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
+				{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
+			],
+		},
+		{
+			label: "Manajemen Operasional",
+			items: [
+				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
+				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
+{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+			],
+		},
+	]);
+
+	const navigation: NavGroup[] = $derived(
+		isExecutive
+			? executiveNavigation
+			: isFieldOfficer
+				? fieldOfficerNavigation
+				: fullNavigation
+	);
 
 	function getRoleTitle(role: string) {
 		switch (role) {
@@ -85,67 +175,6 @@
 		label: string;
 		items: NavItem[];
 	};
-
-	const navigation: NavGroup[] = $derived(
-		isExecutive
-			? [
-					{
-						label: "Ringkasan Eksekutif",
-						items: [
-							{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: LayoutDashboardIcon },
-							{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-							{ title: "Laporan Eksekutif", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-							{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
-						],
-					},
-					{
-						label: "Tata Kelola & Alert",
-						items: [
-							{
-								title: "Notifikasi Sistem",
-								url: "/notifications",
-								icon: BellIcon,
-								badge: notificationCount > 0 ? String(notificationCount) : undefined,
-							},
-						],
-					},
-				]
-			: [
-					{
-						label: "Ringkasan Eksekutif",
-						items: [
-							{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
-							{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: TrophyIcon },
-							{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
-							{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
-							{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
-							{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
-						],
-					},
-					{
-						label: "Manajemen Operasional",
-						items: [
-							{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
-							{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
-							{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-						],
-					},
-					{
-						label: "Super Admin & Tata Kelola",
-						items: [
-							{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-							{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
-							{
-								title: "Notifikasi Sistem",
-								url: "/notifications",
-								icon: BellIcon,
-								badge: notificationCount > 0 ? String(notificationCount) : undefined,
-							},
-							{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
-						],
-					},
-				]
-	);
 </script>
 
 <Sidebar.Root>
@@ -240,14 +269,16 @@
 								</a>
 							{/snippet}
 						</DropdownMenu.Item>
-						<DropdownMenu.Item onclick={handleNavigate}>
-							{#snippet child({ props })}
-								<a href="/audit" {...props}>
-									<ShieldCheckIcon class="mr-2 size-4" />
-									Log Audit Sistem
-								</a>
-							{/snippet}
-						</DropdownMenu.Item>
+						{#if isAdmin}
+							<DropdownMenu.Item onclick={handleNavigate}>
+								{#snippet child({ props })}
+									<a href="/audit" {...props}>
+										<ShieldCheckIcon class="mr-2 size-4" />
+										Log Audit Sistem
+									</a>
+								{/snippet}
+							</DropdownMenu.Item>
+						{/if}
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item
 							variant="destructive"

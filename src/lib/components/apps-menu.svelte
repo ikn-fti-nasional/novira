@@ -11,6 +11,14 @@
 	import DatabaseIcon from "@lucide/svelte/icons/database";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
 
+	type Props = {
+		role: string;
+	};
+
+	let { role }: Props = $props();
+
+	const adminOnlyApps = ["/users", "/roles", "/database"];
+
 	const apps = [
 		{ label: "Dashboard", href: "/", icon: LayoutDashboardIcon },
 		{ label: "Analytics", href: "/analytics", icon: BarChart3Icon },
@@ -20,7 +28,7 @@
 		{ label: "Notifications", href: "/notifications", icon: BellIcon },
 		{ label: "Database", href: "/database", icon: DatabaseIcon },
 		{ label: "Settings", href: "/settings", icon: SettingsIcon },
-	];
+	].filter((app) => role === "admin" || !adminOnlyApps.includes(app.href));
 
 	let open = $state(false);
 </script>

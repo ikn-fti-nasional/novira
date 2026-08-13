@@ -50,12 +50,12 @@
 			</Breadcrumb.Root>
 
 			<div class="ml-auto flex items-center gap-1">
-				<CommandPalette />
+				<CommandPalette role={data.user.role} />
 				<NotificationBell
 					count={data.unreadNotificationCount}
 					notifications={data.recentNotifications}
 				/>
-				<AppsMenu />
+				<AppsMenu role={data.user.role} />
 				<ThemeToggle />
 			</div>
 		</header>
