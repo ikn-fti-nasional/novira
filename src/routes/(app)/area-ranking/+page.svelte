@@ -16,7 +16,8 @@
 			<h1 class="text-3xl font-extrabold tracking-tight">Peringkat Kebersihan Wilayah</h1>
 		</div>
 		<p class="text-sm text-muted-foreground">
-			Skor Adipura real-time berbasis data deteksi otomatis kamera CCTV &amp; respons armada kebersihan.
+			Skor Adipura real-time berbasis data deteksi otomatis kamera CCTV &amp; respons armada
+			kebersihan.
 		</p>
 	</div>
 

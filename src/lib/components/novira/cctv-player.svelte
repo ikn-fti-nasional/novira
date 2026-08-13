@@ -21,9 +21,7 @@
 	let tampilkanOverlayAi = $state(true);
 	let mengunduhTangkapan = $state(false);
 
-	let kameraAktif = $derived(
-		kameraList.find((k) => k.id === kameraIdDipilih) ?? kameraList[0]
-	);
+	let kameraAktif = $derived(kameraList.find((k) => k.id === kameraIdDipilih) ?? kameraList[0]);
 
 	async function tangkapTangkapanLayar() {
 		const snapshotUrl = kameraAktif.urlSnapshot;
@@ -52,11 +50,16 @@
 	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 		<div class="space-y-1">
 			<div class="flex items-center gap-2">
-				<div class="flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+				<div
+					class="flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+				>
 					<VideoIcon class="size-3.5 text-emerald-600 dark:text-emerald-400" />
 					Umpan Pemantauan CCTV Real-time
 				</div>
-				<Badge variant="outline" class="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px]">
+				<Badge
+					variant="outline"
+					class="border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px]"
+				>
 					Deteksi YOLOv8 + ByteTrack Aktif
 				</Badge>
 			</div>
@@ -102,16 +105,22 @@
 			{/if}
 
 			<!-- Bar Atas Frame CCTV -->
-			<div class="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent p-3 text-xs">
+			<div
+				class="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent p-3 text-xs"
+			>
 				<div class="flex items-center gap-2">
 					{#if kameraAktif.status === "ONLINE"}
-						<span class="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+						<span
+							class="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+						>
 							<span class="size-2 animate-ping rounded-full bg-white"></span>
 							LANGSUNG
 						</span>
 						<span class="text-[11px] font-mono text-slate-300">{kameraAktif.fps} FPS</span>
 					{:else}
-						<span class="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-200">
+						<span
+							class="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-200"
+						>
 							OFFLINE / PERBAIKAN
 						</span>
 					{/if}
@@ -139,11 +148,15 @@
 					class="absolute rounded border-2 border-red-500 bg-red-500/10 shadow-lg transition-all duration-300 animate-pulse"
 					style="top: 25%; left: 35%; width: 28%; height: 35%;"
 				>
-					<div class="absolute -top-7 left-0 flex items-center gap-1 rounded bg-red-600 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white shadow-md">
+					<div
+						class="absolute -top-7 left-0 flex items-center gap-1 rounded bg-red-600 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white shadow-md"
+					>
 						<AlertTriangleIcon class="size-3" />
 						<span>pembuangan_liar_besar 94% [TRK-9842]</span>
 					</div>
-					<div class="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 font-mono text-[9px] text-emerald-400">
+					<div
+						class="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 font-mono text-[9px] text-emerald-400"
+					>
 						Timer SLA: 03j 10m
 					</div>
 				</div>
@@ -153,7 +166,9 @@
 						class="absolute rounded border-2 border-amber-400 bg-amber-400/10 shadow-lg"
 						style="top: 55%; left: 15%; width: 16%; height: 22%;"
 					>
-						<div class="absolute -top-6 left-0 rounded bg-amber-500 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-950">
+						<div
+							class="absolute -top-6 left-0 rounded bg-amber-500 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-950"
+						>
 							kantong_plastik 89% [TRK-9839]
 						</div>
 					</div>
@@ -161,7 +176,9 @@
 			{/if}
 
 			<!-- Bar Bawah Overlay Stats -->
-			<div class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent p-3 text-xs">
+			<div
+				class="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent p-3 text-xs"
+			>
 				<div class="flex items-center gap-3">
 					<div class="flex items-center gap-1">
 						<EyeIcon class="size-3.5 text-emerald-400" />

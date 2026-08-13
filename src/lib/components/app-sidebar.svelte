@@ -36,9 +36,6 @@
 	const isExecutive = $derived(user.role === "kepala_dinas" || user.role === "walikota");
 
 	const isAdmin = $derived(user.role === "admin");
-	const isSystemUser = $derived(
-		user.role === "admin" || user.role === "operator" || user.role === "kepala_seksi"
-	);
 	const isFieldOfficer = $derived(user.role === "petugas_lapangan");
 
 	const fullNavigation: NavGroup[] = $derived([
@@ -117,17 +114,13 @@
 			items: [
 				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
 				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
-{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
 			],
 		},
 	]);
 
 	const navigation: NavGroup[] = $derived(
-		isExecutive
-			? executiveNavigation
-			: isFieldOfficer
-				? fieldOfficerNavigation
-				: fullNavigation
+		isExecutive ? executiveNavigation : isFieldOfficer ? fieldOfficerNavigation : fullNavigation
 	);
 
 	function getRoleTitle(role: string) {
@@ -185,11 +178,20 @@
 					{#snippet child({ props })}
 						<a href="/" {...props} onclick={handleNavigate} class="flex items-center gap-3">
 							<div class="flex aspect-square size-10 items-center justify-center">
-								<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
+								<img
+									src="/novira-logo.png"
+									alt="Logo NOVIRA"
+									class="h-full w-full object-contain"
+								/>
 							</div>
 							<div class="flex flex-col gap-0.5 leading-none">
-								<span class="font-extrabold tracking-tight text-emerald-950 dark:text-emerald-50 text-base">NOVIRA</span>
-								<span class="text-[10px] text-muted-foreground font-semibold">Sistem Pengawasan Lingkungan</span>
+								<span
+									class="font-extrabold tracking-tight text-emerald-950 dark:text-emerald-50 text-base"
+									>NOVIRA</span
+								>
+								<span class="text-[10px] text-muted-foreground font-semibold"
+									>Sistem Pengawasan Lingkungan</span
+								>
 							</div>
 						</a>
 					{/snippet}
@@ -201,7 +203,10 @@
 	<Sidebar.Content>
 		{#each navigation as group (group.label)}
 			<Sidebar.Group>
-				<Sidebar.GroupLabel class="text-xs uppercase tracking-wider font-semibold text-muted-foreground/80">{group.label}</Sidebar.GroupLabel>
+				<Sidebar.GroupLabel
+					class="text-xs uppercase tracking-wider font-semibold text-muted-foreground/80"
+					>{group.label}</Sidebar.GroupLabel
+				>
 				<Sidebar.GroupContent>
 					<Sidebar.Menu>
 						{#each group.items as item (item.title)}
@@ -215,7 +220,11 @@
 									{/snippet}
 								</Sidebar.MenuButton>
 								{#if item.badge}
-									<Sidebar.MenuBadge class={item.title === 'Insiden & Alert' ? 'bg-red-500/15 text-red-700 dark:text-red-400 font-semibold' : ''}>{item.badge}</Sidebar.MenuBadge>
+									<Sidebar.MenuBadge
+										class={item.title === "Insiden & Alert"
+											? "bg-red-500/15 text-red-700 dark:text-red-400 font-semibold"
+											: ""}>{item.badge}</Sidebar.MenuBadge
+									>
 								{/if}
 							</Sidebar.MenuItem>
 						{/each}
@@ -237,11 +246,15 @@
 								{...props}
 							>
 								<Avatar.Root class="size-8 rounded-lg">
-									<Avatar.Fallback class="rounded-lg bg-emerald-600 text-white font-bold">{getInitials(user.name)}</Avatar.Fallback>
+									<Avatar.Fallback class="rounded-lg bg-emerald-600 text-white font-bold"
+										>{getInitials(user.name)}</Avatar.Fallback
+									>
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
 									<span class="truncate font-bold">{user.name}</span>
-									<span class="text-muted-foreground truncate text-xs">{getRoleTitle(user.role)}</span>
+									<span class="text-muted-foreground truncate text-xs"
+										>{getRoleTitle(user.role)}</span
+									>
 								</div>
 								<ChevronDownIcon class="ml-auto size-4" />
 							</Sidebar.MenuButton>
@@ -250,7 +263,11 @@
 					<DropdownMenu.Content class="w-56" align="end" side="top">
 						<DropdownMenu.Label class="flex items-center gap-2">
 							Akun Pengguna
-							<Badge variant="outline" class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">{getRoleTitle(user.role)}</Badge>
+							<Badge
+								variant="outline"
+								class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+								>{getRoleTitle(user.role)}</Badge
+							>
 						</DropdownMenu.Label>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item onclick={handleNavigate}>

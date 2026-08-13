@@ -30,7 +30,13 @@
 	// Sapaan berdasarkan waktu setempat
 	const jam = new Date().getHours();
 	const sapaan =
-		jam < 11 ? "Selamat Pagi" : jam < 15 ? "Selamat Siang" : jam < 18 ? "Selamat Sore" : "Selamat Malam";
+		jam < 11
+			? "Selamat Pagi"
+			: jam < 15
+				? "Selamat Siang"
+				: jam < 18
+					? "Selamat Sore"
+					: "Selamat Malam";
 
 	// Scope Filter Super Admin
 	let provinsiDipilih = $state<string>("SEMUA");
@@ -116,7 +122,8 @@
 					<AlertTriangleIcon class="mt-0.5 size-3.5 shrink-0" />
 					<p>
 						Data CCTV, insiden, skor wilayah, petugas, dan tren sampah pada halaman ini adalah
-						<strong>data demo/simulasi</strong>, belum terhubung ke sistem EcoVision yang sebenarnya.
+						<strong>data demo/simulasi</strong>, belum terhubung ke sistem EcoVision yang
+						sebenarnya.
 					</p>
 				</div>
 			{/if}
@@ -129,7 +136,13 @@
 					class="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 text-xs"
 				>
 					<ShieldCheckIcon class="mr-1 size-3.5" />
-					{data.user.role === "admin" ? "Akses Admin" : data.user.role === "operator" ? "Akses Operator" : data.user.role === "kepala_seksi" ? "Akses Kepala Seksi" : "Akses Pemantau"}
+					{data.user.role === "admin"
+						? "Akses Admin"
+						: data.user.role === "operator"
+							? "Akses Operator"
+							: data.user.role === "kepala_seksi"
+								? "Akses Kepala Seksi"
+								: "Akses Pemantau"}
 				</Badge>
 			</div>
 			<p class="text-muted-foreground text-sm mt-1">

@@ -14,7 +14,9 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4">
+	<div
+		class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4"
+	>
 		<div class="flex flex-col gap-1">
 			<div class="flex items-center gap-2">
 				<ShieldCheckIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
@@ -22,7 +24,8 @@
 				<Badge class="bg-emerald-600 text-white text-xs font-semibold">Terenkripsi SHA-256</Badge>
 			</div>
 			<p class="text-sm text-muted-foreground">
-				Catatan jejak audit permanen untuk semua deteksi otomatis AI, penetapan tugas petugas, dan perubahan status oleh Super Admin.
+				Catatan jejak audit permanen untuk semua deteksi otomatis AI, penetapan tugas petugas, dan
+				perubahan status oleh Super Admin.
 			</p>
 		</div>
 
@@ -50,16 +53,22 @@
 					{#each data.auditLogList as log (log.id)}
 						<Table.Row class="text-xs">
 							<Table.Cell class="font-mono font-bold text-muted-foreground">{log.id}</Table.Cell>
-							<Table.Cell class="font-mono text-xs">{new Date(log.waktu).toLocaleString()}</Table.Cell>
+							<Table.Cell class="font-mono text-xs"
+								>{new Date(log.waktu).toLocaleString()}</Table.Cell
+							>
 							<Table.Cell>
 								<div class="flex flex-col">
 									<span class="font-bold text-foreground">{log.pengguna}</span>
 									<span class="text-[10px] text-muted-foreground">{log.peran}</span>
 								</div>
 							</Table.Cell>
-							<Table.Cell class="font-bold text-emerald-700 dark:text-emerald-400">{log.tindakan}</Table.Cell>
+							<Table.Cell class="font-bold text-emerald-700 dark:text-emerald-400"
+								>{log.tindakan}</Table.Cell
+							>
 							<Table.Cell class="max-w-[300px] truncate">{log.rincian}</Table.Cell>
-							<Table.Cell class="font-semibold text-slate-700 dark:text-slate-300">{log.wilayah}</Table.Cell>
+							<Table.Cell class="font-semibold text-slate-700 dark:text-slate-300"
+								>{log.wilayah}</Table.Cell
+							>
 							<Table.Cell class="text-right">
 								<Badge variant="outline" class="text-[9px] font-mono">{log.tipe}</Badge>
 							</Table.Cell>

@@ -16,18 +16,26 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4">
+	<div
+		class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4"
+	>
 		<div class="flex flex-col gap-1">
 			<div class="flex items-center gap-2">
 				<UserCheckIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-				<h1 class="text-3xl font-extrabold tracking-tight">Manajemen Petugas Lapangan &amp; Armada DLH</h1>
+				<h1 class="text-3xl font-extrabold tracking-tight">
+					Manajemen Petugas Lapangan &amp; Armada DLH
+				</h1>
 			</div>
 			<p class="text-sm text-muted-foreground">
 				Daftar anggota personil Satpol PP dan kru armada pengangkut Dinas Lingkungan Hidup.
 			</p>
 		</div>
 
-		<Button variant="default" size="sm" class="h-9 bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700">
+		<Button
+			variant="default"
+			size="sm"
+			class="h-9 bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+		>
 			<PlusIcon class="mr-1.5 size-4" />
 			Tambah Petugas Lapangan Baru
 		</Button>
@@ -55,7 +63,10 @@
 							<Table.Cell class="font-mono text-xs">{officer.telepon}</Table.Cell>
 							<Table.Cell>{officer.wilayahTugas}</Table.Cell>
 							<Table.Cell>
-								<Badge variant={officer.status === "SEDANG_BERTUGAS" ? "destructive" : "default"} class="text-[10px]">
+								<Badge
+									variant={officer.status === "SEDANG_BERTUGAS" ? "destructive" : "default"}
+									class="text-[10px]"
+								>
 									{officer.status.replace("_", " ")}
 								</Badge>
 							</Table.Cell>
@@ -65,7 +76,12 @@
 									<Button variant="ghost" size="sm" class="h-7 text-xs" title="Edit Petugas">
 										<PencilIcon class="size-3.5" />
 									</Button>
-									<Button variant="ghost" size="sm" class="h-7 text-xs text-red-600 hover:text-red-700" title="Hapus Petugas">
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-7 text-xs text-red-600 hover:text-red-700"
+										title="Hapus Petugas"
+									>
 										<TrashIcon class="size-3.5" />
 									</Button>
 								</div>

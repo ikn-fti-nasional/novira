@@ -43,9 +43,7 @@
 		lengkong: { label: "Kec. Lengkong", color: "var(--chart-3)" },
 	} satisfies Chart.ChartConfig;
 
-	const activeTrendData = $derived(
-		chartMode === "mingguan" ? data.trenMingguan : data.trenBulanan
-	);
+	const activeTrendData = $derived(chartMode === "mingguan" ? data.trenMingguan : data.trenBulanan);
 
 	const trendSeriesData = $derived(
 		activeTrendData.map((d) => ({
@@ -60,8 +58,7 @@
 	// Leaderboard Filtered
 	const filteredLeaderboard = $derived(
 		data.leaderboard.filter((item) => {
-			const matchKecamatan =
-				kecamatanDipilih === "SEMUA" || item.kecamatan === kecamatanDipilih;
+			const matchKecamatan = kecamatanDipilih === "SEMUA" || item.kecamatan === kecamatanDipilih;
 			const matchSearch =
 				searchQuery === "" ||
 				item.kelurahan.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -120,9 +117,12 @@
 	]);
 
 	function getBadgeSkorClass(skor: number) {
-		if (skor >= 85) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-extrabold";
-		if (skor >= 70) return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30 font-bold";
-		if (skor >= 60) return "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 font-bold";
+		if (skor >= 85)
+			return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-extrabold";
+		if (skor >= 70)
+			return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30 font-bold";
+		if (skor >= 60)
+			return "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 font-bold";
 		return "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30 font-bold";
 	}
 
@@ -155,7 +155,9 @@
 
 <div class="space-y-6 print:p-0">
 	<!-- Header Eksekutif + Controls Bar -->
-	<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-border/60 pb-4">
+	<div
+		class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-border/60 pb-4"
+	>
 		<div>
 			<div class="flex items-center gap-2">
 				<h1 class="text-3xl font-extrabold tracking-tight text-foreground">
@@ -170,13 +172,16 @@
 				</Badge>
 			</div>
 			<p class="text-muted-foreground text-sm mt-1">
-				Pemantauan skor kebersihan wilayah, evaluasi SLA armada, dan peringkat kelurahan Kota Bandung untuk Kepala Dinas &amp; Wali Kota.
+				Pemantauan skor kebersihan wilayah, evaluasi SLA armada, dan peringkat kelurahan Kota
+				Bandung untuk Kepala Dinas &amp; Wali Kota.
 			</p>
 		</div>
 
 		<!-- Context Controls (Periode, Kecamatan Filter, Unduh PDF/CSV) -->
 		<div class="flex flex-wrap items-center gap-2 print:hidden">
-			<div class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs">
+			<div
+				class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs"
+			>
 				<CalendarIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
 				<span class="font-semibold text-muted-foreground">Periode:</span>
 				<select
@@ -191,7 +196,9 @@
 				</select>
 			</div>
 
-			<div class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs">
+			<div
+				class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs"
+			>
 				<FilterIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
 				<span class="font-semibold text-muted-foreground">Kecamatan:</span>
 				<select
@@ -205,12 +212,22 @@
 				</select>
 			</div>
 
-			<Button variant="outline" size="sm" class="h-9 text-xs font-semibold" onclick={handleExportCsv}>
+			<Button
+				variant="outline"
+				size="sm"
+				class="h-9 text-xs font-semibold"
+				onclick={handleExportCsv}
+			>
 				<FileSpreadsheetIcon class="mr-1.5 size-3.5 text-emerald-600 dark:text-emerald-400" />
 				Unduh CSV
 			</Button>
 
-			<Button variant="default" size="sm" class="h-9 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white" onclick={triggerPdfReportPrint}>
+			<Button
+				variant="default"
+				size="sm"
+				class="h-9 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white"
+				onclick={triggerPdfReportPrint}
+			>
 				<DownloadIcon class="mr-1.5 size-3.5" />
 				Cetak PDF Laporan
 			</Button>
@@ -220,7 +237,9 @@
 	<!-- Baris 1: Kartu Metrik Utama KPI Eksekutif -->
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 		{#each kpiStats as stat (stat.title)}
-			<Card.Root class="relative overflow-hidden border-border/80 shadow-sm transition-all hover:shadow-md">
+			<Card.Root
+				class="relative overflow-hidden border-border/80 shadow-sm transition-all hover:shadow-md"
+			>
 				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 					<Card.Title class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 						{stat.title}
@@ -358,7 +377,8 @@
 					</Card.Title>
 				</div>
 				<Card.Description class="text-xs mt-0.5">
-					Peringkat kebersihan kelurahan berdasarkan evaluasi durasi penanganan armada &amp; akumulasi insiden.
+					Peringkat kebersihan kelurahan berdasarkan evaluasi durasi penanganan armada &amp;
+					akumulasi insiden.
 				</Card.Description>
 			</div>
 
@@ -438,7 +458,10 @@
 
 								<Table.Cell class="text-center">
 									<div class="flex flex-col items-center gap-1">
-										<Badge variant="outline" class={`text-xs ${getBadgeSkorClass(item.skorKebersihan)}`}>
+										<Badge
+											variant="outline"
+											class={`text-xs ${getBadgeSkorClass(item.skorKebersihan)}`}
+										>
 											{item.skorKebersihan} / 100
 										</Badge>
 										<div class="w-24 bg-muted h-1.5 rounded-full overflow-hidden">
@@ -459,7 +482,11 @@
 								</Table.Cell>
 
 								<Table.Cell class="text-center font-semibold">
-									<span class={item.jumlahInsiden > 15 ? "text-red-600 dark:text-red-400 font-extrabold" : ""}>
+									<span
+										class={item.jumlahInsiden > 15
+											? "text-red-600 dark:text-red-400 font-extrabold"
+											: ""}
+									>
 										{item.jumlahInsiden} Insiden
 									</span>
 								</Table.Cell>
@@ -470,17 +497,23 @@
 
 								<Table.Cell class="text-right">
 									{#if item.tren === "membaik"}
-										<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+										<span
+											class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+										>
 											<TrendingUpIcon class="size-3.5" />
 											+{item.persentaseTren}%
 										</span>
 									{:else if item.tren === "menurun"}
-										<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-red-600 dark:text-red-400">
+										<span
+											class="inline-flex items-center gap-0.5 text-xs font-semibold text-red-600 dark:text-red-400"
+										>
 											<TrendingDownIcon class="size-3.5" />
 											{item.persentaseTren}%
 										</span>
 									{:else}
-										<span class="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground">
+										<span
+											class="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground"
+										>
 											<MinusIcon class="size-3.5" />
 											Stabil
 										</span>
@@ -506,7 +539,10 @@
 			<Card.Content class="text-xs space-y-1.5">
 				<p class="font-semibold text-foreground text-sm">Kelurahan Cihapit (Kec. Bandung Wetan)</p>
 				<p class="text-muted-foreground">
-					Skor kebersihan tertinggi <strong class="text-emerald-700 dark:text-emerald-400">94/100</strong> dengan durasi respon SLA rata-rata hanya <strong>0.6 Jam</strong>.
+					Skor kebersihan tertinggi <strong class="text-emerald-700 dark:text-emerald-400"
+						>94/100</strong
+					>
+					dengan durasi respon SLA rata-rata hanya <strong>0.6 Jam</strong>.
 				</p>
 			</Card.Content>
 		</Card.Root>
@@ -521,7 +557,9 @@
 			<Card.Content class="text-xs space-y-1.5">
 				<p class="font-semibold text-foreground text-sm">Kelurahan Malabar (Kec. Lengkong)</p>
 				<p class="text-muted-foreground">
-					Skor terendah <strong class="text-red-600 dark:text-red-400">52/100</strong> dengan <strong>23 insiden</strong> aktif dan durasi pengangkutan <strong>4.2 Jam</strong>.
+					Skor terendah <strong class="text-red-600 dark:text-red-400">52/100</strong> dengan
+					<strong>23 insiden</strong>
+					aktif dan durasi pengangkutan <strong>4.2 Jam</strong>.
 				</p>
 			</Card.Content>
 		</Card.Root>
@@ -536,7 +574,8 @@
 			<Card.Content class="text-xs space-y-1.5">
 				<p class="font-semibold text-foreground text-sm">Optimasi Penambahan Armada</p>
 				<p class="text-muted-foreground">
-					Disarankan menambah <strong>2 unit truk pengangkut kontainer</strong> ke Kecamatan Lengkong pada jam 06:00 - 09:00 WIB untuk menekan durasi pembuangan liar.
+					Disarankan menambah <strong>2 unit truk pengangkut kontainer</strong> ke Kecamatan Lengkong
+					pada jam 06:00 - 09:00 WIB untuk menekan durasi pembuangan liar.
 				</p>
 			</Card.Content>
 		</Card.Root>

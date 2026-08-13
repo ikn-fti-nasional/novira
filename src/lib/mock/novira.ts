@@ -39,7 +39,8 @@ export const MOCK_KAMERA: Kamera[] = [
 		jumlahObjekTerdeteksi: 4,
 		statusDeteksi: "KRITIS",
 		fps: 30,
-		urlSnapshot: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
 	},
 	{
 		id: "CAM-002",
@@ -55,7 +56,8 @@ export const MOCK_KAMERA: Kamera[] = [
 		jumlahObjekTerdeteksi: 1,
 		statusDeteksi: "PERINGATAN",
 		fps: 28,
-		urlSnapshot: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80",
 	},
 	{
 		id: "CAM-003",
@@ -71,7 +73,8 @@ export const MOCK_KAMERA: Kamera[] = [
 		jumlahObjekTerdeteksi: 3,
 		statusDeteksi: "KRITIS",
 		fps: 30,
-		urlSnapshot: "https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=800&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=800&auto=format&fit=crop&q=80",
 	},
 	{
 		id: "CAM-004",
@@ -87,7 +90,8 @@ export const MOCK_KAMERA: Kamera[] = [
 		jumlahObjekTerdeteksi: 0,
 		statusDeteksi: "NORMAL",
 		fps: 29,
-		urlSnapshot: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80",
 	},
 	{
 		id: "CAM-005",
@@ -103,7 +107,8 @@ export const MOCK_KAMERA: Kamera[] = [
 		jumlahObjekTerdeteksi: 2,
 		statusDeteksi: "PERINGATAN",
 		fps: 30,
-		urlSnapshot: "https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?w=800&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?w=800&auto=format&fit=crop&q=80",
 	},
 	{
 		id: "CAM-006",
@@ -134,7 +139,8 @@ export const MOCK_KAMERA: Kamera[] = [
 		jumlahObjekTerdeteksi: 2,
 		statusDeteksi: "PERINGATAN",
 		fps: 30,
-		urlSnapshot: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
 	},
 ];
 
@@ -157,7 +163,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "AKTIF",
 		keparahan: "KRITIS",
 		tingkatKepercayaan: 0.94,
-		urlSnapshot: "https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: "Budi Santoso (Satpol PP)",
 		statusSla: "MELANGGAR_SLA",
 		bbox: { x: 220, y: 140, width: 180, height: 130 },
@@ -180,7 +187,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "AKTIF",
 		keparahan: "TINGGI",
 		tingkatKepercayaan: 0.89,
-		urlSnapshot: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: "Rian Hidayat (Armada DLH)",
 		statusSla: "HAMPIR_BREACH",
 		bbox: { x: 310, y: 200, width: 140, height: 110 },
@@ -203,7 +211,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "PERINGATAN",
 		keparahan: "SEDANG",
 		tingkatKepercayaan: 0.86,
-		urlSnapshot: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: "Agus Pratama (Tim Patroli)",
 		statusSla: "TEPAT_WAKTU",
 		bbox: { x: 150, y: 250, width: 100, height: 80 },
@@ -226,7 +235,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "AKTIF",
 		keparahan: "RENDAH",
 		tingkatKepercayaan: 0.91,
-		urlSnapshot: "https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: undefined,
 		statusSla: "TEPAT_WAKTU",
 		bbox: { x: 400, y: 180, width: 90, height: 75 },
@@ -249,7 +259,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "SELESAI",
 		keparahan: "TINGGI",
 		tingkatKepercayaan: 0.93,
-		urlSnapshot: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: "Rian Hidayat (Armada DLH)",
 		statusSla: "TEPAT_WAKTU",
 		bbox: { x: 180, y: 220, width: 160, height: 120 },
@@ -272,7 +283,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "POSITIF_PALSU",
 		keparahan: "RENDAH",
 		tingkatKepercayaan: 0.54,
-		urlSnapshot: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: undefined,
 		statusSla: "TEPAT_WAKTU",
 		bbox: { x: 260, y: 190, width: 80, height: 60 },
@@ -295,7 +307,8 @@ export const MOCK_INSIDEN: Insiden[] = [
 		status: "AKTIF",
 		keparahan: "TINGGI",
 		tingkatKepercayaan: 0.92,
-		urlSnapshot: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=80",
+		urlSnapshot:
+			"https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=80",
 		petugasDitugaskan: "Dewi Lestari (Dinas Lingkungan Hidup DKI)",
 		statusSla: "HAMPIR_BREACH",
 		bbox: { x: 200, y: 150, width: 140, height: 100 },
@@ -479,22 +492,139 @@ export const MOCK_EKSEKUTIF_KPI: EksekutifKpiStats = {
 };
 
 export const MOCK_TREN_KECAMATAN_MINGGUAN: TrenSkorKecamatan[] = [
-	{ label: "Senin", rataRataKota: 79, lengkong: 54, cicendo: 66, regol: 74, coblong: 86, andir: 63, bandungWetan: 92 },
-	{ label: "Selasa", rataRataKota: 81, lengkong: 52, cicendo: 68, regol: 75, coblong: 88, andir: 64, bandungWetan: 93 },
-	{ label: "Rabu", rataRataKota: 80, lengkong: 50, cicendo: 65, regol: 76, coblong: 87, andir: 65, bandungWetan: 94 },
-	{ label: "Kamis", rataRataKota: 82, lengkong: 53, cicendo: 70, regol: 77, coblong: 89, andir: 67, bandungWetan: 94 },
-	{ label: "Jumat", rataRataKota: 84, lengkong: 55, cicendo: 72, regol: 78, coblong: 90, andir: 68, bandungWetan: 95 },
-	{ label: "Sabtu", rataRataKota: 83, lengkong: 52, cicendo: 71, regol: 76, coblong: 88, andir: 65, bandungWetan: 94 },
-	{ label: "Minggu", rataRataKota: 83.4, lengkong: 52, cicendo: 72, regol: 76, coblong: 88, andir: 65, bandungWetan: 94 },
+	{
+		label: "Senin",
+		rataRataKota: 79,
+		lengkong: 54,
+		cicendo: 66,
+		regol: 74,
+		coblong: 86,
+		andir: 63,
+		bandungWetan: 92,
+	},
+	{
+		label: "Selasa",
+		rataRataKota: 81,
+		lengkong: 52,
+		cicendo: 68,
+		regol: 75,
+		coblong: 88,
+		andir: 64,
+		bandungWetan: 93,
+	},
+	{
+		label: "Rabu",
+		rataRataKota: 80,
+		lengkong: 50,
+		cicendo: 65,
+		regol: 76,
+		coblong: 87,
+		andir: 65,
+		bandungWetan: 94,
+	},
+	{
+		label: "Kamis",
+		rataRataKota: 82,
+		lengkong: 53,
+		cicendo: 70,
+		regol: 77,
+		coblong: 89,
+		andir: 67,
+		bandungWetan: 94,
+	},
+	{
+		label: "Jumat",
+		rataRataKota: 84,
+		lengkong: 55,
+		cicendo: 72,
+		regol: 78,
+		coblong: 90,
+		andir: 68,
+		bandungWetan: 95,
+	},
+	{
+		label: "Sabtu",
+		rataRataKota: 83,
+		lengkong: 52,
+		cicendo: 71,
+		regol: 76,
+		coblong: 88,
+		andir: 65,
+		bandungWetan: 94,
+	},
+	{
+		label: "Minggu",
+		rataRataKota: 83.4,
+		lengkong: 52,
+		cicendo: 72,
+		regol: 76,
+		coblong: 88,
+		andir: 65,
+		bandungWetan: 94,
+	},
 ];
 
 export const MOCK_TREN_KECAMATAN_BULANAN: TrenSkorKecamatan[] = [
-	{ label: "Maret", rataRataKota: 74, lengkong: 45, cicendo: 58, regol: 68, coblong: 80, andir: 55, bandungWetan: 88 },
-	{ label: "April", rataRataKota: 76, lengkong: 48, cicendo: 60, regol: 70, coblong: 82, andir: 58, bandungWetan: 90 },
-	{ label: "Mei", rataRataKota: 78, lengkong: 50, cicendo: 63, regol: 72, coblong: 85, andir: 60, bandungWetan: 91 },
-	{ label: "Juni", rataRataKota: 80, lengkong: 51, cicendo: 66, regol: 74, coblong: 86, andir: 62, bandungWetan: 92 },
-	{ label: "Juli", rataRataKota: 82, lengkong: 52, cicendo: 69, regol: 75, coblong: 87, andir: 64, bandungWetan: 93 },
-	{ label: "Agustus", rataRataKota: 83.4, lengkong: 52, cicendo: 72, regol: 76, coblong: 88, andir: 65, bandungWetan: 94 },
+	{
+		label: "Maret",
+		rataRataKota: 74,
+		lengkong: 45,
+		cicendo: 58,
+		regol: 68,
+		coblong: 80,
+		andir: 55,
+		bandungWetan: 88,
+	},
+	{
+		label: "April",
+		rataRataKota: 76,
+		lengkong: 48,
+		cicendo: 60,
+		regol: 70,
+		coblong: 82,
+		andir: 58,
+		bandungWetan: 90,
+	},
+	{
+		label: "Mei",
+		rataRataKota: 78,
+		lengkong: 50,
+		cicendo: 63,
+		regol: 72,
+		coblong: 85,
+		andir: 60,
+		bandungWetan: 91,
+	},
+	{
+		label: "Juni",
+		rataRataKota: 80,
+		lengkong: 51,
+		cicendo: 66,
+		regol: 74,
+		coblong: 86,
+		andir: 62,
+		bandungWetan: 92,
+	},
+	{
+		label: "Juli",
+		rataRataKota: 82,
+		lengkong: 52,
+		cicendo: 69,
+		regol: 75,
+		coblong: 87,
+		andir: 64,
+		bandungWetan: 93,
+	},
+	{
+		label: "Agustus",
+		rataRataKota: 83.4,
+		lengkong: 52,
+		cicendo: 72,
+		regol: 76,
+		coblong: 88,
+		andir: 65,
+		bandungWetan: 94,
+	},
 ];
 
 export const MOCK_LEADERBOARD_EXPANDED: SkorKebersihanWilayah[] = [

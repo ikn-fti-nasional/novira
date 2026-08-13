@@ -33,10 +33,7 @@ function accessMessage(roles: readonly Role[]): string {
  * The "who may do what" policy lives here and nowhere else; route guards just
  * call this and decide how to respond.
  */
-export function hasRole(
-	user: SessionUser | null | undefined,
-	roles: readonly Role[]
-): boolean {
+export function hasRole(user: SessionUser | null | undefined, roles: readonly Role[]): boolean {
 	return !!user && roles.includes(user.role);
 }
 

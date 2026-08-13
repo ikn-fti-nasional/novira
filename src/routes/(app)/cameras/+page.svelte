@@ -16,18 +16,25 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4">
+	<div
+		class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4"
+	>
 		<div class="flex flex-col gap-1">
 			<div class="flex items-center gap-2">
 				<CameraIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
 				<h1 class="text-3xl font-extrabold tracking-tight">Manajemen Inventaris Kamera CCTV</h1>
 			</div>
 			<p class="text-sm text-muted-foreground">
-				Kelola titik umpan kamera CCTV pemerintah daerah yang terhubung ke nodus inferensi AI NOVIRA.
+				Kelola titik umpan kamera CCTV pemerintah daerah yang terhubung ke nodus inferensi AI
+				NOVIRA.
 			</p>
 		</div>
 
-		<Button variant="default" size="sm" class="h-9 bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700">
+		<Button
+			variant="default"
+			size="sm"
+			class="h-9 bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+		>
 			<PlusIcon class="mr-1.5 size-4" />
 			Tambah Kamera CCTV Baru
 		</Button>
@@ -54,7 +61,10 @@
 							<Table.Cell>{cam.lokasi} ({cam.kelurahan})</Table.Cell>
 							<Table.Cell>{cam.kabupatenKota}, {cam.provinsi}</Table.Cell>
 							<Table.Cell>
-								<Badge variant={cam.status === "ONLINE" ? "default" : "secondary"} class="text-[10px]">
+								<Badge
+									variant={cam.status === "ONLINE" ? "default" : "secondary"}
+									class="text-[10px]"
+								>
 									{cam.status}
 								</Badge>
 							</Table.Cell>
@@ -67,7 +77,12 @@
 									<Button variant="ghost" size="sm" class="h-7 text-xs" title="Edit Kamera">
 										<PencilIcon class="size-3.5" />
 									</Button>
-									<Button variant="ghost" size="sm" class="h-7 text-xs text-red-600 hover:text-red-700" title="Hapus Kamera">
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-7 text-xs text-red-600 hover:text-red-700"
+										title="Hapus Kamera"
+									>
 										<TrashIcon class="size-3.5" />
 									</Button>
 								</div>

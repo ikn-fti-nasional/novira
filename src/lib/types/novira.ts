@@ -2,7 +2,7 @@ export type TingkatTingkatKeparahan = "KRITIS" | "TINGGI" | "SEDANG" | "RENDAH";
 
 export type StatusInsiden = "AKTIF" | "PERINGATAN" | "SELESAI" | "POSITIF_PALSU";
 
-export type JenisSampah = 
+export type JenisSampah =
 	| "tumpukan_sampah"
 	| "kantong_plastik"
 	| "kardus_kemasan"

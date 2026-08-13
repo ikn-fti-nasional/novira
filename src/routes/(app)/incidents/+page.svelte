@@ -18,7 +18,8 @@
 			<Badge variant="destructive" class="text-xs font-semibold">14 Insiden Aktif</Badge>
 		</div>
 		<p class="text-sm text-muted-foreground">
-			Kelola deteksi penumpukan sampah liar, pemantauan timer SLA (&lt;24 jam), dan penugasan armada kebersihan.
+			Kelola deteksi penumpukan sampah liar, pemantauan timer SLA (&lt;24 jam), dan penugasan armada
+			kebersihan.
 		</p>
 	</div>
 

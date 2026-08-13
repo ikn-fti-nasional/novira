@@ -8,14 +8,7 @@ export const users = pgTable("users", {
 	name: text("name").notNull(),
 	avatarUrl: text("avatar_url"),
 	role: text("role", {
-		enum: [
-			"admin",
-			"operator",
-			"kepala_seksi",
-			"kepala_dinas",
-			"walikota",
-			"petugas_lapangan",
-		],
+		enum: ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota", "petugas_lapangan"],
 	})
 		.notNull()
 		.default("operator"),

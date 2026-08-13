@@ -1,8 +1,4 @@
-import {
-	generateSessionToken,
-	createSession,
-	setSessionCookie,
-} from "$lib/server/auth.js";
+import { generateSessionToken, createSession, setSessionCookie } from "$lib/server/auth.js";
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
 import { createUser } from "$lib/server/db/users.js";
@@ -49,9 +45,7 @@ export const actions: Actions = {
 		let userId: string;
 		try {
 			// Only the very first registered user becomes admin; everyone else is an operator.
-			const [existing] = await db
-				.select({ count: countAll })
-				.from(users);
+			const [existing] = await db.select({ count: countAll }).from(users);
 			userId = await createUser({
 				name,
 				email,

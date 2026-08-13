@@ -45,7 +45,7 @@ export async function seedDemo() {
 		// Demo account — what the login page pre-fills. Viewer role so visitors
 		// can explore safely. Protected from self-modification by the (app)
 		// settings actions (see updateProfile / changePassword).
-{
+		{
 			name: "Demo User",
 			email: "demo@novira.dev",
 			username: "demo",
