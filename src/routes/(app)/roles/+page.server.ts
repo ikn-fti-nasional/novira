@@ -8,12 +8,11 @@ import type { Actions, PageServerLoad } from "./$types.js";
 
 const VALID_ROLES: readonly Role[] = [
 	"admin",
-	"admin_dlh",
+	"operator",
+	"kepala_seksi",
 	"kepala_dinas",
 	"walikota",
 	"petugas_lapangan",
-	"editor",
-	"viewer",
 ];
 
 function isRole(value: string): value is Role {
@@ -23,24 +22,40 @@ function isRole(value: string): value is Role {
 const roleDefinitions = [
 	{
 		name: "admin" as const,
-		description: "Full system access. Can manage users, content, settings, and view database info.",
+		description: "IT & super admin sistem — kelola pengguna, peran, pengaturan, dan database.",
 		permissions: [
 			"Manage users",
-			"Manage content",
+			"Manage roles",
 			"Manage settings",
 			"View database",
-			"Manage roles",
+			"Manage content",
+			"Manage cameras & officers",
+			"Verify incidents",
+			"Export reports",
 		],
 	},
 	{
-		name: "admin_dlh" as const,
-		description: "Super admin lingkungan hidup nasional. Akses penuh operasional dan tata kelola.",
+		name: "operator" as const,
+		description: "Admin DLH / operator command center — kelola operasional harian pemantauan.",
 		permissions: [
 			"Manage cameras",
 			"Manage officers",
-			"Manage incidents",
-			"Manage settings",
-			"View analytics",
+			"Verify incidents",
+			"Assign petugas",
+			"Manage content",
+			"View analytics & reports",
+			"Export reports",
+		],
+	},
+	{
+		name: "kepala_seksi" as const,
+		description: "Kepala seksi kebersihan — pantau operasional dan koordinasi eskalasi SLA.",
+		permissions: [
+			"View live monitoring",
+			"View incidents",
+			"Escalate SLA violations",
+			"View analytics & reports",
+			"Export reports",
 		],
 	},
 	{
@@ -67,18 +82,8 @@ const roleDefinitions = [
 	},
 	{
 		name: "petugas_lapangan" as const,
-		description: "Petugas lapangan — memantau penugasan dan insiden di wilayahnya.",
-		permissions: ["View assigned incidents", "View cameras", "Update incident status"],
-	},
-	{
-		name: "editor" as const,
-		description: "Can create and edit content. Cannot manage users or system settings.",
-		permissions: ["Create content", "Edit content", "Delete own content", "View analytics"],
-	},
-	{
-		name: "viewer" as const,
-		description: "Read-only access. Can view content and their own profile.",
-		permissions: ["View content", "View dashboard", "Edit own profile"],
+		description: "Petugas lapangan — menerima dan mengonfirmasi penugasan via WA / mobile.",
+		permissions: ["View assigned incidents", "Update incident status"],
 	},
 ];
 

@@ -38,7 +38,9 @@
 		switch (role) {
 			case "admin":
 				return "border-primary/20 bg-primary/5";
-			case "editor":
+			case "operator":
+				return "border-emerald-500/20 bg-emerald-500/5";
+			case "kepala_seksi":
 				return "border-blue-500/20 bg-blue-500/5";
 			default:
 				return "border-muted";

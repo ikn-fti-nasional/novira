@@ -129,7 +129,7 @@
 					class="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 text-xs"
 				>
 					<ShieldCheckIcon class="mr-1 size-3.5" />
-					{data.user.role === "admin" ? "Akses Admin" : data.user.role === "editor" ? "Akses Editor" : "Akses Viewer"}
+					{data.user.role === "admin" ? "Akses Admin" : data.user.role === "operator" ? "Akses Operator" : data.user.role === "kepala_seksi" ? "Akses Kepala Seksi" : "Akses Pemantau"}
 				</Badge>
 			</div>
 			<p class="text-muted-foreground text-sm mt-1">
@@ -226,17 +226,17 @@
 
 	<!-- Baris 2: Pemantauan Umpan CCTV & Tabel Insiden Peringatan -->
 	<div class="grid gap-6 lg:grid-cols-12">
-		<div class="lg:col-span-6">
+		<div class="min-w-0 lg:col-span-6">
 			<CctvPlayer kameraList={data.kameraList} kameraIdDipilih="CAM-003" />
 		</div>
-		<div class="lg:col-span-6">
+		<div class="min-w-0 lg:col-span-6">
 			<IncidentTable insidenList={data.insidenList} />
 		</div>
 	</div>
 
 	<!-- Baris 3: Tren Deteksi Sampah LayerChart + Peta Titik Rawan -->
 	<div class="grid gap-6 lg:grid-cols-12">
-		<Card.Root class="lg:col-span-6 border-border/80 shadow-md">
+		<Card.Root class="min-w-0 lg:col-span-6 border-border/80 shadow-md">
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<div>
 					<div class="flex items-center gap-2">
@@ -291,7 +291,7 @@
 			</Card.Content>
 		</Card.Root>
 
-		<div class="lg:col-span-6">
+		<div class="min-w-0 lg:col-span-6">
 			<HotspotMap kameraList={data.kameraList} insidenList={data.insidenList} />
 		</div>
 	</div>

@@ -10,16 +10,15 @@ export const users = pgTable("users", {
 	role: text("role", {
 		enum: [
 			"admin",
-			"admin_dlh",
+			"operator",
+			"kepala_seksi",
 			"kepala_dinas",
 			"walikota",
 			"petugas_lapangan",
-			"editor",
-			"viewer",
 		],
 	})
 		.notNull()
-		.default("viewer"),
+		.default("operator"),
 	createdAt: timestamp("created_at", { mode: "date" })
 		.notNull()
 		.$defaultFn(() => new Date()),

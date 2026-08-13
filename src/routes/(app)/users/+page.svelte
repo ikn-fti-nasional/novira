@@ -108,11 +108,11 @@
 	function roleBadgeVariant(role: string) {
 		switch (role) {
 			case "admin":
-			case "admin_dlh":
+			case "kepala_seksi":
 			case "walikota":
 			case "kepala_dinas":
 				return "default" as const;
-			case "editor":
+			case "operator":
 			case "petugas_lapangan":
 				return "secondary" as const;
 			default:

@@ -20,7 +20,7 @@ function slugify(text: string): string {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, ["admin", "operator"]);
 		if (denied) return denied;
 
 		const formData = await request.formData();

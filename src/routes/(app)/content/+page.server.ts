@@ -27,7 +27,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	delete: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, ["admin", "operator"]);
 		if (denied) return denied;
 
 		const formData = await request.formData();
@@ -43,7 +43,7 @@ export const actions: Actions = {
 	},
 
 	bulkDelete: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, ["admin", "operator"]);
 		if (denied) return denied;
 
 		const formData = await request.formData();

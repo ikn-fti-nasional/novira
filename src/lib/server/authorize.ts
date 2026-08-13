@@ -4,12 +4,20 @@ import type { SessionUser } from "$lib/server/auth.js";
 
 export type Role =
 	| "admin"
-	| "admin_dlh"
+	| "operator"
+	| "kepala_seksi"
 	| "kepala_dinas"
 	| "walikota"
-	| "petugas_lapangan"
-	| "editor"
-	| "viewer";
+	| "petugas_lapangan";
+
+/** Roles whose default landing page after login is the executive dashboard. */
+export const EXECUTIVE_ROLES: readonly Role[] = ["kepala_dinas", "walikota"];
+
+/** Roles that can access the operational command pages (not just read reports). */
+export const OPERATIONAL_ROLES: readonly Role[] = ["admin", "operator", "kepala_seksi"];
+
+/** Roles that can access system administration (users, roles, settings, database). */
+export const SYSTEM_ADMIN_ROLES: readonly Role[] = ["admin"];
 
 function capitalize(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);

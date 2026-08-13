@@ -21,7 +21,7 @@ function isProtectedDemoUser(username: string | undefined): boolean {
 const defaultSettings: Record<string, string> = {
 	siteName: "Novira",
 	timezone: "UTC",
-	defaultRole: "viewer",
+	defaultRole: "operator",
 	maintenanceMode: "false",
 };
 
@@ -182,7 +182,7 @@ export const actions: Actions = {
 		const entries: [string, string][] = [
 			["siteName", typeof siteName === "string" ? siteName : "Novira"],
 			["timezone", typeof timezone === "string" ? timezone : "UTC"],
-			["defaultRole", typeof defaultRole === "string" ? defaultRole : "viewer"],
+			["defaultRole", typeof defaultRole === "string" ? defaultRole : "operator"],
 			["maintenanceMode", maintenanceMode === "on" ? "true" : "false"],
 		];
 

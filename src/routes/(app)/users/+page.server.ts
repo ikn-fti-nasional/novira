@@ -16,12 +16,11 @@ import type { Actions, PageServerLoad } from "./$types.js";
 
 const VALID_ROLES: readonly Role[] = [
 	"admin",
-	"admin_dlh",
+	"operator",
+	"kepala_seksi",
 	"kepala_dinas",
 	"walikota",
 	"petugas_lapangan",
-	"editor",
-	"viewer",
 ];
 
 function isRole(value: string): value is Role {

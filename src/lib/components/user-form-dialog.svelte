@@ -76,18 +76,17 @@
 				{/if}
 				<div class="grid gap-2">
 					<Label for="role">Role</Label>
-					<Select.Root name="role" type="single" value={user?.role ?? "viewer"}>
+					<Select.Root name="role" type="single" value={user?.role ?? "operator"}>
 						<Select.Trigger>
-							<span>{user?.role ?? "viewer"}</span>
+							<span>{user?.role ?? "operator"}</span>
 						</Select.Trigger>
 						<Select.Content>
-							<Select.Item value="admin">Admin</Select.Item>
-							<Select.Item value="admin_dlh">Admin DLH</Select.Item>
-							<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
-							<Select.Item value="walikota">Wali Kota Bandung</Select.Item>
-							<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
-							<Select.Item value="editor">Editor</Select.Item>
-							<Select.Item value="viewer">Viewer</Select.Item>
+							<Select.Item value="admin">Admin (IT Sistem)</Select.Item>
+						<Select.Item value="operator">Operator DLH</Select.Item>
+						<Select.Item value="kepala_seksi">Kepala Seksi</Select.Item>
+						<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
+						<Select.Item value="walikota">Wali Kota</Select.Item>
+						<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
 						</Select.Content>
 					</Select.Root>
 				</div>

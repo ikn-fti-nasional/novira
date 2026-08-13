@@ -35,15 +35,23 @@
 
 	const isExecutive = $derived(user.role === "kepala_dinas" || user.role === "walikota");
 
+	const isAdmin = $derived(user.role === "admin");
+	const isSystemUser = $derived(
+		user.role === "admin" || user.role === "operator" || user.role === "kepala_seksi"
+	);
+
 	function getRoleTitle(role: string) {
 		switch (role) {
 			case "walikota":
-				return "Wali Kota Bandung (Eksekutif)";
+				return "Wali Kota (Eksekutif)";
 			case "kepala_dinas":
 				return "Kepala Dinas LH (Eksekutif)";
-			case "admin_dlh":
 			case "admin":
-				return "Super Admin (Nasional)";
+				return "Admin IT (Sistem)";
+			case "operator":
+				return "Operator DLH";
+			case "kepala_seksi":
+				return "Kepala Seksi";
 			case "petugas_lapangan":
 				return "Petugas Lapangan";
 			default:

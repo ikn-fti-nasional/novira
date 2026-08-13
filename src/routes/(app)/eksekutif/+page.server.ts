@@ -13,12 +13,10 @@ import type { PageServerLoad } from "./$types.js";
 export const load: PageServerLoad = async ({ locals }) => {
 	requireRoleOrRedirect(locals.user, [
 		"admin",
-		"admin_dlh",
+		"operator",
+		"kepala_seksi",
 		"kepala_dinas",
 		"walikota",
-		"petugas_lapangan",
-		"editor",
-		"viewer",
 	]);
 
 	const [

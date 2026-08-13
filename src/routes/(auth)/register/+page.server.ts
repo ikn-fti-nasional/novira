@@ -48,7 +48,7 @@ export const actions: Actions = {
 
 		let userId: string;
 		try {
-			// Only the very first registered user becomes admin; everyone else is a viewer.
+			// Only the very first registered user becomes admin; everyone else is an operator.
 			const [existing] = await db
 				.select({ count: countAll })
 				.from(users);
@@ -57,7 +57,7 @@ export const actions: Actions = {
 				email,
 				username,
 				passwordHash,
-				role: existing.count === 0 ? "admin" : "viewer",
+				role: existing.count === 0 ? "admin" : "operator",
 			});
 		} catch {
 			return fail(400, { message: "Username or email already taken" });
