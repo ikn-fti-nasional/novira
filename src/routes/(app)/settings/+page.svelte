@@ -300,6 +300,8 @@
 										<Select.Item value="admin">Admin (IT Sistem)</Select.Item>
 										<Select.Item value="operator">Operator DLH</Select.Item>
 										<Select.Item value="kepala_seksi">Kepala Seksi</Select.Item>
+										<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
+										<Select.Item value="walikota">Wali Kota</Select.Item>
 										<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
 									</Select.Content>
 								</Select.Root>
