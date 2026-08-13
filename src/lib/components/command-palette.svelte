@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { Command } from "bits-ui";
 	import * as Dialog from "$lib/components/ui/dialog/index.js";
 	import { goto } from "$app/navigation";
@@ -37,7 +38,12 @@
 	let query = $state("");
 	let searchResults = $state<SearchResult[]>([]);
 	let loading = $state(false);
+	let isMac = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
+
+	onMount(() => {
+		isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+	});
 
 	const navItems: NavItem[] = [
 		{
@@ -153,7 +159,11 @@
 	<kbd
 		class="bg-background pointer-events-none hidden h-5 items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium sm:inline-flex"
 	>
-		<span class="text-xs">&#8984;</span>K
+		{#if isMac}
+			<span class="text-xs">&#8984;</span>K
+		{:else}
+			<span class="text-xs">Ctrl</span>&nbsp;K
+		{/if}
 	</kbd>
 </button>
 

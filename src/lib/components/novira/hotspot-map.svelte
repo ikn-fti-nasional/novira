@@ -20,9 +20,9 @@
 </script>
 
 <Card.Root class="border-border/80 shadow-md">
-	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-		<div>
-			<div class="flex items-center gap-2">
+	<Card.Header class="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 pb-3">
+		<div class="min-w-0">
+			<div class="flex flex-wrap items-center gap-2">
 				<Card.Title class="text-xl font-bold tracking-tight">
 					Peta Titik Rawan Sampah (Hotspot)
 				</Card.Title>
