@@ -315,7 +315,8 @@
 	</div>
 
 	<!-- Baris 5: Log Audit & Rekam Jejak Sistem Super Admin -->
-	<Card.Root class="border-border/80 shadow-md">
+	{#if data.user.role === "admin"}
+		<Card.Root class="border-border/80 shadow-md">
 		<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 			<div>
 				<div class="flex items-center gap-2">
@@ -362,5 +363,6 @@
 				{/each}
 			</div>
 		</Card.Content>
-	</Card.Root>
+		</Card.Root>
+	{/if}
 </div>
