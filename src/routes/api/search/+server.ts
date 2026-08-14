@@ -49,21 +49,21 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			id: u.id,
 			title: u.name,
 			subtitle: u.email,
-			href: "/users",
+			href: "/dashboard/users",
 		})),
 		...pageResults.map((p) => ({
 			type: "page" as const,
 			id: p.id,
 			title: p.title,
 			subtitle: `/${p.slug}`,
-			href: `/content/${p.id}/edit`,
+			href: `/dashboard/content/${p.id}/edit`,
 		})),
 		...notificationResults.map((n) => ({
 			type: "notification" as const,
 			id: n.id,
 			title: n.title,
 			subtitle: n.message.slice(0, 50),
-			href: "/notifications",
+			href: "/dashboard/notifications",
 		})),
 	];
 

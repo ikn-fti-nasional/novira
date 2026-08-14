@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) redirect(302, "/");
+	if (locals.user) redirect(302, "/dashboard");
 	return {
 		// Only surface pre-filled demo credentials when the public demo is on.
 		demoMode: process.env.DEMO_MODE === "true",
@@ -52,9 +52,9 @@ export const actions: Actions = {
 		setSessionCookie(cookies, token, session.expiresAt);
 
 		if (hasRole(existingUser, EXECUTIVE_ROLES)) {
-			redirect(302, "/eksekutif");
+			redirect(302, "/dashboard/eksekutif");
 		}
 
-		redirect(302, "/");
+		redirect(302, "/dashboard");
 	},
 };

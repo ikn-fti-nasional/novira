@@ -13,13 +13,11 @@
 	let { children, data } = $props();
 
 	function getBreadcrumbs() {
-		const path = page.url.pathname;
-		if (path === "/") return [{ label: "Dashboard", href: "/" }];
-
-		const segments = path.split("/").filter(Boolean);
+		const segments = page.url.pathname.split("/").filter(Boolean).slice(1);
+		if (segments.length === 0) return [{ label: "Dashboard", href: "/dashboard" }];
 		return segments.map((segment, i) => ({
 			label: segment.charAt(0).toUpperCase() + segment.slice(1),
-			href: "/" + segments.slice(0, i + 1).join("/"),
+			href: "/dashboard/" + segments.slice(0, i + 1).join("/"),
 		}));
 	}
 </script>

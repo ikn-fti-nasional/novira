@@ -46,7 +46,7 @@ describe("Register action", () => {
 	it("makes the very first registered user an admin", async () => {
 		const result = await run(registrationForm("first"));
 
-		expect(result).toMatchObject({ status: 302, location: "/" });
+		expect(result).toMatchObject({ status: 302, location: "/dashboard" });
 
 		const [row] = await testDb.select().from(users);
 		expect(row.role).toBe("admin");

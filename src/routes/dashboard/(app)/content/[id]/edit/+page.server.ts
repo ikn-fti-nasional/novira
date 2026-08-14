@@ -1,13 +1,19 @@
 import { db } from "$lib/server/db/index.js";
 import { pages } from "$lib/server/db/schema.js";
-import { fail, redirect } from "@sveltejs/kit";
-import { generateId } from "$lib/server/auth.js";
+import { fail, redirect, error } from "@sveltejs/kit";
 import { requireRoleOrRedirect, requireRoleOrFail, OPERATIONAL_ROLES } from "$lib/authorize.js";
+import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	requireRoleOrRedirect(locals.user, [...OPERATIONAL_ROLES]);
-	return {};
+	const [page] = await db.select().from(pages).where(eq(pages.id, params.id));
+
+	if (!page) {
+		error(404, "Page not found");
+	}
+
+	return { page };
 };
 
 function slugify(text: string): string {
@@ -20,7 +26,7 @@ function slugify(text: string): string {
 }
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
+	default: async ({ request, params, locals }) => {
 		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
 
@@ -50,23 +56,34 @@ export const actions: Actions = {
 			return fail(400, { message: "Invalid status" });
 		}
 
-		const id = generateId(10);
+		// Get existing page to check published status
+		const [existing] = await db
+			.select({ status: pages.status, publishedAt: pages.publishedAt })
+			.from(pages)
+			.where(eq(pages.id, params.id));
+
+		const publishedAt =
+			status === "published" && existing?.status !== "published"
+				? new Date()
+				: (existing?.publishedAt ?? null);
 
 		try {
-			await db.insert(pages).values({
-				id,
-				title,
-				slug: finalSlug,
-				content,
-				template: template as "default" | "landing" | "blog",
-				status: status as "draft" | "published" | "archived",
-				authorId: locals.user!.id,
-				publishedAt: status === "published" ? new Date() : null,
-			});
+			await db
+				.update(pages)
+				.set({
+					title,
+					slug: finalSlug,
+					content,
+					template: template as "default" | "landing" | "blog",
+					status: status as "draft" | "published" | "archived",
+					updatedAt: new Date(),
+					publishedAt,
+				})
+				.where(eq(pages.id, params.id));
 		} catch {
 			return fail(400, { message: "A page with this slug already exists" });
 		}
 
-		redirect(302, "/content");
+		redirect(302, "/dashboard/content");
 	},
 };

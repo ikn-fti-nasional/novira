@@ -3,6 +3,6 @@ import { requireRoleOrRedirect, PAGE_ACCESS } from "$lib/authorize.js";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/audit"]]);
+	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/dashboard/audit"]]);
 	return { auditLogList: await listAuditLog() };
 };

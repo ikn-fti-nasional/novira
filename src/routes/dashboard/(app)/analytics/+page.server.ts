@@ -6,7 +6,7 @@ import { sql, eq } from "drizzle-orm";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/analytics"]]);
+	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/dashboard/analytics"]]);
 	// User signups per month
 	const signupsPerMonth = await db
 		.select({

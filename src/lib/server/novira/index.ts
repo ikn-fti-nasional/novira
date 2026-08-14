@@ -1,7 +1,6 @@
 import {
 	MOCK_PROVINSI,
 	MOCK_KABUPATEN_KOTA,
-	MOCK_KAMERA,
 	MOCK_INSIDEN,
 	MOCK_SKOR_WILAYAH,
 	MOCK_PETUGAS,
@@ -23,6 +22,8 @@ import type {
 	TrenSkorKecamatan,
 	EksekutifKpiStats,
 } from "$lib/types/novira.js";
+import { db } from "$lib/server/db/index.js";
+import { cameras } from "$lib/server/db/schema.js";
 
 /**
  * Seam data domain NOVIRA — satu-satunya pintu masuk data operasional
@@ -48,7 +49,24 @@ export async function listKabupatenKota() {
 }
 
 export async function listKamera(): Promise<Kamera[]> {
-	return MOCK_KAMERA;
+	const rows = await db.select().from(cameras).orderBy(cameras.nama);
+	return rows.map((cam) => ({
+		id: cam.id,
+		nama: cam.nama,
+		lokasi: cam.kecamatan ?? cam.kota,
+		kelurahan: "",
+		kecamatan: cam.kecamatan ?? "",
+		kabupatenKota: cam.kota,
+		provinsi: "",
+		latitude: Number(cam.latitude ?? 0),
+		longitude: Number(cam.longitude ?? 0),
+		status: cam.status,
+		jumlahObjekTerdeteksi: 0,
+		statusDeteksi: "NORMAL",
+		urlStream: cam.urlStream ?? undefined,
+		urlSnapshot: cam.urlSnapshot ?? undefined,
+		fps: 0,
+	}));
 }
 
 export async function listInsiden(): Promise<Insiden[]> {
@@ -94,9 +112,10 @@ export async function listLeaderboardExpanded(): Promise<SkorKebersihanWilayah[]
 
 /** KPI domain NOVIRA — diturunkan dari data kamera/insiden/tren (bukan DB user). */
 export async function ringkasanKpi() {
+	const kamera = await db.select().from(cameras);
 	const insidenAktif = MOCK_INSIDEN.filter((i) => i.status === "AKTIF").length;
-	const cctvOnline = MOCK_KAMERA.filter((c) => c.status === "ONLINE").length;
-	const totalCctv = MOCK_KAMERA.length;
+	const cctvOnline = kamera.filter((c) => c.status === "ONLINE").length;
+	const totalCctv = kamera.length;
 	const slaMelanggar = MOCK_INSIDEN.filter((i) => i.statusSla === "MELANGGAR_SLA").length;
 	// Volume hari ini diambil dari tren mock agar konsisten dengan grafik,
 	// bukan konstanta ajaib.
@@ -106,7 +125,7 @@ export async function ringkasanKpi() {
 		insidenAktif,
 		cctvOnline,
 		totalCctv,
-		persentaseUptimeCctv: Math.round((cctvOnline / totalCctv) * 100),
+		persentaseUptimeCctv: totalCctv === 0 ? 0 : Math.round((cctvOnline / totalCctv) * 100),
 		volumeSampahHariIniKg,
 		slaMelanggar,
 	};

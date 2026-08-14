@@ -19,7 +19,7 @@ export const GET: RequestHandler = async () => {
 			lastmod: new Date().toISOString().split("T")[0],
 		})),
 		...publishedPages.map((page) => ({
-			loc: `${SITE_URL}/content/${page.slug}`,
+			loc: `${SITE_URL}/dashboard/content/${page.slug}`,
 			lastmod: page.updatedAt
 				? new Date(page.updatedAt).toISOString().split("T")[0]
 				: new Date().toISOString().split("T")[0],

@@ -45,6 +45,6 @@ export const actions: Actions = {
 			return fail(400, { message: "Incorrect password" });
 		}
 
-		redirect(302, "/");
+		redirect(302, "/dashboard");
 	},
 };

@@ -3,6 +3,7 @@
 	import VideoIcon from "@lucide/svelte/icons/video";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
+	import ClipboardListIcon from "@lucide/svelte/icons/clipboard-list";
 	import BarChart3Icon from "@lucide/svelte/icons/bar-chart-3";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import UserCheckIcon from "@lucide/svelte/icons/user-check";
@@ -42,34 +43,48 @@
 		{
 			label: "Ringkasan Eksekutif",
 			items: [
-				{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
-				{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: TrophyIcon },
-				{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
-				{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
-				{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
-				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+				{ title: "Beranda Dasbor", url: "/dashboard", icon: LayoutDashboardIcon },
+				{ title: "Dashboard Eksekutif", url: "/dashboard/eksekutif", icon: TrophyIcon },
+				{ title: "Pemantauan Langsung", url: "/dashboard/monitoring", icon: VideoIcon },
+				{
+					title: "Insiden & Alert",
+					url: "/dashboard/incidents",
+					icon: AlertTriangleIcon,
+					badge: "14",
+				},
+				{ title: "Peta Titik Rawan", url: "/dashboard/hotspots", icon: MapPinIcon },
+				{ title: "Analitik Kebersihan", url: "/dashboard/analytics", icon: BarChart3Icon },
 			],
 		},
 		{
 			label: "Manajemen Operasional",
 			items: [
-				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
-				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
-				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+				{ title: "Kamera CCTV", url: "/dashboard/cameras", icon: CameraIcon },
+				{ title: "Petugas Lapangan", url: "/dashboard/officers", icon: UserCheckIcon },
+				{
+					title: "Laporan Masyarakat",
+					url: "/dashboard/laporan-masyarakat",
+					icon: ClipboardListIcon,
+				},
+				{ title: "Peringkat Wilayah", url: "/dashboard/area-ranking", icon: TrophyIcon },
 			],
 		},
 		{
 			label: "Tata Kelola",
 			items: [
-				{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-				{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
+				{
+					title: "Laporan Wilayah & Provinsi",
+					url: "/dashboard/laporan-wilayah",
+					icon: FileSpreadsheetIcon,
+				},
+				{ title: "Audit & Log Aktivitas", url: "/dashboard/audit", icon: ShieldCheckIcon },
 				{
 					title: "Notifikasi Sistem",
-					url: "/notifications",
+					url: "/dashboard/notifications",
 					icon: BellIcon,
 					badge: notificationCount > 0 ? String(notificationCount) : undefined,
 				},
-				{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
+				{ title: "Pengaturan Sistem", url: "/dashboard/settings", icon: SettingsIcon },
 			],
 		},
 	]);
@@ -78,10 +93,14 @@
 		{
 			label: "Ringkasan Eksekutif",
 			items: [
-				{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: LayoutDashboardIcon },
-				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-				{ title: "Laporan Eksekutif", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+				{ title: "Dashboard Eksekutif", url: "/dashboard/eksekutif", icon: LayoutDashboardIcon },
+				{ title: "Peringkat Wilayah", url: "/dashboard/area-ranking", icon: TrophyIcon },
+				{
+					title: "Laporan Eksekutif",
+					url: "/dashboard/laporan-wilayah",
+					icon: FileSpreadsheetIcon,
+				},
+				{ title: "Analitik Kebersihan", url: "/dashboard/analytics", icon: BarChart3Icon },
 			],
 		},
 		{
@@ -89,7 +108,7 @@
 			items: [
 				{
 					title: "Notifikasi Sistem",
-					url: "/notifications",
+					url: "/dashboard/notifications",
 					icon: BellIcon,
 					badge: notificationCount > 0 ? String(notificationCount) : undefined,
 				},
@@ -159,7 +178,12 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton size="lg">
 					{#snippet child({ props })}
-						<a href="/" {...props} onclick={handleNavigate} class="flex items-center gap-3">
+						<a
+							href="/dashboard"
+							{...props}
+							onclick={handleNavigate}
+							class="flex items-center gap-3"
+						>
 							<div class="flex aspect-square size-10 items-center justify-center">
 								<img
 									src="/novira-logo.png"
@@ -255,7 +279,7 @@
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item onclick={handleNavigate}>
 							{#snippet child({ props })}
-								<a href="/settings" {...props}>
+								<a href="/dashboard/settings" {...props}>
 									<UserIcon class="mr-2 size-4" />
 									Profil Saya
 								</a>
@@ -263,7 +287,7 @@
 						</DropdownMenu.Item>
 						<DropdownMenu.Item onclick={handleNavigate}>
 							{#snippet child({ props })}
-								<a href="/notifications" {...props}>
+								<a href="/dashboard/notifications" {...props}>
 									<BellRingIcon class="mr-2 size-4" />
 									Notifikasi &amp; Alert
 								</a>
@@ -272,7 +296,7 @@
 						{#if isAdmin}
 							<DropdownMenu.Item onclick={handleNavigate}>
 								{#snippet child({ props })}
-									<a href="/audit" {...props}>
+									<a href="/dashboard/audit" {...props}>
 										<ShieldCheckIcon class="mr-2 size-4" />
 										Log Audit Sistem
 									</a>

@@ -9,7 +9,7 @@ import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) redirect(302, "/");
+	if (locals.user) redirect(302, "/dashboard");
 };
 
 export const actions: Actions = {
@@ -77,6 +77,6 @@ export const actions: Actions = {
 		});
 		setSessionCookie(cookies, token, session.expiresAt);
 
-		redirect(302, "/");
+		redirect(302, "/dashboard");
 	},
 };

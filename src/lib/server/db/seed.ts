@@ -7,6 +7,8 @@ import {
 	appSettings,
 	sessions,
 	passwordResetTokens,
+	cameras,
+	publicReports,
 } from "./schema.js";
 import { hashPassword } from "../password.js";
 import { generateId } from "../id.js";
@@ -31,6 +33,8 @@ export async function seedDemo() {
 	// with a foreign-key violation.
 	await db.delete(notifications);
 	await db.delete(pages);
+	await db.delete(cameras);
+	await db.delete(publicReports);
 	await db.delete(sessions);
 	await db.delete(passwordResetTokens);
 	await db.delete(appSettings);
@@ -1313,6 +1317,33 @@ export async function seedDemo() {
 			updatedAt: new Date(),
 		});
 	}
+
+	// --- CAMERAS ---
+	console.log("Creating cameras...");
+	const cameraData = [
+		{ nama: "CCTV Sudirman 1", kota: "Bandung", kecamatan: "Bandung Wetan" },
+		{ nama: "CCTV Sudirman 2", kota: "Bandung", kecamatan: "Cicendo" },
+		{ nama: "CCTV Asia Afrika", kota: "Bandung", kecamatan: "Regol" },
+		{ nama: "CCTV Kebon Kelapa", kota: "Jakarta Pusat", kecamatan: "Gambir" },
+		{ nama: "CCTV Thamrin", kota: "Jakarta Pusat", kecamatan: "Menteng" },
+		{ nama: "CCTV Tugu Muda", kota: "Semarang", kecamatan: "Semarang Tengah" },
+		{ nama: "CCTV Simpang Lima", kota: "Semarang", kecamatan: "Semarang Selatan" },
+		{ nama: "CCTV Tunjungan", kota: "Surabaya", kecamatan: "Genteng" },
+		{ nama: "CCTV Gubernur Suryo", kota: "Surabaya", kecamatan: "Gubeng" },
+		{ nama: "CCTV Malioboro", kota: "Yogyakarta", kecamatan: "Gedongtengen" },
+	];
+
+	await db.insert(cameras).values(
+		cameraData.map((c) => ({
+			id: generateId(10),
+			nama: c.nama,
+			kota: c.kota,
+			kecamatan: c.kecamatan,
+			status: "OFFLINE" as const,
+		}))
+	);
+	console.log(`  Created ${cameraData.length} cameras`);
+
 	console.log(`  Created ${settingsData.length} app settings`);
 
 	console.log("\nSeed complete!");

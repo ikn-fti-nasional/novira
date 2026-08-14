@@ -55,49 +55,49 @@
 	const allNavItems: NavItem[] = [
 		{
 			label: "Dashboard",
-			href: "/",
+			href: "/dashboard",
 			icon: LayoutDashboardIcon,
 			keywords: ["home", "overview", "kpi"],
 		},
 		{
 			label: "Analytics",
-			href: "/analytics",
+			href: "/dashboard/analytics",
 			icon: BarChart3Icon,
 			keywords: ["charts", "stats", "reports"],
 		},
 		{
 			label: "Users",
-			href: "/users",
+			href: "/dashboard/users",
 			icon: UsersIcon,
 			keywords: ["accounts", "members", "people"],
 		},
 		{
 			label: "Content",
-			href: "/content",
+			href: "/dashboard/content",
 			icon: FileTextIcon,
 			keywords: ["pages", "blog", "articles"],
 		},
 		{
 			label: "Roles",
-			href: "/roles",
+			href: "/dashboard/roles",
 			icon: ShieldIcon,
 			keywords: ["permissions", "access", "admin"],
 		},
 		{
 			label: "Notifications",
-			href: "/notifications",
+			href: "/dashboard/notifications",
 			icon: BellIcon,
 			keywords: ["alerts", "messages"],
 		},
 		{
 			label: "Database",
-			href: "/database",
+			href: "/dashboard/database",
 			icon: DatabaseIcon,
 			keywords: ["tables", "sql", "storage"],
 		},
 		{
 			label: "Settings",
-			href: "/settings",
+			href: "/dashboard/settings",
 			icon: SettingsIcon,
 			keywords: ["preferences", "profile", "config"],
 		},
@@ -262,7 +262,7 @@
 						<Command.Item
 							value="New Page"
 							keywords={["create", "add", "content"]}
-							onSelect={() => navigate("/content/new")}
+							onSelect={() => navigate("/dashboard/content/new")}
 							class="data-[selected]:bg-accent data-[selected]:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none"
 						>
 							<PlusIcon class="text-muted-foreground size-4" />

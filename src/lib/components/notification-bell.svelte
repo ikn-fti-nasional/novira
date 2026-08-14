@@ -114,7 +114,7 @@
 		</div>
 		<div class="border-t px-4 py-2">
 			<a
-				href="/notifications"
+				href="/dashboard/notifications"
 				class="text-primary block text-center text-xs font-medium hover:underline"
 			>
 				View all notifications

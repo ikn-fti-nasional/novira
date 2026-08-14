@@ -15,16 +15,16 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	// Read-only access guard for executive roles
 	if (hasRole(locals.user, EXECUTIVE_ROLES)) {
 		const restrictedPaths = [
-			"/cameras",
-			"/users",
-			"/settings",
-			"/roles",
-			"/database",
-			"/monitoring",
-			"/incidents",
+			"/dashboard/cameras",
+			"/dashboard/users",
+			"/dashboard/settings",
+			"/dashboard/roles",
+			"/dashboard/database",
+			"/dashboard/monitoring",
+			"/dashboard/incidents",
 		];
 		if (restrictedPaths.some((path) => url.pathname.startsWith(path))) {
-			redirect(302, "/eksekutif");
+			redirect(302, "/dashboard/eksekutif");
 		}
 	}
 
