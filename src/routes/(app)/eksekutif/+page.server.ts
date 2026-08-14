@@ -7,19 +7,11 @@ import {
 	listProvinsi,
 	listKabupatenKota,
 } from "$lib/server/novira/index.js";
-import { requireRoleOrRedirect } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, PAGE_ACCESS } from "$lib/authorize.js";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, [
-		"admin",
-		"admin_dlh",
-		"kepala_dinas",
-		"walikota",
-		"petugas_lapangan",
-		"editor",
-		"viewer",
-	]);
+	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/eksekutif"]]);
 
 	const [
 		kpi,

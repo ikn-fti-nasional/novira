@@ -10,8 +10,15 @@
 	import BellIcon from "@lucide/svelte/icons/bell";
 	import DatabaseIcon from "@lucide/svelte/icons/database";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
+	import { canAccessRole } from "$lib/authorize.js";
 
-	const apps = [
+	type Props = {
+		role: string;
+	};
+
+	let { role }: Props = $props();
+
+	const allApps = [
 		{ label: "Dashboard", href: "/", icon: LayoutDashboardIcon },
 		{ label: "Analytics", href: "/analytics", icon: BarChart3Icon },
 		{ label: "Users", href: "/users", icon: UsersIcon },
@@ -21,6 +28,8 @@
 		{ label: "Database", href: "/database", icon: DatabaseIcon },
 		{ label: "Settings", href: "/settings", icon: SettingsIcon },
 	];
+
+	const apps = $derived(allApps.filter((app) => canAccessRole(role, app.href)));
 
 	let open = $state(false);
 </script>

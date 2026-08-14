@@ -3,6 +3,7 @@ import { db } from "$lib/server/db/index.js";
 import { notifications, appSettings } from "$lib/server/db/schema.js";
 import { visibleTo } from "$lib/server/db/notification-visibility.js";
 import { countAll } from "$lib/server/db/helpers.js";
+import { EXECUTIVE_ROLES, hasRole } from "$lib/authorize.js";
 import { eq, and, desc } from "drizzle-orm";
 import type { LayoutServerLoad } from "./$types.js";
 
@@ -12,9 +13,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	}
 
 	// Read-only access guard for executive roles
-	const isExecutive =
-		locals.user.role === "kepala_dinas" || locals.user.role === "walikota";
-	if (isExecutive) {
+	if (hasRole(locals.user, EXECUTIVE_ROLES)) {
 		const restrictedPaths = [
 			"/cameras",
 			"/users",

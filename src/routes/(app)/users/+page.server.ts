@@ -9,19 +9,23 @@ import {
 import { createUser } from "$lib/server/db/users.js";
 import { fail } from "@sveltejs/kit";
 import { hashPassword } from "$lib/server/password.js";
-import { requireRoleOrRedirect, requireRoleOrFail, type Role } from "$lib/server/authorize.js";
+import {
+	requireRoleOrRedirect,
+	requireRoleOrFail,
+	SYSTEM_ADMIN_ROLES,
+	type Role,
+} from "$lib/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { eq, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 const VALID_ROLES: readonly Role[] = [
 	"admin",
-	"admin_dlh",
+	"operator",
+	"kepala_seksi",
 	"kepala_dinas",
 	"walikota",
 	"petugas_lapangan",
-	"editor",
-	"viewer",
 ];
 
 function isRole(value: string): value is Role {
@@ -44,7 +48,7 @@ async function deleteUserRows(ids: string[]) {
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, ["admin"]);
+	requireRoleOrRedirect(locals.user, [...SYSTEM_ADMIN_ROLES]);
 
 	const allUsers = await db
 		.select({
@@ -63,7 +67,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		const denied = requireRoleOrFail(locals.user, [...SYSTEM_ADMIN_ROLES]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const name = formData.get("name");
@@ -114,7 +118,7 @@ export const actions: Actions = {
 	},
 
 	update: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		const denied = requireRoleOrFail(locals.user, [...SYSTEM_ADMIN_ROLES]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const id = formData.get("id");
@@ -165,7 +169,7 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		const denied = requireRoleOrFail(locals.user, [...SYSTEM_ADMIN_ROLES]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const id = formData.get("id");
@@ -197,7 +201,7 @@ export const actions: Actions = {
 	},
 
 	bulkDelete: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		const denied = requireRoleOrFail(locals.user, [...SYSTEM_ADMIN_ROLES]);
 		if (denied) return denied;
 		const formData = await request.formData();
 		const idsRaw = formData.get("ids");

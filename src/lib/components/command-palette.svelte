@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { Command } from "bits-ui";
 	import * as Dialog from "$lib/components/ui/dialog/index.js";
 	import { goto } from "$app/navigation";
@@ -17,6 +18,7 @@
 	import UserIcon from "@lucide/svelte/icons/user";
 	import LoaderIcon from "@lucide/svelte/icons/loader";
 	import type { Component } from "svelte";
+	import { canAccessRole } from "$lib/authorize.js";
 
 	type SearchResult = {
 		type: "user" | "page" | "notification";
@@ -33,13 +35,24 @@
 		keywords: string[];
 	};
 
+	type Props = {
+		role: string;
+	};
+
+	let { role }: Props = $props();
+
 	let open = $state(false);
 	let query = $state("");
 	let searchResults = $state<SearchResult[]>([]);
 	let loading = $state(false);
+	let isMac = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 
-	const navItems: NavItem[] = [
+	onMount(() => {
+		isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+	});
+
+	const allNavItems: NavItem[] = [
 		{
 			label: "Dashboard",
 			href: "/",
@@ -89,6 +102,10 @@
 			keywords: ["preferences", "profile", "config"],
 		},
 	];
+
+	const navItems: NavItem[] = $derived(
+		allNavItems.filter((item) => canAccessRole(role, item.href))
+	);
 
 	function resultIcon(type: string) {
 		switch (type) {
@@ -153,7 +170,11 @@
 	<kbd
 		class="bg-background pointer-events-none hidden h-5 items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium sm:inline-flex"
 	>
-		<span class="text-xs">&#8984;</span>K
+		{#if isMac}
+			<span class="text-xs">&#8984;</span>K
+		{:else}
+			<span class="text-xs">Ctrl</span>&nbsp;K
+		{/if}
 	</kbd>
 </button>
 

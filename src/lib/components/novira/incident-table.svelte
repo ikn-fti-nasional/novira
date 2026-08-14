@@ -21,7 +21,11 @@
 	let insidenTersaring = $derived(
 		filterStatus === "SEMUA"
 			? insidenList
-			: insidenList.filter((i) => i.status === filterStatus || (filterStatus === "MELANGGAR_SLA" && i.statusSla === "MELANGGAR_SLA"))
+			: insidenList.filter(
+					(i) =>
+						i.status === filterStatus ||
+						(filterStatus === "MELANGGAR_SLA" && i.statusSla === "MELANGGAR_SLA")
+				)
 	);
 
 	function getBadgeKeparahanClass(keparahan: string) {
@@ -61,19 +65,24 @@
 
 	function formatNamaStatus(status: string) {
 		switch (status) {
-			case "AKTIF": return "AKTIF";
-			case "PERINGATAN": return "PERINGATAN";
-			case "SELESAI": return "SELESAI";
-			case "POSITIF_PALSU": return "POSITIF PALSU";
-			default: return status;
+			case "AKTIF":
+				return "AKTIF";
+			case "PERINGATAN":
+				return "PERINGATAN";
+			case "SELESAI":
+				return "SELESAI";
+			case "POSITIF_PALSU":
+				return "POSITIF PALSU";
+			default:
+				return status;
 		}
 	}
 </script>
 
 <Card.Root class="border-border/80 shadow-md">
-	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-		<div>
-			<div class="flex items-center gap-2">
+	<Card.Header class="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 pb-3">
+		<div class="min-w-0">
+			<div class="flex flex-wrap items-center gap-2">
 				<Card.Title class="text-xl font-bold tracking-tight">
 					Daftar Peringatan Insiden Sampah
 				</Card.Title>
@@ -135,11 +144,16 @@
 						<!-- Keparahan -->
 						<Table.Cell>
 							<div class="flex flex-col gap-1">
-								<Badge variant="outline" class={`w-fit text-[10px] uppercase ${getBadgeKeparahanClass(insiden.keparahan)}`}>
+								<Badge
+									variant="outline"
+									class={`w-fit text-[10px] uppercase ${getBadgeKeparahanClass(insiden.keparahan)}`}
+								>
 									{insiden.keparahan}
 								</Badge>
 								{#if insiden.statusSla === "MELANGGAR_SLA"}
-									<span class="inline-flex items-center gap-0.5 text-[9px] font-bold text-red-600 dark:text-red-400">
+									<span
+										class="inline-flex items-center gap-0.5 text-[9px] font-bold text-red-600 dark:text-red-400"
+									>
 										<ShieldAlertIcon class="size-3" />
 										LANGGAR SLA
 									</span>
@@ -151,7 +165,9 @@
 						<Table.Cell>
 							<div class="flex flex-col">
 								<span class="font-bold text-foreground">{insiden.lokasi}</span>
-								<span class="text-[11px] text-muted-foreground">{insiden.namaKamera} ({insiden.kelurahan})</span>
+								<span class="text-[11px] text-muted-foreground"
+									>{insiden.namaKamera} ({insiden.kelurahan})</span
+								>
 							</div>
 						</Table.Cell>
 
@@ -202,15 +218,26 @@
 						<Table.Cell class="text-right">
 							<div class="flex items-center justify-end gap-1">
 								{#if insiden.status === "AKTIF"}
-									<Button variant="outline" size="sm" class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700">
+									<Button
+										variant="outline"
+										size="sm"
+										class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
+									>
 										<UserPlusIcon class="mr-1 size-3" />
 										Tugaskan
 									</Button>
-									<Button variant="ghost" size="sm" class="h-7 text-[11px] text-slate-500 hover:text-slate-900" title="Tandai Positif Palsu">
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
+										title="Tandai Positif Palsu"
+									>
 										<XCircleIcon class="size-3.5" />
 									</Button>
 								{:else if insiden.status === "SELESAI"}
-									<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+									<span
+										class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
+									>
 										<CheckCircle2Icon class="size-3.5" />
 										Terangkut
 									</span>

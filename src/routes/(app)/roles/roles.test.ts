@@ -32,9 +32,9 @@ describe("Roles page", () => {
 	describe("load", () => {
 		it("returns roles with user counts", async () => {
 			await createTestUser(testDb, {
-				email: "editor@test.com",
-				username: "editor",
-				role: "editor",
+				email: "operator@test.com",
+				username: "operator",
+				role: "operator",
 			});
 
 			const result: any = await load({
@@ -42,7 +42,7 @@ describe("Roles page", () => {
 			} as any);
 
 			expect(result.roles).toBeInstanceOf(Array);
-			expect(result.roles.length).toBe(7);
+			expect(result.roles.length).toBe(6);
 
 			const adminRole = result.roles.find((r: any) => r.name === "admin");
 			expect(adminRole).toBeDefined();
@@ -55,7 +55,7 @@ describe("Roles page", () => {
 		it("prevents demotion of last admin", async () => {
 			const formData = createFormData({
 				userId: adminId,
-				newRole: "viewer",
+				newRole: "operator",
 			});
 
 			const result = await actions.changeRole({
@@ -67,15 +67,15 @@ describe("Roles page", () => {
 		});
 
 		it("allows role change for non-last-admin", async () => {
-			const editorId = await createTestUser(testDb, {
-				email: "editor@test.com",
-				username: "editor",
-				role: "editor",
+			const operatorId = await createTestUser(testDb, {
+				email: "operator@test.com",
+				username: "operator",
+				role: "operator",
 			});
 
 			const formData = createFormData({
-				userId: editorId,
-				newRole: "viewer",
+				userId: operatorId,
+				newRole: "petugas_lapangan",
 			});
 
 			const result = await actions.changeRole({

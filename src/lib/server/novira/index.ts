@@ -100,10 +100,7 @@ export async function ringkasanKpi() {
 	const slaMelanggar = MOCK_INSIDEN.filter((i) => i.statusSla === "MELANGGAR_SLA").length;
 	// Volume hari ini diambil dari tren mock agar konsisten dengan grafik,
 	// bukan konstanta ajaib.
-	const volumeSampahHariIniKg = MOCK_TREN_SAMPAH.reduce(
-		(sum, t) => sum + t.volumeSampahKg,
-		0
-	);
+	const volumeSampahHariIniKg = MOCK_TREN_SAMPAH.reduce((sum, t) => sum + t.volumeSampahKg, 0);
 
 	return {
 		insidenAktif,

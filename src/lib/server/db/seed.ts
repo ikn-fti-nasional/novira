@@ -42,15 +42,16 @@ export async function seedDemo() {
 	const passwordHash = await hashPassword("password123");
 
 	const userData = [
-		// Demo account — what the login page pre-fills. Viewer role so visitors
-		// can explore safely. Protected from self-modification by the (app)
-		// settings actions (see updateProfile / changePassword).
+		// Demo account — what the login page pre-fills. Restricted to the
+		// operator role so public visitors can explore without admin powers.
+		// Protected from self-modification by the (app) settings actions (see
+		// updateProfile / changePassword).
 		{
 			name: "Demo User",
 			email: "demo@novira.dev",
 			username: "demo",
 			password: "NoviraDemo2026!",
-			role: "viewer" as const,
+			role: "operator" as const,
 			daysAgo: 365,
 		},
 		// Executive demo accounts — login redirects these to /eksekutif.
@@ -68,6 +69,31 @@ export async function seedDemo() {
 			username: "kepala_dinas",
 			password: "password123",
 			role: "kepala_dinas" as const,
+			daysAgo: 365,
+		},
+		// Operational demo accounts — control room & reports.
+		{
+			name: "Sari Wulandari",
+			email: "operator@bandung.go.id",
+			username: "operator",
+			password: "password123",
+			role: "operator" as const,
+			daysAgo: 365,
+		},
+		{
+			name: "H. Agus Salim, S.Sos",
+			email: "kepala.seksi@bandung.go.id",
+			username: "kepala_seksi",
+			password: "password123",
+			role: "kepala_seksi" as const,
+			daysAgo: 365,
+		},
+		{
+			name: "Budi Santoso",
+			email: "petugas@bandung.go.id",
+			username: "petugas",
+			password: "password123",
+			role: "petugas_lapangan" as const,
 			daysAgo: 365,
 		},
 		// 12 months ago (2 users)
@@ -90,14 +116,14 @@ export async function seedDemo() {
 			name: "Marcus Johnson",
 			email: "marcus@novira.dev",
 			username: "marcus",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 340,
 		},
 		{
 			name: "Elena Rodriguez",
 			email: "elena@novira.dev",
 			username: "elena",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 332,
 		},
 		// 10 months ago (3 users)
@@ -105,7 +131,7 @@ export async function seedDemo() {
 			name: "James Park",
 			email: "james@novira.dev",
 			username: "james",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 310,
 		},
 		{
@@ -119,7 +145,7 @@ export async function seedDemo() {
 			name: "Alex Turner",
 			email: "alex@novira.dev",
 			username: "alex",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 298,
 		},
 		// 9 months ago (3 users)
@@ -127,21 +153,21 @@ export async function seedDemo() {
 			name: "Mei Lin",
 			email: "mei@novira.dev",
 			username: "mei",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 278,
 		},
 		{
 			name: "David Kim",
 			email: "david@novira.dev",
 			username: "david",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 270,
 		},
 		{
 			name: "Rachel Foster",
 			email: "rachel@novira.dev",
 			username: "rachel",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 265,
 		},
 		// 8 months ago (3 users)
@@ -149,21 +175,21 @@ export async function seedDemo() {
 			name: "Olivia Brown",
 			email: "olivia@novira.dev",
 			username: "olivia",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 248,
 		},
 		{
 			name: "Lucas Miller",
 			email: "lucas@novira.dev",
 			username: "lucas",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 242,
 		},
 		{
 			name: "Anya Petrov",
 			email: "anya@novira.dev",
 			username: "anya",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 235,
 		},
 		// 7 months ago (4 users)
@@ -171,21 +197,21 @@ export async function seedDemo() {
 			name: "Noah Williams",
 			email: "noah@novira.dev",
 			username: "noah",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 218,
 		},
 		{
 			name: "Zara Ahmed",
 			email: "zara@novira.dev",
 			username: "zara",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 212,
 		},
 		{
 			name: "Carlos Diaz",
 			email: "carlos@novira.dev",
 			username: "carlos",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 208,
 		},
 		{
@@ -200,28 +226,28 @@ export async function seedDemo() {
 			name: "Raj Patel",
 			email: "raj@novira.dev",
 			username: "raj",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 188,
 		},
 		{
 			name: "Emma Davis",
 			email: "emma@novira.dev",
 			username: "emma",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 182,
 		},
 		{
 			name: "Felix Larsson",
 			email: "felix@novira.dev",
 			username: "felix",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 178,
 		},
 		{
 			name: "Leila Hassan",
 			email: "leila@novira.dev",
 			username: "leila",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 172,
 		},
 		// 5 months ago (5 users)
@@ -229,28 +255,28 @@ export async function seedDemo() {
 			name: "Tyler Brooks",
 			email: "tyler@novira.dev",
 			username: "tyler",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 158,
 		},
 		{
 			name: "Yuki Tanaka",
 			email: "yuki@novira.dev",
 			username: "yuki",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 152,
 		},
 		{
 			name: "Grace Wong",
 			email: "grace@novira.dev",
 			username: "grace",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 148,
 		},
 		{
 			name: "Liam O'Brien",
 			email: "liam@novira.dev",
 			username: "liam",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 142,
 		},
 		{
@@ -265,35 +291,35 @@ export async function seedDemo() {
 			name: "Oscar Reyes",
 			email: "oscar@novira.dev",
 			username: "oscar",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 125,
 		},
 		{
 			name: "Hannah Lee",
 			email: "hannah@novira.dev",
 			username: "hannah",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 118,
 		},
 		{
 			name: "Ben Carter",
 			email: "ben@novira.dev",
 			username: "ben",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 112,
 		},
 		{
 			name: "Amara Johnson",
 			email: "amara@novira.dev",
 			username: "amara",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 108,
 		},
 		{
 			name: "Kai Nakamura",
 			email: "kai@novira.dev",
 			username: "kai",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 102,
 		},
 		// 3 months ago (6 users)
@@ -301,42 +327,42 @@ export async function seedDemo() {
 			name: "Clara Fischer",
 			email: "clara@novira.dev",
 			username: "clara",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 92,
 		},
 		{
 			name: "Derek Stone",
 			email: "derek@novira.dev",
 			username: "derek",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 88,
 		},
 		{
 			name: "Fatima Al-Rashid",
 			email: "fatima@novira.dev",
 			username: "fatima",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 82,
 		},
 		{
 			name: "George Papadopoulos",
 			email: "george@novira.dev",
 			username: "george",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 78,
 		},
 		{
 			name: "Ingrid Bergstrom",
 			email: "ingrid@novira.dev",
 			username: "ingrid",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 72,
 		},
 		{
 			name: "Jordan Rivers",
 			email: "jordan@novira.dev",
 			username: "jordan",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 68,
 		},
 		// 2 months ago (6 users)
@@ -344,42 +370,42 @@ export async function seedDemo() {
 			name: "Kenji Watanabe",
 			email: "kenji@novira.dev",
 			username: "kenji",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 55,
 		},
 		{
 			name: "Laura Bianchi",
 			email: "laura@novira.dev",
 			username: "laura",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 52,
 		},
 		{
 			name: "Michael Chen",
 			email: "michael@novira.dev",
 			username: "michael",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 48,
 		},
 		{
 			name: "Nadia Kowalski",
 			email: "nadia@novira.dev",
 			username: "nadia",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 44,
 		},
 		{
 			name: "Pablo Ruiz",
 			email: "pablo@novira.dev",
 			username: "pablo",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 40,
 		},
 		{
 			name: "Quinn Taylor",
 			email: "quinn@novira.dev",
 			username: "quinn",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 38,
 		},
 		// Last month (7 users)
@@ -387,49 +413,49 @@ export async function seedDemo() {
 			name: "Ruby Anderson",
 			email: "ruby@novira.dev",
 			username: "ruby",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 28,
 		},
 		{
 			name: "Samuel Okonkwo",
 			email: "samuel@novira.dev",
 			username: "samuel",
-			role: "editor" as const,
+			role: "operator" as const,
 			daysAgo: 24,
 		},
 		{
 			name: "Tara Singh",
 			email: "tara@novira.dev",
 			username: "tara",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 20,
 		},
 		{
 			name: "Ulrich Weber",
 			email: "ulrich@novira.dev",
 			username: "ulrich",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 16,
 		},
 		{
 			name: "Valentina Costa",
 			email: "valentina@novira.dev",
 			username: "valentina",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 12,
 		},
 		{
 			name: "Wesley Morgan",
 			email: "wesley@novira.dev",
 			username: "wesley",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 6,
 		},
 		{
 			name: "Xia Zhang",
 			email: "xia@novira.dev",
 			username: "xia",
-			role: "viewer" as const,
+			role: "petugas_lapangan" as const,
 			daysAgo: 2,
 		},
 	];
@@ -450,7 +476,7 @@ export async function seedDemo() {
 			updatedAt: daysAgo(u.daysAgo),
 		});
 		userIds.push(id);
-		if (u.role === "editor" || u.role === "admin") {
+		if (u.role === "operator" || u.role === "admin") {
 			editorIds.push(id);
 		}
 	}
@@ -1276,7 +1302,7 @@ export async function seedDemo() {
 	const settingsData = [
 		{ key: "siteName", value: "Novira" },
 		{ key: "timezone", value: "America/New_York" },
-		{ key: "defaultRole", value: "viewer" },
+		{ key: "defaultRole", value: "operator" },
 		{ key: "maintenanceMode", value: "false" },
 	];
 
@@ -1295,9 +1321,7 @@ export async function seedDemo() {
 		`  ${pageData.length} pages (${pageData.filter((p) => p.status === "published").length} published, ${pageData.filter((p) => p.status === "draft").length} draft, ${pageData.filter((p) => p.status === "archived").length} archived)`
 	);
 	console.log(`  ${notificationData.length} notifications`);
-	console.log(
-		"Login: username 'demo' / password 'NoviraDemo2026!' (viewer, what the UI pre-fills)"
-	);
+	console.log("Login: username 'demo' / password 'NoviraDemo2026!' (operator)");
 	console.log(
 		"       username 'admin' / password 'password123' (admin — use to access demo reset)"
 	);

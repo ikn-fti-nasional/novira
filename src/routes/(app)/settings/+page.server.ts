@@ -3,7 +3,7 @@ import { db } from "$lib/server/db/index.js";
 import { users, sessions, appSettings } from "$lib/server/db/schema.js";
 import { seedDemo } from "$lib/server/db/seed.js";
 import { hashPassword, verifyPassword } from "$lib/server/password.js";
-import { requireRoleOrFail } from "$lib/server/authorize.js";
+import { requireRoleOrFail, isRole } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq, and, ne } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
@@ -21,7 +21,7 @@ function isProtectedDemoUser(username: string | undefined): boolean {
 const defaultSettings: Record<string, string> = {
 	siteName: "Novira",
 	timezone: "UTC",
-	defaultRole: "viewer",
+	defaultRole: "operator",
 	maintenanceMode: "false",
 };
 
@@ -182,7 +182,12 @@ export const actions: Actions = {
 		const entries: [string, string][] = [
 			["siteName", typeof siteName === "string" ? siteName : "Novira"],
 			["timezone", typeof timezone === "string" ? timezone : "UTC"],
-			["defaultRole", typeof defaultRole === "string" ? defaultRole : "viewer"],
+			// Accept only values from the authoritative role list; anything else
+			// (including legacy viewer/editor or garbage) falls back to operator.
+			[
+				"defaultRole",
+				typeof defaultRole === "string" && isRole(defaultRole) ? defaultRole : "operator",
+			],
 			["maintenanceMode", maintenanceMode === "on" ? "true" : "false"],
 		];
 

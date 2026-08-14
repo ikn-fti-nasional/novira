@@ -15,7 +15,8 @@
 	let { skorWilayahList }: Props = $props();
 
 	function getBadgeSkorClass(skor: number) {
-		if (skor >= 85) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
+		if (skor >= 85)
+			return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
 		if (skor >= 70) return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30";
 		if (skor >= 60) return "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30";
 		return "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30";
@@ -32,11 +33,15 @@
 				</Card.Title>
 			</div>
 			<Card.Description class="text-xs">
-				Skor Adipura real-time yang dihitung dari jumlah insiden &amp; kecepatan pengangkutan sampah SLA.
+				Skor Adipura real-time yang dihitung dari jumlah insiden &amp; kecepatan pengangkutan sampah
+				SLA.
 			</Card.Description>
 		</div>
 
-		<Badge variant="outline" class="border-amber-500/40 text-amber-700 dark:text-amber-400 text-[10px]">
+		<Badge
+			variant="outline"
+			class="border-amber-500/40 text-amber-700 dark:text-amber-400 text-[10px]"
+		>
 			Klasemen Mingguan
 		</Badge>
 	</Card.Header>
@@ -57,11 +62,17 @@
 				{#each skorWilayahList as area (area.kelurahan)}
 					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
 						<Table.Cell class="text-center font-bold">
-							<span class={`inline-flex size-6 items-center justify-center rounded-full text-xs ${
-								area.peringkat === 1 ? 'bg-amber-400 text-slate-950 font-bold' :
-								area.peringkat === 2 ? 'bg-slate-300 text-slate-900 font-bold' :
-								area.peringkat === 3 ? 'bg-amber-700/40 text-amber-200 font-bold' : 'bg-muted text-muted-foreground'
-							}`}>
+							<span
+								class={`inline-flex size-6 items-center justify-center rounded-full text-xs ${
+									area.peringkat === 1
+										? "bg-amber-400 text-slate-950 font-bold"
+										: area.peringkat === 2
+											? "bg-slate-300 text-slate-900 font-bold"
+											: area.peringkat === 3
+												? "bg-amber-700/40 text-amber-200 font-bold"
+												: "bg-muted text-muted-foreground"
+								}`}
+							>
 								#{area.peringkat}
 							</span>
 						</Table.Cell>
@@ -69,12 +80,17 @@
 						<Table.Cell>
 							<div class="flex flex-col">
 								<span class="font-bold text-foreground text-sm">{area.kelurahan}</span>
-								<span class="text-[11px] text-muted-foreground">{area.kecamatan}, {area.kabupatenKota}</span>
+								<span class="text-[11px] text-muted-foreground"
+									>{area.kecamatan}, {area.kabupatenKota}</span
+								>
 							</div>
 						</Table.Cell>
 
 						<Table.Cell class="text-center">
-							<Badge variant="outline" class={`text-xs font-extrabold ${getBadgeSkorClass(area.skorKebersihan)}`}>
+							<Badge
+								variant="outline"
+								class={`text-xs font-extrabold ${getBadgeSkorClass(area.skorKebersihan)}`}
+							>
 								{area.skorKebersihan} / 100
 							</Badge>
 						</Table.Cell>
@@ -89,17 +105,23 @@
 
 						<Table.Cell class="text-right">
 							{#if area.tren === "membaik"}
-								<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+								<span
+									class="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+								>
 									<TrendingUpIcon class="size-3.5" />
 									+{area.persentaseTren}%
 								</span>
 							{:else if area.tren === "menurun"}
-								<span class="inline-flex items-center gap-0.5 text-xs font-semibold text-red-600 dark:text-red-400">
+								<span
+									class="inline-flex items-center gap-0.5 text-xs font-semibold text-red-600 dark:text-red-400"
+								>
 									<TrendingDownIcon class="size-3.5" />
 									{area.persentaseTren}%
 								</span>
 							{:else}
-								<span class="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground">
+								<span
+									class="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground"
+								>
 									<MinusIcon class="size-3.5" />
 									Stabil
 								</span>

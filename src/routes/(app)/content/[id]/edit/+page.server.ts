@@ -1,11 +1,12 @@
 import { db } from "$lib/server/db/index.js";
 import { pages } from "$lib/server/db/schema.js";
 import { fail, redirect, error } from "@sveltejs/kit";
-import { requireRoleOrFail } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, requireRoleOrFail, OPERATIONAL_ROLES } from "$lib/authorize.js";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	requireRoleOrRedirect(locals.user, [...OPERATIONAL_ROLES]);
 	const [page] = await db.select().from(pages).where(eq(pages.id, params.id));
 
 	if (!page) {
@@ -26,7 +27,7 @@ function slugify(text: string): string {
 
 export const actions: Actions = {
 	default: async ({ request, params, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
 
 		const formData = await request.formData();

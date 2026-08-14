@@ -2,10 +2,11 @@ import { db } from "$lib/server/db/index.js";
 import { pages } from "$lib/server/db/schema.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { generateId } from "$lib/server/auth.js";
-import { requireRoleOrFail } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, requireRoleOrFail, OPERATIONAL_ROLES } from "$lib/authorize.js";
 import type { Actions, PageServerLoad } from "./$types.js";
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	requireRoleOrRedirect(locals.user, [...OPERATIONAL_ROLES]);
 	return {};
 };
 
@@ -20,7 +21,7 @@ function slugify(text: string): string {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
 
 		const formData = await request.formData();

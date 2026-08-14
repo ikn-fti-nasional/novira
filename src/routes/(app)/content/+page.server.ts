@@ -1,11 +1,12 @@
 import { db } from "$lib/server/db/index.js";
 import { pages, users } from "$lib/server/db/schema.js";
-import { requireRoleOrFail } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, requireRoleOrFail, OPERATIONAL_ROLES } from "$lib/authorize.js";
 import { fail } from "@sveltejs/kit";
 import { eq, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	requireRoleOrRedirect(locals.user, [...OPERATIONAL_ROLES]);
 	const allPages = await db
 		.select({
 			id: pages.id,
@@ -27,7 +28,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	delete: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
 
 		const formData = await request.formData();
@@ -43,7 +44,7 @@ export const actions: Actions = {
 	},
 
 	bulkDelete: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin", "editor"]);
+		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
 
 		const formData = await request.formData();

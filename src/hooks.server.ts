@@ -6,8 +6,14 @@ import {
 } from "$lib/server/auth.js";
 import { db } from "$lib/server/db/index.js";
 import { sessions } from "$lib/server/db/schema.js";
+import { migrateLegacyRoles } from "$lib/server/db/migrate-legacy-roles.js";
 import { eq } from "drizzle-orm";
 import type { Handle } from "@sveltejs/kit";
+
+// Data migration for legacy roles (viewer/editor/admin_dlh) that may still
+// exist in production databases. Idempotent and cheap-to-no-op; runs once per
+// process start so no user falls outside the new authorization groups.
+await migrateLegacyRoles();
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get(SESSION_COOKIE_NAME);

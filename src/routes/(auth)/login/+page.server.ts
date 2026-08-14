@@ -2,6 +2,7 @@ import { generateSessionToken, createSession, setSessionCookie } from "$lib/serv
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
 import { verifyPassword } from "$lib/server/password.js";
+import { EXECUTIVE_ROLES, hasRole } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
@@ -50,7 +51,7 @@ export const actions: Actions = {
 		});
 		setSessionCookie(cookies, token, session.expiresAt);
 
-		if (existingUser.role === "kepala_dinas" || existingUser.role === "walikota") {
+		if (hasRole(existingUser, EXECUTIVE_ROLES)) {
 			redirect(302, "/eksekutif");
 		}
 

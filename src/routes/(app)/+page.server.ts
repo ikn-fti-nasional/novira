@@ -46,7 +46,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		skorWilayahList,
 		petugasList,
 		trenSampahList,
-		auditLogList,
 	] = await Promise.all([
 		listProvinsi(),
 		listKabupatenKota(),
@@ -55,8 +54,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		listSkorWilayah(),
 		listPetugas(),
 		listTrenSampah(),
-		listAuditLog(),
 	]);
+
+	// Audit records are sensitive — never expose them to non-admin roles, even
+	// though the UI only renders the audit card for admins.
+	const auditLogList = locals.user.role === "admin" ? await listAuditLog() : [];
 
 	return {
 		user: locals.user,

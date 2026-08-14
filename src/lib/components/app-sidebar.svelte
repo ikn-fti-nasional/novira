@@ -20,6 +20,7 @@
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
+	import { canAccessRole } from "$lib/authorize.js";
 
 	type Props = {
 		user: {
@@ -35,15 +36,88 @@
 
 	const isExecutive = $derived(user.role === "kepala_dinas" || user.role === "walikota");
 
+	const isAdmin = $derived(user.role === "admin");
+
+	const operationalNavigation: NavGroup[] = $derived([
+		{
+			label: "Ringkasan Eksekutif",
+			items: [
+				{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
+				{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: TrophyIcon },
+				{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
+				{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
+				{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
+				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+			],
+		},
+		{
+			label: "Manajemen Operasional",
+			items: [
+				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
+				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
+				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+			],
+		},
+		{
+			label: "Tata Kelola",
+			items: [
+				{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
+				{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
+				{
+					title: "Notifikasi Sistem",
+					url: "/notifications",
+					icon: BellIcon,
+					badge: notificationCount > 0 ? String(notificationCount) : undefined,
+				},
+				{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
+			],
+		},
+	]);
+
+	const executiveNavigation: NavGroup[] = $derived([
+		{
+			label: "Ringkasan Eksekutif",
+			items: [
+				{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: LayoutDashboardIcon },
+				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
+				{ title: "Laporan Eksekutif", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
+				{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
+			],
+		},
+		{
+			label: "Tata Kelola & Alert",
+			items: [
+				{
+					title: "Notifikasi Sistem",
+					url: "/notifications",
+					icon: BellIcon,
+					badge: notificationCount > 0 ? String(notificationCount) : undefined,
+				},
+			],
+		},
+	]);
+
+	const navigation: NavGroup[] = $derived(
+		isExecutive
+			? executiveNavigation
+			: operationalNavigation.map((group) => ({
+					label: group.label,
+					items: group.items.filter((item) => canAccessRole(user.role, item.url)),
+				}))
+	);
+
 	function getRoleTitle(role: string) {
 		switch (role) {
 			case "walikota":
-				return "Wali Kota Bandung (Eksekutif)";
+				return "Wali Kota (Eksekutif)";
 			case "kepala_dinas":
 				return "Kepala Dinas LH (Eksekutif)";
-			case "admin_dlh":
 			case "admin":
-				return "Super Admin (Nasional)";
+				return "Admin IT (Sistem)";
+			case "operator":
+				return "Operator DLH";
+			case "kepala_seksi":
+				return "Kepala Seksi";
 			case "petugas_lapangan":
 				return "Petugas Lapangan";
 			default:
@@ -77,67 +151,6 @@
 		label: string;
 		items: NavItem[];
 	};
-
-	const navigation: NavGroup[] = $derived(
-		isExecutive
-			? [
-					{
-						label: "Ringkasan Eksekutif",
-						items: [
-							{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: LayoutDashboardIcon },
-							{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-							{ title: "Laporan Eksekutif", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-							{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
-						],
-					},
-					{
-						label: "Tata Kelola & Alert",
-						items: [
-							{
-								title: "Notifikasi Sistem",
-								url: "/notifications",
-								icon: BellIcon,
-								badge: notificationCount > 0 ? String(notificationCount) : undefined,
-							},
-						],
-					},
-				]
-			: [
-					{
-						label: "Ringkasan Eksekutif",
-						items: [
-							{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
-							{ title: "Dashboard Eksekutif", url: "/eksekutif", icon: TrophyIcon },
-							{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
-							{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
-							{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
-							{ title: "Analitik Kebersihan", url: "/analytics", icon: BarChart3Icon },
-						],
-					},
-					{
-						label: "Manajemen Operasional",
-						items: [
-							{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
-							{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
-							{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-						],
-					},
-					{
-						label: "Super Admin & Tata Kelola",
-						items: [
-							{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-							{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
-							{
-								title: "Notifikasi Sistem",
-								url: "/notifications",
-								icon: BellIcon,
-								badge: notificationCount > 0 ? String(notificationCount) : undefined,
-							},
-							{ title: "Pengaturan Sistem", url: "/settings", icon: SettingsIcon },
-						],
-					},
-				]
-	);
 </script>
 
 <Sidebar.Root>
@@ -148,11 +161,20 @@
 					{#snippet child({ props })}
 						<a href="/" {...props} onclick={handleNavigate} class="flex items-center gap-3">
 							<div class="flex aspect-square size-10 items-center justify-center">
-								<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
+								<img
+									src="/novira-logo.png"
+									alt="Logo NOVIRA"
+									class="h-full w-full object-contain"
+								/>
 							</div>
 							<div class="flex flex-col gap-0.5 leading-none">
-								<span class="font-extrabold tracking-tight text-emerald-950 dark:text-emerald-50 text-base">NOVIRA</span>
-								<span class="text-[10px] text-muted-foreground font-semibold">Sistem Pengawasan Lingkungan</span>
+								<span
+									class="font-extrabold tracking-tight text-emerald-950 dark:text-emerald-50 text-base"
+									>NOVIRA</span
+								>
+								<span class="text-[10px] text-muted-foreground font-semibold"
+									>Sistem Pengawasan Lingkungan</span
+								>
 							</div>
 						</a>
 					{/snippet}
@@ -164,7 +186,10 @@
 	<Sidebar.Content>
 		{#each navigation as group (group.label)}
 			<Sidebar.Group>
-				<Sidebar.GroupLabel class="text-xs uppercase tracking-wider font-semibold text-muted-foreground/80">{group.label}</Sidebar.GroupLabel>
+				<Sidebar.GroupLabel
+					class="text-xs uppercase tracking-wider font-semibold text-muted-foreground/80"
+					>{group.label}</Sidebar.GroupLabel
+				>
 				<Sidebar.GroupContent>
 					<Sidebar.Menu>
 						{#each group.items as item (item.title)}
@@ -178,7 +203,11 @@
 									{/snippet}
 								</Sidebar.MenuButton>
 								{#if item.badge}
-									<Sidebar.MenuBadge class={item.title === 'Insiden & Alert' ? 'bg-red-500/15 text-red-700 dark:text-red-400 font-semibold' : ''}>{item.badge}</Sidebar.MenuBadge>
+									<Sidebar.MenuBadge
+										class={item.title === "Insiden & Alert"
+											? "bg-red-500/15 text-red-700 dark:text-red-400 font-semibold"
+											: ""}>{item.badge}</Sidebar.MenuBadge
+									>
 								{/if}
 							</Sidebar.MenuItem>
 						{/each}
@@ -200,11 +229,15 @@
 								{...props}
 							>
 								<Avatar.Root class="size-8 rounded-lg">
-									<Avatar.Fallback class="rounded-lg bg-emerald-600 text-white font-bold">{getInitials(user.name)}</Avatar.Fallback>
+									<Avatar.Fallback class="rounded-lg bg-emerald-600 text-white font-bold"
+										>{getInitials(user.name)}</Avatar.Fallback
+									>
 								</Avatar.Root>
 								<div class="grid flex-1 text-left text-sm leading-tight">
 									<span class="truncate font-bold">{user.name}</span>
-									<span class="text-muted-foreground truncate text-xs">{getRoleTitle(user.role)}</span>
+									<span class="text-muted-foreground truncate text-xs"
+										>{getRoleTitle(user.role)}</span
+									>
 								</div>
 								<ChevronDownIcon class="ml-auto size-4" />
 							</Sidebar.MenuButton>
@@ -213,7 +246,11 @@
 					<DropdownMenu.Content class="w-56" align="end" side="top">
 						<DropdownMenu.Label class="flex items-center gap-2">
 							Akun Pengguna
-							<Badge variant="outline" class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30">{getRoleTitle(user.role)}</Badge>
+							<Badge
+								variant="outline"
+								class="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+								>{getRoleTitle(user.role)}</Badge
+							>
 						</DropdownMenu.Label>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item onclick={handleNavigate}>
@@ -232,14 +269,16 @@
 								</a>
 							{/snippet}
 						</DropdownMenu.Item>
-						<DropdownMenu.Item onclick={handleNavigate}>
-							{#snippet child({ props })}
-								<a href="/audit" {...props}>
-									<ShieldCheckIcon class="mr-2 size-4" />
-									Log Audit Sistem
-								</a>
-							{/snippet}
-						</DropdownMenu.Item>
+						{#if isAdmin}
+							<DropdownMenu.Item onclick={handleNavigate}>
+								{#snippet child({ props })}
+									<a href="/audit" {...props}>
+										<ShieldCheckIcon class="mr-2 size-4" />
+										Log Audit Sistem
+									</a>
+								{/snippet}
+							</DropdownMenu.Item>
+						{/if}
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item
 							variant="destructive"

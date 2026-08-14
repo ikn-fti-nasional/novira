@@ -30,7 +30,13 @@
 	// Sapaan berdasarkan waktu setempat
 	const jam = new Date().getHours();
 	const sapaan =
-		jam < 11 ? "Selamat Pagi" : jam < 15 ? "Selamat Siang" : jam < 18 ? "Selamat Sore" : "Selamat Malam";
+		jam < 11
+			? "Selamat Pagi"
+			: jam < 15
+				? "Selamat Siang"
+				: jam < 18
+					? "Selamat Sore"
+					: "Selamat Malam";
 
 	// Scope Filter Super Admin
 	let provinsiDipilih = $state<string>("SEMUA");
@@ -116,7 +122,8 @@
 					<AlertTriangleIcon class="mt-0.5 size-3.5 shrink-0" />
 					<p>
 						Data CCTV, insiden, skor wilayah, petugas, dan tren sampah pada halaman ini adalah
-						<strong>data demo/simulasi</strong>, belum terhubung ke sistem EcoVision yang sebenarnya.
+						<strong>data demo/simulasi</strong>, belum terhubung ke sistem EcoVision yang
+						sebenarnya.
 					</p>
 				</div>
 			{/if}
@@ -129,7 +136,13 @@
 					class="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 text-xs"
 				>
 					<ShieldCheckIcon class="mr-1 size-3.5" />
-					{data.user.role === "admin" ? "Akses Admin" : data.user.role === "editor" ? "Akses Editor" : "Akses Viewer"}
+					{data.user.role === "admin"
+						? "Akses Admin"
+						: data.user.role === "operator"
+							? "Akses Operator"
+							: data.user.role === "kepala_seksi"
+								? "Akses Kepala Seksi"
+								: "Akses Pemantau"}
 				</Badge>
 			</div>
 			<p class="text-muted-foreground text-sm mt-1">
@@ -226,17 +239,17 @@
 
 	<!-- Baris 2: Pemantauan Umpan CCTV & Tabel Insiden Peringatan -->
 	<div class="grid gap-6 lg:grid-cols-12">
-		<div class="lg:col-span-6">
+		<div class="min-w-0 lg:col-span-6">
 			<CctvPlayer kameraList={data.kameraList} kameraIdDipilih="CAM-003" />
 		</div>
-		<div class="lg:col-span-6">
+		<div class="min-w-0 lg:col-span-6">
 			<IncidentTable insidenList={data.insidenList} />
 		</div>
 	</div>
 
 	<!-- Baris 3: Tren Deteksi Sampah LayerChart + Peta Titik Rawan -->
 	<div class="grid gap-6 lg:grid-cols-12">
-		<Card.Root class="lg:col-span-6 border-border/80 shadow-md">
+		<Card.Root class="min-w-0 lg:col-span-6 border-border/80 shadow-md">
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
 				<div>
 					<div class="flex items-center gap-2">
@@ -291,7 +304,7 @@
 			</Card.Content>
 		</Card.Root>
 
-		<div class="lg:col-span-6">
+		<div class="min-w-0 lg:col-span-6">
 			<HotspotMap kameraList={data.kameraList} insidenList={data.insidenList} />
 		</div>
 	</div>
@@ -302,52 +315,54 @@
 	</div>
 
 	<!-- Baris 5: Log Audit & Rekam Jejak Sistem Super Admin -->
-	<Card.Root class="border-border/80 shadow-md">
-		<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-			<div>
-				<div class="flex items-center gap-2">
-					<ShieldCheckIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
-					<Card.Title class="text-xl font-bold tracking-tight">
-						Log Audit &amp; Rekam Jejak Aktivitas Sistem
-					</Card.Title>
-				</div>
-				<Card.Description class="text-xs">
-					Catatan audit terenkripsi seluruh tindakan deteksi AI, penugasan petugas, dan keputusan
-					Super Admin.
-				</Card.Description>
-			</div>
-			<a
-				href="/audit"
-				class="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
-			>
-				Lihat Seluruh Log Audit &rarr;
-			</a>
-		</Card.Header>
-		<Card.Content>
-			<div class="space-y-3">
-				{#each data.auditLogList as log (log.id)}
-					<div
-						class="flex items-start justify-between rounded-lg border bg-card p-3 text-xs shadow-xs"
-					>
-						<div class="flex flex-col gap-0.5">
-							<div class="flex items-center gap-2">
-								<span class="font-bold text-foreground">{log.tindakan}</span>
-								<Badge variant="outline" class="text-[9px] font-mono">{log.tipe}</Badge>
-							</div>
-							<p class="text-muted-foreground">{log.rincian}</p>
-							<span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold"
-								>{log.wilayah}</span
-							>
-						</div>
-						<div class="text-right">
-							<span class="font-bold text-slate-700 dark:text-slate-300">{log.pengguna}</span>
-							<p class="text-[10px] text-muted-foreground">
-								{new Date(log.waktu).toLocaleTimeString()}
-							</p>
-						</div>
+	{#if data.user.role === "admin"}
+		<Card.Root class="border-border/80 shadow-md">
+			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
+				<div>
+					<div class="flex items-center gap-2">
+						<ShieldCheckIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
+						<Card.Title class="text-xl font-bold tracking-tight">
+							Log Audit &amp; Rekam Jejak Aktivitas Sistem
+						</Card.Title>
 					</div>
-				{/each}
-			</div>
-		</Card.Content>
-	</Card.Root>
+					<Card.Description class="text-xs">
+						Catatan audit terenkripsi seluruh tindakan deteksi AI, penugasan petugas, dan keputusan
+						Super Admin.
+					</Card.Description>
+				</div>
+				<a
+					href="/audit"
+					class="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+				>
+					Lihat Seluruh Log Audit &rarr;
+				</a>
+			</Card.Header>
+			<Card.Content>
+				<div class="space-y-3">
+					{#each data.auditLogList as log (log.id)}
+						<div
+							class="flex items-start justify-between rounded-lg border bg-card p-3 text-xs shadow-xs"
+						>
+							<div class="flex flex-col gap-0.5">
+								<div class="flex items-center gap-2">
+									<span class="font-bold text-foreground">{log.tindakan}</span>
+									<Badge variant="outline" class="text-[9px] font-mono">{log.tipe}</Badge>
+								</div>
+								<p class="text-muted-foreground">{log.rincian}</p>
+								<span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold"
+									>{log.wilayah}</span
+								>
+							</div>
+							<div class="text-right">
+								<span class="font-bold text-slate-700 dark:text-slate-300">{log.pengguna}</span>
+								<p class="text-[10px] text-muted-foreground">
+									{new Date(log.waktu).toLocaleTimeString()}
+								</p>
+							</div>
+						</div>
+					{/each}
+				</div>
+			</Card.Content>
+		</Card.Root>
+	{/if}
 </div>

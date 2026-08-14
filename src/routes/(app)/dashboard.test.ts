@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-	createTestDb,
-	createTestUser,
-	createMockLocals,
-} from "$lib/server/db/test-utils.js";
+import { createTestDb, createTestUser, createMockLocals } from "$lib/server/db/test-utils.js";
 import { notifications, appSettings } from "$lib/server/db/schema.js";
 import { generateId } from "$lib/server/id.js";
 
@@ -104,6 +100,25 @@ describe("Dashboard page", () => {
 
 		expect(result.systemStatus).toHaveProperty("maintenanceMode");
 		expect(result.systemStatus.maintenanceMode).toBe(false);
+	});
+
+	it("exposes audit log records to admins only", async () => {
+		const operatorId = await createTestUser(testDb, {
+			name: "Operator",
+			email: "operator@test.com",
+			username: "operator",
+			role: "operator",
+		});
+
+		const adminResult: any = await load({
+			locals: createMockLocals(adminId),
+		} as any);
+		const operatorResult: any = await load({
+			locals: createMockLocals(operatorId, "operator"),
+		} as any);
+
+		expect(adminResult.auditLogList).toBeInstanceOf(Array);
+		expect(operatorResult.auditLogList).toEqual([]);
 	});
 
 	it("reflects maintenanceMode when the setting is stored as true", async () => {

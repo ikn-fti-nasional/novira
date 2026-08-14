@@ -8,18 +8,10 @@ export const users = pgTable("users", {
 	name: text("name").notNull(),
 	avatarUrl: text("avatar_url"),
 	role: text("role", {
-		enum: [
-			"admin",
-			"admin_dlh",
-			"kepala_dinas",
-			"walikota",
-			"petugas_lapangan",
-			"editor",
-			"viewer",
-		],
+		enum: ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota", "petugas_lapangan"],
 	})
 		.notNull()
-		.default("viewer"),
+		.default("operator"),
 	createdAt: timestamp("created_at", { mode: "date" })
 		.notNull()
 		.$defaultFn(() => new Date()),

@@ -30,9 +30,7 @@ export const actions: Actions = {
 		await db
 			.update(notifications)
 			.set({ read: true })
-			.where(
-				and(eq(notifications.id, id), visibleTo(locals.user!.id))
-			);
+			.where(and(eq(notifications.id, id), visibleTo(locals.user!.id)));
 
 		return { success: true };
 	},
@@ -41,9 +39,7 @@ export const actions: Actions = {
 		await db
 			.update(notifications)
 			.set({ read: true })
-			.where(
-				and(eq(notifications.read, false), visibleTo(locals.user!.id))
-			);
+			.where(and(eq(notifications.read, false), visibleTo(locals.user!.id)));
 
 		return { success: true };
 	},
@@ -56,11 +52,7 @@ export const actions: Actions = {
 			return fail(400, { message: "Notification ID is required" });
 		}
 
-		await db
-			.delete(notifications)
-			.where(
-				and(eq(notifications.id, id), visibleTo(locals.user!.id))
-			);
+		await db.delete(notifications).where(and(eq(notifications.id, id), visibleTo(locals.user!.id)));
 
 		return { success: true };
 	},

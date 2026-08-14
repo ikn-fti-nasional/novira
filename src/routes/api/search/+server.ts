@@ -20,13 +20,14 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const pattern = `%${escaped}%`;
 
 	// User search returns emails — restrict it to admins.
-	const userSearch = locals.user.role === "admin"
-		? db
-				.select({ id: users.id, name: users.name, email: users.email })
-				.from(users)
-				.where(or(sql`${users.name} ILIKE ${pattern}`, sql`${users.email} ILIKE ${pattern}`))
-				.limit(5)
-		: Promise.resolve([]);
+	const userSearch =
+		locals.user.role === "admin"
+			? db
+					.select({ id: users.id, name: users.name, email: users.email })
+					.from(users)
+					.where(or(sql`${users.name} ILIKE ${pattern}`, sql`${users.email} ILIKE ${pattern}`))
+					.limit(5)
+			: Promise.resolve([]);
 
 	const [userResults, pageResults, notificationResults] = await Promise.all([
 		userSearch,

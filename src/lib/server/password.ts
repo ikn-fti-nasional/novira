@@ -21,9 +21,6 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /** Verify a plaintext password against an Argon2id hash. */
-export async function verifyPassword(
-	passwordHash: string,
-	password: string
-): Promise<boolean> {
+export async function verifyPassword(passwordHash: string, password: string): Promise<boolean> {
 	return verify(passwordHash, password, ARGON2_CONFIG);
 }

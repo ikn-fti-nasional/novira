@@ -15,13 +15,13 @@ This repository is the **admin dashboard** — the piece operators, field office
 
 Indonesia produces roughly 68 million tons of waste per year, and most cities have no real-time visibility into where trash accumulates or how long it's left there. Handling is reactive (wait for a citizen report) and unmeasured (no SLA). Novira's pitch to a local government is simple: **turn the CCTV you already have into a 24/7 digital sanitation officer, with no new cameras required.**
 
-| Problem | Today | With Novira |
-| --- | --- | --- |
-| No visibility into illegal dumping spots | Manual patrols / waiting for reports | Automatic 24/7 detection from existing CCTV |
-| No measure of how long trash sits | Untracked | Automatic timer per trash pile (SLA) |
-| Sanitation crew performance is unmeasured | Manual, unreliable reporting | Response-time dashboard per area |
-| No evidence of illegal dumping | Hard to act on | Automatic event clip when trash appears |
-| No ranking of area cleanliness | Adipura award, once a year | Real-time cleanliness score per neighborhood |
+| Problem                                   | Today                                | With Novira                                  |
+| ----------------------------------------- | ------------------------------------ | -------------------------------------------- |
+| No visibility into illegal dumping spots  | Manual patrols / waiting for reports | Automatic 24/7 detection from existing CCTV  |
+| No measure of how long trash sits         | Untracked                            | Automatic timer per trash pile (SLA)         |
+| Sanitation crew performance is unmeasured | Manual, unreliable reporting         | Response-time dashboard per area             |
+| No evidence of illegal dumping            | Hard to act on                       | Automatic event clip when trash appears      |
+| No ranking of area cleanliness            | Adipura award, once a year           | Real-time cleanliness score per neighborhood |
 
 ## Who uses it
 

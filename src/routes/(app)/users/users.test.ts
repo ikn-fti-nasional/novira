@@ -52,7 +52,7 @@ describe("Users page", () => {
 				email: "new@test.com",
 				username: "newuser",
 				password: "password123",
-				role: "viewer",
+				role: "operator",
 			});
 
 			const result = await actions.create({
@@ -74,7 +74,7 @@ describe("Users page", () => {
 				email: "bad@test.com",
 				username: "AB", // too short
 				password: "password123",
-				role: "viewer",
+				role: "operator",
 			});
 
 			const result = await actions.create({
@@ -89,7 +89,7 @@ describe("Users page", () => {
 			await createTestUser(testDb, {
 				email: "existing@test.com",
 				username: "taken",
-				role: "viewer",
+				role: "operator",
 			});
 
 			const formData = createFormData({
@@ -97,7 +97,7 @@ describe("Users page", () => {
 				email: "dup@test.com",
 				username: "taken",
 				password: "password123",
-				role: "viewer",
+				role: "operator",
 			});
 
 			const result = await actions.create({
@@ -123,10 +123,10 @@ describe("Users page", () => {
 		});
 
 		it("denies non-admins from deleting users", async () => {
-			const viewerId = await createTestUser(testDb, {
-				email: "viewer@test.com",
-				username: "viewer",
-				role: "viewer",
+			const operatorId = await createTestUser(testDb, {
+				email: "operator@test.com",
+				username: "operator",
+				role: "operator",
 			});
 
 			// /users mutations are gated on the admin role (requireRoleOrFail), so a
@@ -135,20 +135,20 @@ describe("Users page", () => {
 
 			const result = await actions.delete({
 				request: createMockRequest(formData),
-				locals: createMockLocals(viewerId, "viewer"),
+				locals: createMockLocals(operatorId, "operator"),
 			} as any);
 
 			expect(result).toHaveProperty("status", 403);
 		});
 
 		it("allows deletion of non-admin users", async () => {
-			const viewerId = await createTestUser(testDb, {
-				email: "viewer@test.com",
-				username: "viewer",
-				role: "viewer",
+			const operatorId = await createTestUser(testDb, {
+				email: "operator@test.com",
+				username: "operator",
+				role: "operator",
 			});
 
-			const formData = createFormData({ id: viewerId });
+			const formData = createFormData({ id: operatorId });
 
 			const result = await actions.delete({
 				request: createMockRequest(formData),
@@ -165,7 +165,7 @@ describe("Users page", () => {
 				id: adminId,
 				name: "Admin",
 				email: "admin@test.com",
-				role: "viewer",
+				role: "operator",
 			});
 
 			const result = await actions.update({
@@ -187,7 +187,7 @@ describe("Users page", () => {
 				id: adminId,
 				name: "Admin",
 				email: "admin@test.com",
-				role: "editor",
+				role: "operator",
 			});
 
 			const result = await actions.update({
