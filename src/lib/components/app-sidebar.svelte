@@ -20,7 +20,7 @@
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
-	import { canAccessRole } from "$lib/server/authorize.js";
+	import { canAccessRole } from "$lib/authorize.js";
 
 	type Props = {
 		user: {

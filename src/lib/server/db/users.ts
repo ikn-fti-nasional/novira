@@ -1,7 +1,7 @@
 import { db } from "./index.js";
 import { users } from "./schema.js";
 import { generateId } from "../id.js";
-import type { Role } from "../authorize.js";
+import type { Role } from "$lib/authorize.js";
 
 export interface CreateUserInput {
 	name: string;

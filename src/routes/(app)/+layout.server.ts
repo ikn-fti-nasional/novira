@@ -3,7 +3,7 @@ import { db } from "$lib/server/db/index.js";
 import { notifications, appSettings } from "$lib/server/db/schema.js";
 import { visibleTo } from "$lib/server/db/notification-visibility.js";
 import { countAll } from "$lib/server/db/helpers.js";
-import { EXECUTIVE_ROLES, hasRole } from "$lib/server/authorize.js";
+import { EXECUTIVE_ROLES, hasRole } from "$lib/authorize.js";
 import { eq, and, desc } from "drizzle-orm";
 import type { LayoutServerLoad } from "./$types.js";
 

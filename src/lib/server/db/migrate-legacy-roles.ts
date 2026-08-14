@@ -1,7 +1,7 @@
 import { db } from "./index.js";
 import { users, appSettings } from "./schema.js";
 import { eq, and, inArray } from "drizzle-orm";
-import type { Role } from "../authorize.js";
+import type { Role } from "$lib/authorize.js";
 
 /**
  * Legacy roles that existed before the current authorization model and their

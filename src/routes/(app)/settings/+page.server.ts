@@ -3,7 +3,7 @@ import { db } from "$lib/server/db/index.js";
 import { users, sessions, appSettings } from "$lib/server/db/schema.js";
 import { seedDemo } from "$lib/server/db/seed.js";
 import { hashPassword, verifyPassword } from "$lib/server/password.js";
-import { requireRoleOrFail, isRole } from "$lib/server/authorize.js";
+import { requireRoleOrFail, isRole } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq, and, ne } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";

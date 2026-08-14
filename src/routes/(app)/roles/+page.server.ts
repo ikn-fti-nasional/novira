@@ -1,6 +1,11 @@
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
-import { requireRoleOrRedirect, requireRoleOrFail, type Role } from "$lib/server/authorize.js";
+import {
+	requireRoleOrRedirect,
+	requireRoleOrFail,
+	SYSTEM_ADMIN_ROLES,
+	type Role,
+} from "$lib/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
@@ -88,7 +93,7 @@ const roleDefinitions = [
 ];
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, ["admin"]);
+	requireRoleOrRedirect(locals.user, [...SYSTEM_ADMIN_ROLES]);
 
 	const allUsers = await db
 		.select({
@@ -111,7 +116,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	changeRole: async ({ request, locals }) => {
-		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		const denied = requireRoleOrFail(locals.user, [...SYSTEM_ADMIN_ROLES]);
 		if (denied) return denied;
 
 		const formData = await request.formData();

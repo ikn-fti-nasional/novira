@@ -2,7 +2,7 @@ import { generateSessionToken, createSession, setSessionCookie } from "$lib/serv
 import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
 import { verifyPassword } from "$lib/server/password.js";
-import { EXECUTIVE_ROLES, hasRole } from "$lib/server/authorize.js";
+import { EXECUTIVE_ROLES, hasRole } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";

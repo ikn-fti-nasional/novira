@@ -1,7 +1,7 @@
 import { db } from "$lib/server/db/index.js";
 import { users, pages, notifications } from "$lib/server/db/schema.js";
 import { countAll } from "$lib/server/db/helpers.js";
-import { requireRoleOrRedirect, PAGE_ACCESS } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, PAGE_ACCESS } from "$lib/authorize.js";
 import { sql, eq } from "drizzle-orm";
 import type { PageServerLoad } from "./$types.js";
 

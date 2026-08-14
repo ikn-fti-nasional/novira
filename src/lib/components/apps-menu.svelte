@@ -10,7 +10,7 @@
 	import BellIcon from "@lucide/svelte/icons/bell";
 	import DatabaseIcon from "@lucide/svelte/icons/database";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
-	import { canAccessRole } from "$lib/server/authorize.js";
+	import { canAccessRole } from "$lib/authorize.js";
 
 	type Props = {
 		role: string;

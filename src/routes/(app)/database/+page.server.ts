@@ -1,12 +1,12 @@
 import { db } from "$lib/server/db/index.js";
 import { users, sessions, pages, notifications, appSettings } from "$lib/server/db/schema.js";
-import { requireRoleOrRedirect } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, SYSTEM_ADMIN_ROLES } from "$lib/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { sql } from "drizzle-orm";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, ["admin"]);
+	requireRoleOrRedirect(locals.user, [...SYSTEM_ADMIN_ROLES]);
 
 	// Get table row counts
 	const [usersCount] = await db.select({ count: countAll }).from(users);

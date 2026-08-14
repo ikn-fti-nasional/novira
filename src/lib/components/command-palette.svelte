@@ -18,7 +18,7 @@
 	import UserIcon from "@lucide/svelte/icons/user";
 	import LoaderIcon from "@lucide/svelte/icons/loader";
 	import type { Component } from "svelte";
-	import { canAccessRole } from "$lib/server/authorize.js";
+	import { canAccessRole } from "$lib/authorize.js";
 
 	type SearchResult = {
 		type: "user" | "page" | "notification";
