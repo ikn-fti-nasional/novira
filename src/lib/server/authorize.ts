@@ -10,6 +10,19 @@ export type Role =
 	| "walikota"
 	| "petugas_lapangan";
 
+export const ALL_ROLES: readonly Role[] = [
+	"admin",
+	"operator",
+	"kepala_seksi",
+	"kepala_dinas",
+	"walikota",
+	"petugas_lapangan",
+];
+
+export function isRole(value: string): value is Role {
+	return (ALL_ROLES as readonly string[]).includes(value);
+}
+
 /** Roles whose default landing page after login is the executive dashboard. */
 export const EXECUTIVE_ROLES: readonly Role[] = ["kepala_dinas", "walikota"];
 
@@ -18,6 +31,37 @@ export const OPERATIONAL_ROLES: readonly Role[] = ["admin", "operator", "kepala_
 
 /** Roles that can access system administration (users, roles, settings, database). */
 export const SYSTEM_ADMIN_ROLES: readonly Role[] = ["admin"];
+
+/**
+ * Single source of truth for "who may see which page" — consumed by the
+ * sidebar, apps menu, command palette, and the server-side route guards, so
+ * the visible navigation can never drift from what the guards enforce.
+ */
+export const PAGE_ACCESS: Record<string, readonly Role[]> = {
+	"/": ALL_ROLES,
+	"/eksekutif": ["admin", "kepala_dinas", "walikota"],
+	"/monitoring": ALL_ROLES,
+	"/incidents": ALL_ROLES,
+	"/hotspots": ALL_ROLES,
+	"/analytics": ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota"],
+	"/cameras": OPERATIONAL_ROLES,
+	"/officers": OPERATIONAL_ROLES,
+	"/area-ranking": ALL_ROLES,
+	"/laporan-wilayah": ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota"],
+	"/audit": SYSTEM_ADMIN_ROLES,
+	"/notifications": ALL_ROLES,
+	"/settings": ALL_ROLES,
+	"/users": SYSTEM_ADMIN_ROLES,
+	"/roles": SYSTEM_ADMIN_ROLES,
+	"/database": SYSTEM_ADMIN_ROLES,
+	"/content": OPERATIONAL_ROLES,
+};
+
+/** Pure predicate — may `role` open `path`? */
+export function canAccessRole(role: string, path: string): boolean {
+	const allowed = PAGE_ACCESS[path];
+	return !!allowed && (allowed as readonly string[]).includes(role);
+}
 
 function capitalize(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);

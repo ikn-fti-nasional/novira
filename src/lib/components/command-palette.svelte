@@ -18,6 +18,7 @@
 	import UserIcon from "@lucide/svelte/icons/user";
 	import LoaderIcon from "@lucide/svelte/icons/loader";
 	import type { Component } from "svelte";
+	import { canAccessRole } from "$lib/server/authorize.js";
 
 	type SearchResult = {
 		type: "user" | "page" | "notification";
@@ -51,7 +52,7 @@
 		isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 	});
 
-	const navItems: NavItem[] = $derived([
+	const allNavItems: NavItem[] = [
 		{
 			label: "Dashboard",
 			href: "/",
@@ -64,55 +65,47 @@
 			icon: BarChart3Icon,
 			keywords: ["charts", "stats", "reports"],
 		},
-		...(role === "admin"
-			? [
-					{
-						label: "Users",
-						href: "/users",
-						icon: UsersIcon,
-						keywords: ["accounts", "members", "people"],
-					},
-				]
-			: []),
+		{
+			label: "Users",
+			href: "/users",
+			icon: UsersIcon,
+			keywords: ["accounts", "members", "people"],
+		},
 		{
 			label: "Content",
 			href: "/content",
 			icon: FileTextIcon,
 			keywords: ["pages", "blog", "articles"],
 		},
-		...(role === "admin"
-			? [
-					{
-						label: "Roles",
-						href: "/roles",
-						icon: ShieldIcon,
-						keywords: ["permissions", "access", "admin"],
-					},
-				]
-			: []),
+		{
+			label: "Roles",
+			href: "/roles",
+			icon: ShieldIcon,
+			keywords: ["permissions", "access", "admin"],
+		},
 		{
 			label: "Notifications",
 			href: "/notifications",
 			icon: BellIcon,
 			keywords: ["alerts", "messages"],
 		},
-		...(role === "admin"
-			? [
-					{
-						label: "Database",
-						href: "/database",
-						icon: DatabaseIcon,
-						keywords: ["tables", "sql", "storage"],
-					},
-				]
-			: []),
+		{
+			label: "Database",
+			href: "/database",
+			icon: DatabaseIcon,
+			keywords: ["tables", "sql", "storage"],
+		},
 		{
 			label: "Settings",
 			href: "/settings",
 			icon: SettingsIcon,
 			keywords: ["preferences", "profile", "config"],
 		},
-	]);
+	];
+
+	const navItems: NavItem[] = $derived(
+		allNavItems.filter((item) => canAccessRole(role, item.href))
+	);
 
 	function resultIcon(type: string) {
 		switch (type) {

@@ -1,8 +1,8 @@
 import { listAuditLog } from "$lib/server/novira/index.js";
-import { requireRoleOrRedirect } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, PAGE_ACCESS } from "$lib/server/authorize.js";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, ["admin"]);
+	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/audit"]]);
 	return { auditLogList: await listAuditLog() };
 };

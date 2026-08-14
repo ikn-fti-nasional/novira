@@ -10,6 +10,7 @@
 	import BellIcon from "@lucide/svelte/icons/bell";
 	import DatabaseIcon from "@lucide/svelte/icons/database";
 	import SettingsIcon from "@lucide/svelte/icons/settings";
+	import { canAccessRole } from "$lib/server/authorize.js";
 
 	type Props = {
 		role: string;
@@ -17,9 +18,7 @@
 
 	let { role }: Props = $props();
 
-	const adminOnlyApps = ["/users", "/roles", "/database"];
-
-	const apps = [
+	const allApps = [
 		{ label: "Dashboard", href: "/", icon: LayoutDashboardIcon },
 		{ label: "Analytics", href: "/analytics", icon: BarChart3Icon },
 		{ label: "Users", href: "/users", icon: UsersIcon },
@@ -28,7 +27,9 @@
 		{ label: "Notifications", href: "/notifications", icon: BellIcon },
 		{ label: "Database", href: "/database", icon: DatabaseIcon },
 		{ label: "Settings", href: "/settings", icon: SettingsIcon },
-	].filter((app) => role === "admin" || !adminOnlyApps.includes(app.href));
+	];
+
+	const apps = $derived(allApps.filter((app) => canAccessRole(role, app.href)));
 
 	let open = $state(false);
 </script>

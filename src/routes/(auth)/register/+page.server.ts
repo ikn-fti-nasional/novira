@@ -4,6 +4,7 @@ import { users } from "$lib/server/db/schema.js";
 import { createUser } from "$lib/server/db/users.js";
 import { hashPassword } from "$lib/server/password.js";
 import { countAll } from "$lib/server/db/helpers.js";
+import { sql } from "drizzle-orm";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types.js";
 
@@ -44,14 +45,24 @@ export const actions: Actions = {
 
 		let userId: string;
 		try {
-			// Only the very first registered user becomes admin; everyone else is an operator.
-			const [existing] = await db.select({ count: countAll }).from(users);
-			userId = await createUser({
-				name,
-				email,
-				username,
-				passwordHash,
-				role: existing.count === 0 ? "admin" : "operator",
+			// Only the very first registered user becomes admin; everyone else is
+			// an operator. Serialized with an advisory lock so two concurrent
+			// first registrations can't both count zero and create two admins.
+			userId = await db.transaction(async (tx) => {
+				await tx.execute(
+					sql`select pg_advisory_xact_lock(hashtext('novira_first_user_bootstrap'))`
+				);
+				const [existing] = await tx.select({ count: countAll }).from(users);
+				return createUser(
+					{
+						name,
+						email,
+						username,
+						passwordHash,
+						role: existing.count === 0 ? "admin" : "operator",
+					},
+					tx
+				);
 			});
 		} catch {
 			return fail(400, { message: "Username or email already taken" });

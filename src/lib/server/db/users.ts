@@ -19,10 +19,16 @@ export interface CreateUserInput {
  * to lowercase; the caller supplies a pre-hashed password so argon2 runs only
  * once per distinct password (seed hashes the shared default password once and
  * reuses it across all users).
+ *
+ * `client` defaults to the shared `db`; pass a transaction handle when the
+ * insert must join an on-going transaction (e.g. first-user bootstrap).
  */
-export async function createUser(input: CreateUserInput): Promise<string> {
+export async function createUser(
+	input: CreateUserInput,
+	client: { insert: typeof db.insert } = db
+): Promise<string> {
 	const id = generateId(10);
-	await db.insert(users).values({
+	await client.insert(users).values({
 		id,
 		name: input.name,
 		email: input.email.toLowerCase(),

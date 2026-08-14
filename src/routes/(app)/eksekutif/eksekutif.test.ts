@@ -47,4 +47,19 @@ describe("Executive Dashboard (/eksekutif)", () => {
 		expect(result.provinsiList).toBeInstanceOf(Array);
 		expect(result.kabupatenKotaList).toBeInstanceOf(Array);
 	});
+
+	it("denies access to operational roles that are not authorized", async () => {
+		const operatorId = await createTestUser(testDb, {
+			name: "Operator",
+			email: "operator@test.com",
+			username: "operator",
+			role: "operator",
+		});
+
+		await expect(
+			load({
+				locals: createMockLocals(operatorId, "operator"),
+			} as any)
+		).rejects.toMatchObject({ status: 403 });
+	});
 });

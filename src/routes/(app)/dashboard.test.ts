@@ -102,6 +102,25 @@ describe("Dashboard page", () => {
 		expect(result.systemStatus.maintenanceMode).toBe(false);
 	});
 
+	it("exposes audit log records to admins only", async () => {
+		const operatorId = await createTestUser(testDb, {
+			name: "Operator",
+			email: "operator@test.com",
+			username: "operator",
+			role: "operator",
+		});
+
+		const adminResult: any = await load({
+			locals: createMockLocals(adminId),
+		} as any);
+		const operatorResult: any = await load({
+			locals: createMockLocals(operatorId, "operator"),
+		} as any);
+
+		expect(adminResult.auditLogList).toBeInstanceOf(Array);
+		expect(operatorResult.auditLogList).toEqual([]);
+	});
+
 	it("reflects maintenanceMode when the setting is stored as true", async () => {
 		await testDb.insert(appSettings).values({
 			key: "maintenanceMode",

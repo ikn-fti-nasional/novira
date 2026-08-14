@@ -20,6 +20,7 @@
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
+	import { canAccessRole } from "$lib/server/authorize.js";
 
 	type Props = {
 		user: {
@@ -36,9 +37,8 @@
 	const isExecutive = $derived(user.role === "kepala_dinas" || user.role === "walikota");
 
 	const isAdmin = $derived(user.role === "admin");
-	const isFieldOfficer = $derived(user.role === "petugas_lapangan");
 
-	const fullNavigation: NavGroup[] = $derived([
+	const operationalNavigation: NavGroup[] = $derived([
 		{
 			label: "Ringkasan Eksekutif",
 			items: [
@@ -62,9 +62,7 @@
 			label: "Tata Kelola",
 			items: [
 				{ title: "Laporan Wilayah & Provinsi", url: "/laporan-wilayah", icon: FileSpreadsheetIcon },
-				...(isAdmin
-					? [{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon }]
-					: []),
+				{ title: "Audit & Log Aktivitas", url: "/audit", icon: ShieldCheckIcon },
 				{
 					title: "Notifikasi Sistem",
 					url: "/notifications",
@@ -99,28 +97,13 @@
 		},
 	]);
 
-	const fieldOfficerNavigation: NavGroup[] = $derived([
-		{
-			label: "Ringkasan Eksekutif",
-			items: [
-				{ title: "Beranda Dasbor", url: "/", icon: LayoutDashboardIcon },
-				{ title: "Pemantauan Langsung", url: "/monitoring", icon: VideoIcon },
-				{ title: "Insiden & Alert", url: "/incidents", icon: AlertTriangleIcon, badge: "14" },
-				{ title: "Peta Titik Rawan", url: "/hotspots", icon: MapPinIcon },
-			],
-		},
-		{
-			label: "Manajemen Operasional",
-			items: [
-				{ title: "Kamera CCTV", url: "/cameras", icon: CameraIcon },
-				{ title: "Petugas Lapangan", url: "/officers", icon: UserCheckIcon },
-				{ title: "Peringkat Wilayah", url: "/area-ranking", icon: TrophyIcon },
-			],
-		},
-	]);
-
 	const navigation: NavGroup[] = $derived(
-		isExecutive ? executiveNavigation : isFieldOfficer ? fieldOfficerNavigation : fullNavigation
+		isExecutive
+			? executiveNavigation
+			: operationalNavigation.map((group) => ({
+					label: group.label,
+					items: group.items.filter((item) => canAccessRole(user.role, item.url)),
+				}))
 	);
 
 	function getRoleTitle(role: string) {

@@ -1,18 +1,12 @@
 import { db } from "$lib/server/db/index.js";
 import { users, pages, notifications } from "$lib/server/db/schema.js";
 import { countAll } from "$lib/server/db/helpers.js";
-import { requireRoleOrRedirect } from "$lib/server/authorize.js";
+import { requireRoleOrRedirect, PAGE_ACCESS } from "$lib/server/authorize.js";
 import { sql, eq } from "drizzle-orm";
 import type { PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	requireRoleOrRedirect(locals.user, [
-		"admin",
-		"operator",
-		"kepala_seksi",
-		"kepala_dinas",
-		"walikota",
-	]);
+	requireRoleOrRedirect(locals.user, [...PAGE_ACCESS["/analytics"]]);
 	// User signups per month
 	const signupsPerMonth = await db
 		.select({

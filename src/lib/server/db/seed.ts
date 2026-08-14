@@ -42,15 +42,16 @@ export async function seedDemo() {
 	const passwordHash = await hashPassword("password123");
 
 	const userData = [
-		// Demo account — what the login page pre-fills. Viewer role so visitors
-		// can explore safely. Protected from self-modification by the (app)
-		// settings actions (see updateProfile / changePassword).
+		// Demo account — what the login page pre-fills. Restricted to the
+		// operator role so public visitors can explore without admin powers.
+		// Protected from self-modification by the (app) settings actions (see
+		// updateProfile / changePassword).
 		{
 			name: "Demo User",
 			email: "demo@novira.dev",
 			username: "demo",
 			password: "NoviraDemo2026!",
-			role: "admin" as const,
+			role: "operator" as const,
 			daysAgo: 365,
 		},
 		// Executive demo accounts — login redirects these to /eksekutif.
@@ -1320,9 +1321,7 @@ export async function seedDemo() {
 		`  ${pageData.length} pages (${pageData.filter((p) => p.status === "published").length} published, ${pageData.filter((p) => p.status === "draft").length} draft, ${pageData.filter((p) => p.status === "archived").length} archived)`
 	);
 	console.log(`  ${notificationData.length} notifications`);
-	console.log(
-		"Login: username 'demo' / password 'NoviraDemo2026!' (viewer, what the UI pre-fills)"
-	);
+	console.log("Login: username 'demo' / password 'NoviraDemo2026!' (operator)");
 	console.log(
 		"       username 'admin' / password 'password123' (admin — use to access demo reset)"
 	);
