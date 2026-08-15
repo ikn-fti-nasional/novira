@@ -1,6 +1,4 @@
 import {
-	MOCK_PROVINSI,
-	MOCK_KABUPATEN_KOTA,
 	MOCK_INSIDEN,
 	MOCK_SKOR_WILAYAH,
 	MOCK_PETUGAS,
@@ -41,11 +39,42 @@ import { cameras } from "$lib/server/db/schema.js";
  */
 
 export async function listProvinsi() {
-	return MOCK_PROVINSI;
+	const rows = await db.select({ kota: cameras.kota }).from(cameras);
+	const map = new Map<string, string>();
+	for (const row of rows) map.set(kotaKeProvinsi(row.kota), row.kota);
+	return [...map.entries()]
+		.map(([nama]) => ({ id: `PROV-${nama}`, nama }))
+		.sort((a, b) => a.nama.localeCompare(b.nama));
 }
 
 export async function listKabupatenKota() {
-	return MOCK_KABUPATEN_KOTA;
+	const rows = await db.select({ kota: cameras.kota }).from(cameras);
+	return [...new Set(rows.map((r) => r.kota).filter(Boolean))]
+		.map((kota) => ({
+			id: `KAB-${kota}`,
+			provinsiId: `PROV-${kotaKeProvinsi(kota)}`,
+			nama: kota,
+		}))
+		.sort((a, b) => a.nama.localeCompare(b.nama));
+}
+
+/** Pemetaan kota → provinsi agar filter cuma berisi lokasi yang benar-benar ada kameranya. */
+export function kotaKeProvinsi(kota: string): string {
+	const map: Record<string, string> = {
+		Bandung: "Jawa Barat",
+		"Kabupaten Cirebon": "Jawa Barat",
+		"Kabupaten Bandung Barat": "Jawa Barat",
+		"Kabupaten Bandung": "Jawa Barat",
+		"Kota Cirebon": "Jawa Barat",
+		"Kabupaten Tangerang": "Banten",
+		"Kota Palembang": "Sumatera Selatan",
+		"Kota Semarang": "Jawa Tengah",
+		"Kabupaten Buleleng": "Bali",
+		"Jakarta Pusat": "DKI Jakarta",
+		Surabaya: "Jawa Timur",
+		Yogyakarta: "DI Yogyakarta",
+	};
+	return map[kota] ?? "Lainnya";
 }
 
 export async function listKamera(): Promise<Kamera[]> {
@@ -57,7 +86,7 @@ export async function listKamera(): Promise<Kamera[]> {
 		kelurahan: "",
 		kecamatan: cam.kecamatan ?? "",
 		kabupatenKota: cam.kota,
-		provinsi: "",
+		provinsi: kotaKeProvinsi(cam.kota),
 		latitude: Number(cam.latitude ?? 0),
 		longitude: Number(cam.longitude ?? 0),
 		status: cam.status,
