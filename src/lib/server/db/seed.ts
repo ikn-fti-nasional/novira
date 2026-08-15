@@ -1365,8 +1365,7 @@ export async function seedDemo() {
 			kecamatan: "Kosambi",
 			latitude: "-6.092136145427569",
 			longitude: "106.71870867037522",
-			urlStream:
-				"https://cctv-dishub.tangerangkab.go.id/storage/video/01jsrctg4pc3xdf5vkjjg4pcfd/01jsrctg4pc3xdf5vkjjg4pcfd.m3u8",
+			urlStream: "/api/cctv/tangerang/01jsrctg4pc3xdf5vkjjg4pcfd/01jsrctg4pc3xdf5vkjjg4pcfd.m3u8",
 		},
 		{
 			nama: "Jl. Pantura Bitung 2",
@@ -1374,8 +1373,7 @@ export async function seedDemo() {
 			kecamatan: "Kelapa Dua",
 			latitude: "-6.2230346323921495",
 			longitude: "106.5599518345196",
-			urlStream:
-				"https://cctv-dishub.tangerangkab.go.id/storage/video/01jzvr0hphd8c104283f8g1d9n/01jzvr0hphd8c104283f8g1d9n.m3u8",
+			urlStream: "/api/cctv/tangerang/01jzvr0hphd8c104283f8g1d9n/01jzvr0hphd8c104283f8g1d9n.m3u8",
 		},
 		{
 			nama: "Simpang Rajeg Kukun 2",
@@ -1383,8 +1381,7 @@ export async function seedDemo() {
 			kecamatan: "Rajeg",
 			latitude: "-6.130006908709916",
 			longitude: "106.52675509902808",
-			urlStream:
-				"https://cctv-dishub.tangerangkab.go.id/storage/video/01jsr0j5nwjcbthcb6aypa6dcr/01jsr0j5nwjcbthcb6aypa6dcr.m3u8",
+			urlStream: "/api/cctv/tangerang/01jsr0j5nwjcbthcb6aypa6dcr/01jsr0j5nwjcbthcb6aypa6dcr.m3u8",
 		},
 		{
 			nama: "Simpang Sepatan 1",
@@ -1392,8 +1389,7 @@ export async function seedDemo() {
 			kecamatan: "Sepatan",
 			latitude: "-6.118874199737398",
 			longitude: "106.57561217365658",
-			urlStream:
-				"https://cctv-dishub.tangerangkab.go.id/storage/video/01jsr485tfw1cwwa1v6c3jpgfd/01jsr485tfw1cwwa1v6c3jpgfd.m3u8",
+			urlStream: "/api/cctv/tangerang/01jsr485tfw1cwwa1v6c3jpgfd/01jsr485tfw1cwwa1v6c3jpgfd.m3u8",
 		},
 		{
 			nama: "Thamrin Pandanaran 360",
@@ -1412,6 +1408,62 @@ export async function seedDemo() {
 			longitude: "114.933679",
 			urlStream:
 				"https://shinobi.bulelengkab.go.id/Amk60KFacq87lQMvTCMHu17u00ONuC/mp4/admin/edROyIUx2v80/s.mp4",
+		},
+		{
+			nama: "Cicadas Gateway 02",
+			kota: "Kota Bandung",
+			kecamatan: "Cibeunying Kidul",
+			latitude: "-6.907154",
+			longitude: "107.647198",
+			urlStream: "/api/cctv/bandung/DAHUA/CICAB.m3u8",
+		},
+		{
+			nama: "Cimindi Kharisma 01",
+			kota: "Kota Bandung",
+			kecamatan: "Sukasari",
+			latitude: "-6.899308",
+			longitude: "107.562477",
+			urlStream: "/api/cctv/bandung/DAHUA/CIMI.m3u8",
+		},
+		{
+			nama: "Taman Bungkul (Hadap Selatan)",
+			kota: "Kota Surabaya",
+			kecamatan: "Wonokromo",
+			latitude: "-7.291208",
+			longitude: "112.739011",
+			urlStream: "/api/cctv/surabaya/cctv_337/stream.m3u8",
+		},
+		{
+			nama: "Bratang - Krukah",
+			kota: "Kota Surabaya",
+			kecamatan: "Gubeng",
+			latitude: "-7.298521",
+			longitude: "112.755893",
+			urlStream: "/api/cctv/surabaya/cctv_84/stream.m3u8",
+		},
+		{
+			nama: "Kembang Jepun Kyakya (Parkir)",
+			kota: "Kota Surabaya",
+			kecamatan: "Pabean Cantian",
+			latitude: "-7.238402",
+			longitude: "112.744745",
+			urlStream: "/api/cctv/surabaya/cctv_501/stream.m3u8",
+		},
+		{
+			nama: "Simpang 3 Ngingas (Arah Ronggowarsito)",
+			kota: "Kabupaten Klaten",
+			kecamatan: "Klaten Utara",
+			latitude: "-7.6945934",
+			longitude: "110.6099004",
+			urlStream: "/api/cctv/klaten/simpang3ngingas_arahronggowarsito.m3u8",
+		},
+		{
+			nama: "Simpang 3 Ngingas (Arah Solo)",
+			kota: "Kabupaten Klaten",
+			kecamatan: "Klaten Utara",
+			latitude: "-7.6945934",
+			longitude: "110.6099004",
+			urlStream: "/api/cctv/klaten/simpang3ngingas_arahsolo.m3u8",
 		},
 	];
 

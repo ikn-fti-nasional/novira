@@ -1,17 +1,14 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import type { Kamera } from "$lib/types/novira.js";
+	import type Hls from "hls.js";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import WifiOffIcon from "@lucide/svelte/icons/wifi-off";
 
 	let { kamera, autoplay = true }: { kamera: Kamera; autoplay?: boolean } = $props();
 
 	let videoEl: HTMLVideoElement | undefined = $state();
-	let player: {
-		destroy(): void;
-		loadSource(url: string): void;
-		attachMedia(el: HTMLVideoElement): void;
-	} | null = null;
+	let player: Hls | null = null;
 	let gagal = $state(false);
 
 	onMount(() => {
@@ -38,6 +35,16 @@
 						liveDurationInfinity: true,
 						backBufferLength: 30,
 					});
+					// Error fatal = hls.js sudah habis percobaan pulih otomatis;
+					// tanpa ini stream yang mati akan membeku selamanya. Hancurkan
+					// player dan tampilkan fallback.
+					player.on(Hls.Events.ERROR, (_event, data) => {
+						if (data.fatal) {
+							player?.destroy();
+							player = null;
+							gagal = true;
+						}
+					});
 					player.loadSource(src);
 					player.attachMedia(videoEl);
 				})
@@ -59,7 +66,7 @@
 	<video
 		bind:this={videoEl}
 		controls
-		autoplay={autoplay}
+		{autoplay}
 		muted
 		playsinline
 		class="h-full w-full object-cover"

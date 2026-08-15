@@ -62,6 +62,7 @@ export async function listKabupatenKota() {
 export function kotaKeProvinsi(kota: string): string {
 	const map: Record<string, string> = {
 		Bandung: "Jawa Barat",
+		"Kota Bandung": "Jawa Barat",
 		"Kabupaten Cirebon": "Jawa Barat",
 		"Kabupaten Bandung Barat": "Jawa Barat",
 		"Kabupaten Bandung": "Jawa Barat",
@@ -69,9 +70,11 @@ export function kotaKeProvinsi(kota: string): string {
 		"Kabupaten Tangerang": "Banten",
 		"Kota Palembang": "Sumatera Selatan",
 		"Kota Semarang": "Jawa Tengah",
+		"Kabupaten Klaten": "Jawa Tengah",
 		"Kabupaten Buleleng": "Bali",
 		"Jakarta Pusat": "DKI Jakarta",
 		Surabaya: "Jawa Timur",
+		"Kota Surabaya": "Jawa Timur",
 		Yogyakarta: "DI Yogyakarta",
 	};
 	return map[kota] ?? "Lainnya";
