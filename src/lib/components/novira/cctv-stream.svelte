@@ -10,6 +10,9 @@
 	let videoEl: HTMLVideoElement | undefined = $state();
 	let player: Hls | null = null;
 	let gagal = $state(false);
+	// Guard untuk callback async hls.js: import bisa selesai setelah komponen
+	// di-destroy, dan elemen video yang sudah terlepas tidak boleh disentuh.
+	let hancur = false;
 
 	onMount(() => {
 		const src = kamera.urlStream ?? "";
@@ -27,6 +30,7 @@
 			// saat dibutuhkan).
 			import("hls.js")
 				.then(({ default: Hls }) => {
+					if (hancur) return;
 					if (!Hls.isSupported() || !videoEl) {
 						videoEl!.src = src;
 						return;
@@ -49,7 +53,7 @@
 					player.attachMedia(videoEl);
 				})
 				.catch(() => {
-					if (videoEl) videoEl.src = src;
+					if (!hancur && videoEl) videoEl.src = src;
 				});
 		} else {
 			videoEl.src = src;
@@ -57,6 +61,7 @@
 	});
 
 	onDestroy(() => {
+		hancur = true;
 		player?.destroy();
 		player = null;
 	});
