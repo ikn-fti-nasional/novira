@@ -1,7 +1,7 @@
 import { json, error } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { users, pages, notifications } from "$lib/server/db/schema.js";
-import { visibleTo } from "$lib/server/db/notification-visibility.js";
+import { visibleTo, notDismissedBy } from "$lib/server/db/notification-visibility.js";
 import { sql, or, and } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
 
@@ -39,7 +39,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		db
 			.select({ id: notifications.id, title: notifications.title, message: notifications.message })
 			.from(notifications)
-			.where(and(sql`${notifications.title} ILIKE ${pattern}`, visibleTo(locals.user.id)))
+			.where(
+				and(
+					sql`${notifications.title} ILIKE ${pattern}`,
+					visibleTo(locals.user.id),
+					notDismissedBy(locals.user.id)
+				)
+			)
 			.limit(5),
 	]);
 

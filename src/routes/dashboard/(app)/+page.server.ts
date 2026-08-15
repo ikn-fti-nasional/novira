@@ -1,7 +1,7 @@
 import { redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { users, notifications, appSettings } from "$lib/server/db/schema.js";
-import { visibleTo } from "$lib/server/db/notification-visibility.js";
+import { unreadFilter, notDismissedBy } from "$lib/server/db/notification-visibility.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import {
 	ringkasanKpi,
@@ -28,7 +28,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const [unreadCount] = await db
 		.select({ count: countAll })
 		.from(notifications)
-		.where(and(eq(notifications.read, false), visibleTo(locals.user.id)));
+		.where(and(unreadFilter(locals.user.id), notDismissedBy(locals.user.id)));
 
 	const maintenanceSetting = await db.query.appSettings.findFirst({
 		where: eq(appSettings.key, "maintenanceMode"),

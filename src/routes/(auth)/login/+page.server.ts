@@ -8,7 +8,9 @@ import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) redirect(302, "/dashboard");
+	if (locals.user) {
+		redirect(302, hasRole(locals.user, EXECUTIVE_ROLES) ? "/dashboard/eksekutif" : "/dashboard");
+	}
 	return {
 		// Only surface pre-filled demo credentials when the public demo is on.
 		demoMode: process.env.DEMO_MODE === "true",

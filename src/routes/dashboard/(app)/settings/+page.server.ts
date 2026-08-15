@@ -35,7 +35,7 @@ const notificationPrefKeys = [
 ];
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) redirect(302, "/login");
+	if (!locals.user || !locals.session) redirect(302, "/login");
 	const user = locals.user;
 
 	// Load profile data (without password)
@@ -50,11 +50,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(users)
 		.where(eq(users.id, user.id));
 
-	// Load app settings (admin only)
+	// Load app settings (admin only) + notification preferences from one read
+	const settingRows = await db.select().from(appSettings);
+
 	const settings = { ...defaultSettings };
 	if (user.role === "admin") {
-		const rows = await db.select().from(appSettings);
-		for (const row of rows) {
+		for (const row of settingRows) {
 			settings[row.key] = row.value;
 		}
 	}
@@ -76,8 +77,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	for (const key of notificationPrefKeys) {
 		notifPrefs[key] = true; // default all on
 	}
-	const prefRows = await db.select().from(appSettings);
-	for (const row of prefRows) {
+	for (const row of settingRows) {
 		const userPrefKey = `${user.id}:`;
 		if (row.key.startsWith(userPrefKey)) {
 			const prefName = row.key.slice(userPrefKey.length);
@@ -93,14 +93,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 		isAdmin: user.role === "admin",
 		isDemoMode: DEMO_MODE,
 		sessions: userSessions,
-		currentSessionId: locals.session!.id,
+		currentSessionId: locals.session.id,
 		notificationPrefs: notifPrefs,
 	};
 };
 
 export const actions: Actions = {
 	updateProfile: async ({ request, locals }) => {
-		if (isProtectedDemoUser(locals.user?.username)) {
+		if (!locals.user) redirect(302, "/login");
+		if (isProtectedDemoUser(locals.user.username)) {
 			return fail(403, { message: "The shared demo account cannot be modified" });
 		}
 
@@ -115,12 +116,12 @@ export const actions: Actions = {
 			return fail(400, { message: "Valid email is required" });
 		}
 
-		try {
-			await db
-				.update(users)
-				.set({ name, email: email.toLowerCase(), updatedAt: new Date() })
-				.where(eq(users.id, locals.user!.id));
-		} catch {
+try {
+		await db
+			.update(users)
+			.set({ name, email: email.toLowerCase(), updatedAt: new Date() })
+			.where(eq(users.id, locals.user.id));
+	} catch {
 			return fail(400, { message: "Email already taken" });
 		}
 
@@ -128,7 +129,8 @@ export const actions: Actions = {
 	},
 
 	changePassword: async ({ request, locals }) => {
-		if (isProtectedDemoUser(locals.user?.username)) {
+		if (!locals.user) redirect(302, "/login");
+		if (isProtectedDemoUser(locals.user.username)) {
 			return fail(403, { message: "The shared demo account cannot be modified" });
 		}
 
@@ -151,7 +153,11 @@ export const actions: Actions = {
 		const [user] = await db
 			.select({ passwordHash: users.passwordHash })
 			.from(users)
-			.where(eq(users.id, locals.user!.id));
+			.where(eq(users.id, locals.user.id));
+
+		if (!user) {
+			return fail(404, { message: "User not found" });
+		}
 
 		const valid = await verifyPassword(user.passwordHash, currentPassword);
 
@@ -164,7 +170,7 @@ export const actions: Actions = {
 		await db
 			.update(users)
 			.set({ passwordHash, updatedAt: new Date() })
-			.where(eq(users.id, locals.user!.id));
+			.where(eq(users.id, locals.user.id));
 
 		return { success: true, action: "password" };
 	},
@@ -205,6 +211,7 @@ export const actions: Actions = {
 	},
 
 	revokeSession: async ({ request, locals }) => {
+		if (!locals.user || !locals.session) redirect(302, "/login");
 		const formData = await request.formData();
 		const sessionId = formData.get("sessionId");
 
@@ -213,7 +220,7 @@ export const actions: Actions = {
 		}
 
 		// Don't allow revoking current session via this action
-		if (sessionId === locals.session!.id) {
+		if (sessionId === locals.session.id) {
 			return fail(400, { message: "Cannot revoke your current session. Use logout instead." });
 		}
 
@@ -223,7 +230,7 @@ export const actions: Actions = {
 			.from(sessions)
 			.where(eq(sessions.id, sessionId));
 
-		if (!target || target.userId !== locals.user!.id) {
+		if (!target || target.userId !== locals.user.id) {
 			return fail(404, { message: "Session not found" });
 		}
 
@@ -232,8 +239,9 @@ export const actions: Actions = {
 	},
 
 	revokeAllOtherSessions: async ({ locals }) => {
-		const userId = locals.user!.id;
-		const currentSessionId = locals.session!.id;
+		if (!locals.user || !locals.session) redirect(302, "/login");
+		const userId = locals.user.id;
+		const currentSessionId = locals.session.id;
 
 		// Get all sessions for this user except current
 		const otherSessions = await db
@@ -266,8 +274,9 @@ export const actions: Actions = {
 	},
 
 	updateNotificationPrefs: async ({ request, locals }) => {
+		if (!locals.user) redirect(302, "/login");
 		const formData = await request.formData();
-		const userId = locals.user!.id;
+		const userId = locals.user.id;
 
 		for (const key of notificationPrefKeys) {
 			const value = formData.get(key) === "on" ? "true" : "false";

@@ -331,7 +331,7 @@
 					</Card.Description>
 				</div>
 				<a
-					href="/audit"
+					href="/dashboard/audit"
 					class="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
 				>
 					Lihat Seluruh Log Audit &rarr;

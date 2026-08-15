@@ -49,7 +49,7 @@
 		)
 	);
 
-	const sorted = $derived(() => {
+	const sorted = $derived.by(() => {
 		const arr = [...filtered];
 		arr.sort((a, b) => {
 			const aVal = String((a as Record<string, unknown>)[sortKey] ?? "");
@@ -60,7 +60,14 @@
 		return arr;
 	});
 
-	const paginated = $derived(sorted().slice((currentPage - 1) * pageSize, currentPage * pageSize));
+	const paginated = $derived(sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize));
+
+	// Selection is scoped to the current page: the header checkbox and bulk
+	// delete only act on rows the user can see right now.
+	const pageIds = $derived(paginated.map((u) => u.id));
+	const allPageSelected = $derived(
+		pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
+	);
 
 	$effect(() => {
 		// Reset page when search changes
@@ -98,11 +105,13 @@
 	}
 
 	function toggleSelectAll() {
-		if (selectedIds.size === paginated.length) {
-			selectedIds = new Set();
+		const next = new Set(selectedIds);
+		if (allPageSelected) {
+			for (const id of pageIds) next.delete(id);
 		} else {
-			selectedIds = new Set(paginated.map((u) => u.id));
+			for (const id of pageIds) next.add(id);
 		}
+		selectedIds = next;
 	}
 
 	function roleBadgeVariant(role: string) {
@@ -226,7 +235,7 @@
 					<Table.Head class="w-[40px]">
 						<input
 							type="checkbox"
-							checked={paginated.length > 0 && selectedIds.size === paginated.length}
+							checked={allPageSelected}
 							onchange={toggleSelectAll}
 							class="accent-primary size-4"
 						/>

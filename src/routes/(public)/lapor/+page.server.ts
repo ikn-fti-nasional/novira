@@ -48,12 +48,24 @@ export const actions: Actions = {
 		const pelaporTelepon = String(form.get("pelaporTelepon") ?? "").trim();
 		const deskripsi = String(form.get("deskripsi") ?? "").trim();
 		const jenisSampah = String(form.get("jenisSampah") ?? "").trim();
-		const latitude = String(form.get("latitude") ?? "").trim();
-		const longitude = String(form.get("longitude") ?? "").trim();
+		const latRaw = String(form.get("latitude") ?? "").trim();
+		const lonRaw = String(form.get("longitude") ?? "").trim();
 		const kota = String(form.get("kota") ?? "").trim();
 		const kecamatan = String(form.get("kecamatan") ?? "").trim();
 
-		if (!kota && !latitude) {
+		// GPS mode: both coordinates required and finite within valid ranges.
+		// City fallback applies only when no coordinates are supplied.
+		let latitude: string | null = null;
+		let longitude: string | null = null;
+		if (latRaw || lonRaw) {
+			const lat = Number(latRaw);
+			const lon = Number(lonRaw);
+			if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+				return fail(400, { message: "Koordinat lokasi tidak valid." });
+			}
+			latitude = latRaw;
+			longitude = lonRaw;
+		} else if (!kota) {
 			return fail(400, { message: "Lokasi wajib diisi — izinkan GPS atau pilih kota." });
 		}
 
@@ -68,8 +80,8 @@ export const actions: Actions = {
 			jenisSampah: jenisSampah || null,
 			urlFoto,
 			urlVideo,
-			latitude: latitude || null,
-			longitude: longitude || null,
+			latitude,
+			longitude,
 			kota: kota || null,
 			kecamatan: kecamatan || null,
 			status: "MENUNGGU",

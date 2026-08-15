@@ -34,7 +34,7 @@
 
 <div class="mx-auto max-w-3xl space-y-6">
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="icon" href="/content">
+		<Button variant="ghost" size="icon" href="/dashboard/content">
 			<ArrowLeftIcon class="size-4" />
 		</Button>
 		<div>
@@ -115,7 +115,7 @@
 				</div>
 
 				<div class="flex justify-end gap-2">
-					<Button variant="outline" href="/content">Cancel</Button>
+					<Button variant="outline" href="/dashboard/content">Cancel</Button>
 					<Button type="submit">Save Changes</Button>
 				</div>
 			</form>

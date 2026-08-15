@@ -27,6 +27,8 @@ export const actions: Actions = {
 	proses: async ({ request, locals }) => {
 		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
+		if (!locals.user) return fail(401, { message: "Unauthorized" });
+		const user = locals.user;
 
 		const form = await request.formData();
 		const id = String(form.get("id") ?? "");
@@ -36,13 +38,16 @@ export const actions: Actions = {
 		if (!id || !STATUSES.includes(status as (typeof STATUSES)[number])) {
 			return fail(400, { message: "Data tidak valid" });
 		}
+		if (catatan.length > 2000) {
+			return fail(400, { message: "Catatan terlalu panjang (maksimal 2000 karakter)" });
+		}
 
 		await db
 			.update(publicReports)
 			.set({
 				status: status as (typeof STATUSES)[number],
 				catatanPetugas: catatan || null,
-				diprosesOleh: locals.user!.id,
+				diprosesOleh: user.id,
 				updatedAt: new Date(),
 			})
 			.where(eq(publicReports.id, id));

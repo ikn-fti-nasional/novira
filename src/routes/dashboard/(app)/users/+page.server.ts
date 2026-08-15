@@ -12,39 +12,27 @@ import { hashPassword } from "$lib/server/password.js";
 import {
 	requireRoleOrRedirect,
 	requireRoleOrFail,
+	isRole,
 	SYSTEM_ADMIN_ROLES,
-	type Role,
 } from "$lib/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { eq, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
-const VALID_ROLES: readonly Role[] = [
-	"admin",
-	"operator",
-	"kepala_seksi",
-	"kepala_dinas",
-	"walikota",
-	"petugas_lapangan",
-];
-
-function isRole(value: string): value is Role {
-	return VALID_ROLES.includes(value as Role);
-}
-
 /**
  * Delete a user and everything that references them. Postgres enforces FKs
  * (unlike the old SQLite setup), so child rows must be removed first or the
  * delete fails. Pages are authored by the user and author_id is NOT NULL, so
- * the user's pages are deleted too.
+ * the user's pages are deleted too. Runs in one transaction so a failure
+ * can't leave half-deleted users behind.
  */
-async function deleteUserRows(ids: string[]) {
+async function deleteUserRows(ids: string[], tx: Pick<typeof db, "delete"> = db) {
 	if (ids.length === 0) return;
-	await db.delete(passwordResetTokens).where(inArray(passwordResetTokens.userId, ids));
-	await db.delete(sessions).where(inArray(sessions.userId, ids));
-	await db.delete(notifications).where(inArray(notifications.userId, ids));
-	await db.delete(pages).where(inArray(pages.authorId, ids));
-	await db.delete(users).where(inArray(users.id, ids));
+	await tx.delete(passwordResetTokens).where(inArray(passwordResetTokens.userId, ids));
+	await tx.delete(sessions).where(inArray(sessions.userId, ids));
+	await tx.delete(notifications).where(inArray(notifications.userId, ids));
+	await tx.delete(pages).where(inArray(pages.authorId, ids));
+	await tx.delete(users).where(inArray(users.id, ids));
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -139,30 +127,44 @@ export const actions: Actions = {
 			return fail(400, { message: "Invalid role" });
 		}
 
-		// Prevent demotion of last admin
-		const [existing] = await db.select({ role: users.role }).from(users).where(eq(users.id, id));
-		if (existing?.role === "admin" && role !== "admin") {
-			const [adminCount] = await db
-				.select({ count: countAll })
-				.from(users)
-				.where(eq(users.role, "admin"));
-			if (adminCount.count <= 1) {
-				return fail(400, { message: "Cannot demote the last admin" });
-			}
-		}
-
+		// Prevent demotion of last admin — lookup + count + update atomically
+		let result: "ok" | "missing" | "lastAdmin";
 		try {
-			await db
-				.update(users)
-				.set({
-					name,
-					email: email.toLowerCase(),
-					role,
-					updatedAt: new Date(),
-				})
-				.where(eq(users.id, id));
+			result = await db.transaction(async (tx) => {
+				const [existing] = await tx
+					.select({ role: users.role })
+					.from(users)
+					.where(eq(users.id, id));
+				if (!existing) return "missing" as const;
+				if (existing.role === "admin" && role !== "admin") {
+					const [adminCount] = await tx
+						.select({ count: countAll })
+						.from(users)
+						.where(eq(users.role, "admin"));
+					if (adminCount.count <= 1) {
+						return "lastAdmin" as const;
+					}
+				}
+				await tx
+					.update(users)
+					.set({
+						name,
+						email: email.toLowerCase(),
+						role,
+						updatedAt: new Date(),
+					})
+					.where(eq(users.id, id));
+				return "ok" as const;
+			});
 		} catch {
 			return fail(400, { message: "Email already taken" });
+		}
+
+		if (result === "missing") {
+			return fail(404, { message: "User not found" });
+		}
+		if (result === "lastAdmin") {
+			return fail(400, { message: "Cannot demote the last admin" });
 		}
 
 		return { success: true };
@@ -179,23 +181,41 @@ export const actions: Actions = {
 		}
 
 		// Prevent self-deletion
-		if (id === locals.user!.id) {
+		if (id === locals.user?.id) {
 			return fail(400, { message: "You cannot delete your own account" });
 		}
 
-		// Prevent deletion of last admin
-		const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id));
-		if (target?.role === "admin") {
-			const [adminCount] = await db
-				.select({ count: countAll })
-				.from(users)
-				.where(eq(users.role, "admin"));
-			if (adminCount.count <= 1) {
-				return fail(400, { message: "Cannot delete the last admin" });
-			}
+		// Prevent deletion of last admin — lookup + count + delete atomically
+		let result: "ok" | "missing" | "lastAdmin";
+		try {
+			result = await db.transaction(async (tx) => {
+				const [target] = await tx
+					.select({ role: users.role })
+					.from(users)
+					.where(eq(users.id, id));
+				if (!target) return "missing" as const;
+				if (target.role === "admin") {
+					const [adminCount] = await tx
+						.select({ count: countAll })
+						.from(users)
+						.where(eq(users.role, "admin"));
+					if (adminCount.count <= 1) {
+						return "lastAdmin" as const;
+					}
+				}
+				await deleteUserRows([id], tx);
+				return "ok" as const;
+			});
+		} catch {
+			return fail(500, { message: "Delete failed" });
 		}
 
-		await deleteUserRows([id]);
+		if (result === "missing") {
+			return fail(404, { message: "User not found" });
+		}
+		if (result === "lastAdmin") {
+			return fail(400, { message: "Cannot delete the last admin" });
+		}
 
 		return { success: true };
 	},
@@ -211,7 +231,11 @@ export const actions: Actions = {
 		}
 
 		const ids = idsRaw.split(",").filter(Boolean);
-		const currentUserId = locals.user!.id;
+		// Cap the list so a crafted submission can't build a huge IN query.
+		if (ids.length > 100) {
+			return fail(400, { message: "Too many users selected (max 100)" });
+		}
+		const currentUserId = locals.user?.id;
 
 		// Filter out self
 		const toDelete = ids.filter((id) => id !== currentUserId);
@@ -219,14 +243,28 @@ export const actions: Actions = {
 			return fail(400, { message: "You cannot delete your own account" });
 		}
 
-		// Check if any targets are the last admin
-		const admins = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin"));
-		const remainingAdmins = admins.filter((a) => !toDelete.includes(a.id));
-		if (remainingAdmins.length === 0) {
-			return fail(400, { message: "Cannot delete all admin users" });
+		// Check if any targets are the last admin — count + delete atomically
+		let result: "ok" | "lastAdmin";
+		try {
+			result = await db.transaction(async (tx) => {
+				const admins = await tx
+					.select({ id: users.id })
+					.from(users)
+					.where(eq(users.role, "admin"));
+				const remainingAdmins = admins.filter((a) => !toDelete.includes(a.id));
+				if (remainingAdmins.length === 0) {
+					return "lastAdmin" as const;
+				}
+				await deleteUserRows(toDelete, tx);
+				return "ok" as const;
+			});
+		} catch {
+			return fail(500, { message: "Delete failed" });
 		}
 
-		await deleteUserRows(toDelete);
+		if (result === "lastAdmin") {
+			return fail(400, { message: "Cannot delete all admin users" });
+		}
 
 		return { success: true };
 	},

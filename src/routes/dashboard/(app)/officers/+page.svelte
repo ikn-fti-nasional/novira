@@ -73,7 +73,13 @@
 							<Table.Cell class="font-bold text-xs">{officer.jumlahTugasAktif} insiden</Table.Cell>
 							<Table.Cell class="text-right">
 								<div class="flex items-center justify-end gap-1">
-									<Button variant="ghost" size="sm" class="h-7 text-xs" title="Edit Petugas">
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-7 text-xs"
+										title="Edit Petugas"
+										aria-label="Edit petugas"
+									>
 										<PencilIcon class="size-3.5" />
 									</Button>
 									<Button
@@ -81,6 +87,7 @@
 										size="sm"
 										class="h-7 text-xs text-red-600 hover:text-red-700"
 										title="Hapus Petugas"
+										aria-label="Hapus petugas"
 									>
 										<TrashIcon class="size-3.5" />
 									</Button>

@@ -150,7 +150,7 @@
 			<h1 class="text-3xl font-bold tracking-tight">Content</h1>
 			<p class="text-muted-foreground">Create and manage your platform content.</p>
 		</div>
-		<Button href="/content/new">
+		<Button href="/dashboard/content/new">
 			<PlusIcon class="mr-2 size-4" />
 			New Page
 		</Button>
@@ -241,7 +241,7 @@
 						<Table.Cell class="text-muted-foreground">{formatDate(p.updatedAt)}</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-center gap-1">
-								<Button variant="ghost" size="icon" class="size-8" href="/content/{p.id}/edit">
+								<Button variant="ghost" size="icon" class="size-8" href="/dashboard/content/{p.id}/edit">
 									<PencilIcon class="size-4" />
 								</Button>
 								<Button

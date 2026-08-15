@@ -3,26 +3,13 @@ import { users } from "$lib/server/db/schema.js";
 import {
 	requireRoleOrRedirect,
 	requireRoleOrFail,
+	isRole,
 	SYSTEM_ADMIN_ROLES,
-	type Role,
 } from "$lib/authorize.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
-
-const VALID_ROLES: readonly Role[] = [
-	"admin",
-	"operator",
-	"kepala_seksi",
-	"kepala_dinas",
-	"walikota",
-	"petugas_lapangan",
-];
-
-function isRole(value: string): value is Role {
-	return VALID_ROLES.includes(value as Role);
-}
 
 const roleDefinitions = [
 	{
@@ -130,22 +117,40 @@ export const actions: Actions = {
 			return fail(400, { message: "Invalid role" });
 		}
 
-		// Prevent demotion of last admin
-		const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId));
-		if (target?.role === "admin" && newRole !== "admin") {
-			const [adminCount] = await db
-				.select({ count: countAll })
-				.from(users)
-				.where(eq(users.role, "admin"));
-			if (adminCount.count <= 1) {
-				return fail(400, { message: "Cannot demote the last admin" });
-			}
+		// Prevent demotion of last admin — lookup + count + update atomically
+		let result: "ok" | "missing" | "lastAdmin";
+		try {
+			result = await db.transaction(async (tx) => {
+				const [target] = await tx
+					.select({ role: users.role })
+					.from(users)
+					.where(eq(users.id, userId));
+				if (!target) return "missing" as const;
+				if (target.role === "admin" && newRole !== "admin") {
+					const [adminCount] = await tx
+						.select({ count: countAll })
+						.from(users)
+						.where(eq(users.role, "admin"));
+					if (adminCount.count <= 1) {
+						return "lastAdmin" as const;
+					}
+				}
+				await tx
+					.update(users)
+					.set({ role: newRole, updatedAt: new Date() })
+					.where(eq(users.id, userId));
+				return "ok" as const;
+			});
+		} catch {
+			return fail(500, { message: "Role change failed" });
 		}
 
-		await db
-			.update(users)
-			.set({ role: newRole, updatedAt: new Date() })
-			.where(eq(users.id, userId));
+		if (result === "missing") {
+			return fail(404, { message: "User not found" });
+		}
+		if (result === "lastAdmin") {
+			return fail(400, { message: "Cannot demote the last admin" });
+		}
 
 		return { success: true };
 	},

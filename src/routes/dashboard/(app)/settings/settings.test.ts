@@ -14,9 +14,7 @@ vi.mock("$lib/server/db/index.js", () => ({
 }));
 
 vi.mock("$lib/server/auth.js", () => ({
-	lucia: {
-		invalidateSession: vi.fn(),
-	},
+	invalidateSession: vi.fn(),
 }));
 
 describe("Settings page server", () => {

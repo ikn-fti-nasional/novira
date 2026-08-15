@@ -1,7 +1,7 @@
 import { redirect, error } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { notifications, appSettings } from "$lib/server/db/schema.js";
-import { visibleTo } from "$lib/server/db/notification-visibility.js";
+import { unreadFilter, notDismissedBy } from "$lib/server/db/notification-visibility.js";
 import { countAll } from "$lib/server/db/helpers.js";
 import { EXECUTIVE_ROLES, hasRole } from "$lib/authorize.js";
 import { eq, and, desc } from "drizzle-orm";
@@ -36,12 +36,13 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		error(503, "The application is currently under maintenance. Please check back later.");
 	}
 
-	const userNotificationFilter = visibleTo(locals.user.id);
+	const userUnreadFilter = unreadFilter(locals.user.id);
+	const userNotDismissedFilter = notDismissedBy(locals.user.id);
 
 	const [countResult] = await db
 		.select({ count: countAll })
 		.from(notifications)
-		.where(and(eq(notifications.read, false), userNotificationFilter));
+		.where(and(userUnreadFilter, userNotDismissedFilter));
 
 	const recentNotifications = await db
 		.select({
@@ -52,7 +53,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			createdAt: notifications.createdAt,
 		})
 		.from(notifications)
-		.where(and(eq(notifications.read, false), userNotificationFilter))
+		.where(and(userUnreadFilter, userNotDismissedFilter))
 		.orderBy(desc(notifications.createdAt))
 		.limit(5);
 

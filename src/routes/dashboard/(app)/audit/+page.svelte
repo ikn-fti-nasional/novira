@@ -21,7 +21,7 @@
 			<div class="flex items-center gap-2">
 				<ShieldCheckIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
 				<h1 class="text-3xl font-extrabold tracking-tight">Log Audit &amp; Rekam Jejak Sistem</h1>
-				<Badge class="bg-emerald-600 text-white text-xs font-semibold">Terenkripsi SHA-256</Badge>
+				<Badge class="bg-emerald-600 text-white text-xs font-semibold">Di-hash SHA-256</Badge>
 			</div>
 			<p class="text-sm text-muted-foreground">
 				Catatan jejak audit permanen untuk semua deteksi otomatis AI, penetapan tugas petugas, dan

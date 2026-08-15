@@ -139,6 +139,7 @@
 									class="text-destructive size-8"
 									type="submit"
 									title="Delete"
+									aria-label="Hapus notifikasi"
 								>
 									<TrashIcon class="size-4" />
 								</Button>

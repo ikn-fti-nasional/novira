@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createTestDb } from "$lib/server/db/test-utils.js";
 
 let testDb: Awaited<ReturnType<typeof createTestDb>>;

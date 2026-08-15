@@ -129,8 +129,8 @@ describe("Users page", () => {
 				role: "operator",
 			});
 
-			// /users mutations are gated on the admin role (requireRoleOrFail), so a
-			// viewer is rejected with 403 before reaching any deletion guard.
+			// /users mutations are gated on the admin role (requireRoleOrFail), so an
+			// operator is rejected with 403 before reaching any deletion guard.
 			const formData = createFormData({ id: adminId });
 
 			const result = await actions.delete({
@@ -156,6 +156,42 @@ describe("Users page", () => {
 			} as any);
 
 			expect(result).toEqual({ success: true });
+		});
+
+		it("returns 404 when deleting an unknown user", async () => {
+			const formData = createFormData({ id: "no-such-user" });
+
+			const result = await actions.delete({
+				request: createMockRequest(formData),
+				locals: createMockLocals(adminId),
+			} as any);
+
+			expect(result).toHaveProperty("status", 404);
+		});
+	});
+
+	describe("actions.bulkDelete", () => {
+		it("rejects more than 100 ids", async () => {
+			const ids = Array.from({ length: 101 }, (_, i) => `id-${i}`).join(",");
+			const formData = createFormData({ ids });
+
+			const result = await actions.bulkDelete({
+				request: createMockRequest(formData),
+				locals: createMockLocals(adminId),
+			} as any);
+
+			expect(result).toHaveProperty("status", 400);
+		});
+
+		it("refuses to delete the last admin", async () => {
+			const formData = createFormData({ ids: adminId });
+
+			const result = await actions.bulkDelete({
+				request: createMockRequest(formData),
+				locals: createMockLocals(adminId),
+			} as any);
+
+			expect(result).toHaveProperty("status", 400);
 		});
 	});
 

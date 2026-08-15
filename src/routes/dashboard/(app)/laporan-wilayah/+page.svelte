@@ -131,7 +131,7 @@
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each data.skorWilayahList as row (row.kelurahan)}
+					{#each data.skorWilayahList as row (`${row.provinsi}-${row.kabupatenKota}-${row.kecamatan}-${row.kelurahan}`)}
 						<Table.Row class="text-xs">
 							<Table.Cell class="font-bold">{row.provinsi}</Table.Cell>
 							<Table.Cell>{row.kabupatenKota}</Table.Cell>

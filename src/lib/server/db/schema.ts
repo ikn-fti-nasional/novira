@@ -1,4 +1,12 @@
-import { pgTable, text, bigint, boolean, timestamp, index } from "drizzle-orm/pg-core";
+import {
+	pgTable,
+	text,
+	bigint,
+	boolean,
+	timestamp,
+	index,
+	primaryKey,
+} from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
 	id: text("id").primaryKey(),
@@ -87,6 +95,28 @@ export const notifications = pgTable(
 		// Supports the unread-count + recent-unread queries in the app shell.
 		index("notifications_read_created_idx").on(table.read, table.createdAt),
 	]
+);
+
+// Per-user state for global notifications (`userId = NULL`): those rows are
+// shared across every user, so read/dismissed state must live here instead of
+// mutating the shared row. User-owned notifications keep using the `read`
+// column on `notifications`.
+export const notificationReads = pgTable(
+	"notification_reads",
+	{
+		notificationId: text("notification_id")
+			.notNull()
+			.references(() => notifications.id, { onDelete: "cascade" }),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		read: boolean("read").notNull().default(false),
+		dismissed: boolean("dismissed").notNull().default(false),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(table) => [primaryKey({ columns: [table.notificationId, table.userId] })]
 );
 
 export const passwordResetTokens = pgTable(

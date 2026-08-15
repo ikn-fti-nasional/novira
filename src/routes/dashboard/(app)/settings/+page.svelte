@@ -192,7 +192,7 @@
 				</Card.Header>
 				<Card.Content>
 					<div class="space-y-4">
-						{#each data.sessions as session}
+						{#each data.sessions as session (session.id)}
 							{@const ua = parseUserAgent(session.userAgent)}
 							{@const isCurrent = session.id === data.currentSessionId}
 							{@const DeviceIcon = getDeviceIcon(ua.device)}
