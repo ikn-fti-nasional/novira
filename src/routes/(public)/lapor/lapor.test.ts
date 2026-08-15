@@ -67,6 +67,35 @@ describe("Public report (/lapor)", () => {
 		expect(result).toMatchObject({ status: 400 });
 	});
 
+	it("rejects latitude without longitude", async () => {
+		const form = makeForm({
+			foto: new File(["abc"], "x.jpg", { type: "image/jpeg" }),
+			latitude: "-6.9175",
+		});
+
+		const result = await actions.default({
+			request: { formData: async () => form },
+			getClientAddress: () => "127.0.0.4",
+		} as any);
+
+		expect(result).toMatchObject({ status: 400 });
+	});
+
+	it("rejects latitude out of range", async () => {
+		const form = makeForm({
+			foto: new File(["abc"], "x.jpg", { type: "image/jpeg" }),
+			latitude: "91",
+			longitude: "107.6191",
+		});
+
+		const result = await actions.default({
+			request: { formData: async () => form },
+			getClientAddress: () => "127.0.0.5",
+		} as any);
+
+		expect(result).toMatchObject({ status: 400 });
+	});
+
 	it("rejects bot honeypot submissions", async () => {
 		const form = makeForm({
 			foto: new File(["abc"], "x.jpg", { type: "image/jpeg" }),

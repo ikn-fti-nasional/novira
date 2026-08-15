@@ -58,6 +58,9 @@ export const actions: Actions = {
 		let latitude: string | null = null;
 		let longitude: string | null = null;
 		if (latRaw || lonRaw) {
+			if (!latRaw || !lonRaw) {
+				return fail(400, { message: "Koordinat lokasi tidak valid." });
+			}
 			const lat = Number(latRaw);
 			const lon = Number(lonRaw);
 			if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
