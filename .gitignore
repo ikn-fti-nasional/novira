@@ -18,6 +18,10 @@ Thumbs.db
 !.env.example
 !.env.test
 
+# Playwright MCP debug snapshots
+.playwright-mcp
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+static/uploads/

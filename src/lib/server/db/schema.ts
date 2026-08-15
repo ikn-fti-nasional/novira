@@ -1,4 +1,12 @@
-import { pgTable, text, bigint, boolean, timestamp, index } from "drizzle-orm/pg-core";
+import {
+	pgTable,
+	text,
+	bigint,
+	boolean,
+	timestamp,
+	index,
+	primaryKey,
+} from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
 	id: text("id").primaryKey(),
@@ -89,6 +97,28 @@ export const notifications = pgTable(
 	]
 );
 
+// Per-user state for global notifications (`userId = NULL`): those rows are
+// shared across every user, so read/dismissed state must live here instead of
+// mutating the shared row. User-owned notifications keep using the `read`
+// column on `notifications`.
+export const notificationReads = pgTable(
+	"notification_reads",
+	{
+		notificationId: text("notification_id")
+			.notNull()
+			.references(() => notifications.id, { onDelete: "cascade" }),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		read: boolean("read").notNull().default(false),
+		dismissed: boolean("dismissed").notNull().default(false),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(table) => [primaryKey({ columns: [table.notificationId, table.userId] })]
+);
+
 export const passwordResetTokens = pgTable(
 	"password_reset_tokens",
 	{
@@ -113,6 +143,55 @@ export const appSettings = pgTable("app_settings", {
 		.$defaultFn(() => new Date()),
 });
 
+export const cameras = pgTable("cameras", {
+	id: text("id").primaryKey(),
+	nama: text("nama").notNull(),
+	kota: text("kota").notNull(),
+	kecamatan: text("kecamatan"),
+	urlStream: text("url_stream"),
+	urlSnapshot: text("url_snapshot"),
+	status: text("status", { enum: ["ONLINE", "OFFLINE", "PERBAIKAN"] })
+		.notNull()
+		.default("OFFLINE"),
+	latitude: text("latitude"),
+	longitude: text("longitude"),
+	createdAt: timestamp("created_at", { mode: "date" })
+		.notNull()
+		.$defaultFn(() => new Date()),
+	updatedAt: timestamp("updated_at", { mode: "date" })
+		.notNull()
+		.$defaultFn(() => new Date()),
+});
+
+export const publicReports = pgTable(
+	"public_reports",
+	{
+		id: text("id").primaryKey(),
+		pelaporNama: text("pelapor_nama"),
+		pelaporTelepon: text("pelapor_telepon"),
+		deskripsi: text("deskripsi"),
+		jenisSampah: text("jenis_sampah"),
+		urlFoto: text("url_foto"),
+		urlVideo: text("url_video"),
+		latitude: text("latitude"),
+		longitude: text("longitude"),
+		kota: text("kota"),
+		kecamatan: text("kecamatan"),
+		status: text("status", { enum: ["MENUNGGU", "DIPROSES", "SELESAI", "DITOLAK"] })
+			.notNull()
+			.default("MENUNGGU"),
+		catatanPetugas: text("catatan_petugas"),
+		diprosesOleh: text("diproses_oleh").references(() => users.id),
+		createdAt: timestamp("created_at", { mode: "date" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		updatedAt: timestamp("updated_at", { mode: "date" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(table) => [index("public_reports_status_created_idx").on(table.status, table.createdAt)]
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
@@ -120,3 +199,7 @@ export type Page = typeof pages.$inferSelect;
 export type NewPage = typeof pages.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type AppSetting = typeof appSettings.$inferSelect;
+export type Camera = typeof cameras.$inferSelect;
+export type NewCamera = typeof cameras.$inferInsert;
+export type PublicReport = typeof publicReports.$inferSelect;
+export type NewPublicReport = typeof publicReports.$inferInsert;

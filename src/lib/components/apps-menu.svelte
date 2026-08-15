@@ -19,14 +19,14 @@
 	let { role }: Props = $props();
 
 	const allApps = [
-		{ label: "Dashboard", href: "/", icon: LayoutDashboardIcon },
-		{ label: "Analytics", href: "/analytics", icon: BarChart3Icon },
-		{ label: "Users", href: "/users", icon: UsersIcon },
-		{ label: "Content", href: "/content", icon: FileTextIcon },
-		{ label: "Roles", href: "/roles", icon: ShieldIcon },
-		{ label: "Notifications", href: "/notifications", icon: BellIcon },
-		{ label: "Database", href: "/database", icon: DatabaseIcon },
-		{ label: "Settings", href: "/settings", icon: SettingsIcon },
+		{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
+		{ label: "Analytics", href: "/dashboard/analytics", icon: BarChart3Icon },
+		{ label: "Users", href: "/dashboard/users", icon: UsersIcon },
+		{ label: "Content", href: "/dashboard/content", icon: FileTextIcon },
+		{ label: "Roles", href: "/dashboard/roles", icon: ShieldIcon },
+		{ label: "Notifications", href: "/dashboard/notifications", icon: BellIcon },
+		{ label: "Database", href: "/dashboard/database", icon: DatabaseIcon },
+		{ label: "Settings", href: "/dashboard/settings", icon: SettingsIcon },
 	];
 
 	const apps = $derived(allApps.filter((app) => canAccessRole(role, app.href)));

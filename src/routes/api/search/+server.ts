@@ -1,7 +1,7 @@
 import { json, error } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { users, pages, notifications } from "$lib/server/db/schema.js";
-import { visibleTo } from "$lib/server/db/notification-visibility.js";
+import { visibleTo, notDismissedBy } from "$lib/server/db/notification-visibility.js";
 import { sql, or, and } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
 
@@ -39,7 +39,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		db
 			.select({ id: notifications.id, title: notifications.title, message: notifications.message })
 			.from(notifications)
-			.where(and(sql`${notifications.title} ILIKE ${pattern}`, visibleTo(locals.user.id)))
+			.where(
+				and(
+					sql`${notifications.title} ILIKE ${pattern}`,
+					visibleTo(locals.user.id),
+					notDismissedBy(locals.user.id)
+				)
+			)
 			.limit(5),
 	]);
 
@@ -49,21 +55,21 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			id: u.id,
 			title: u.name,
 			subtitle: u.email,
-			href: "/users",
+			href: "/dashboard/users",
 		})),
 		...pageResults.map((p) => ({
 			type: "page" as const,
 			id: p.id,
 			title: p.title,
 			subtitle: `/${p.slug}`,
-			href: `/content/${p.id}/edit`,
+			href: `/dashboard/content/${p.id}/edit`,
 		})),
 		...notificationResults.map((n) => ({
 			type: "notification" as const,
 			id: n.id,
 			title: n.title,
 			subtitle: n.message.slice(0, 50),
-			href: "/notifications",
+			href: "/dashboard/notifications",
 		})),
 	];
 

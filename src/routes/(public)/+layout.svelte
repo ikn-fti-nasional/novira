@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Button } from "$lib/components/ui/button/index.js";
-	import HammerIcon from "@lucide/svelte/icons/hammer";
+	import CameraIcon from "@lucide/svelte/icons/camera";
 
 	let { children } = $props();
 </script>
@@ -9,10 +8,9 @@
 	<header class="border-b">
 		<div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
 			<a href="/" class="flex items-center gap-2 font-semibold">
-				<HammerIcon class="size-5" />
+				<CameraIcon class="size-5 text-emerald-600" />
 				Novira
 			</a>
-			<Button href="/login" variant="outline" size="sm">Sign In</Button>
 		</div>
 	</header>
 	<main>
