@@ -58,11 +58,15 @@ describe("Insiden page server", () => {
 		expect(result.status).toBe(400);
 	});
 
-	it("menolak insiden yang tidak dikenal", async () => {
+	it("menolak insiden yang tidak dikenal tanpa menyimpan upload", async () => {
 		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db);
 		const locals = createMockLocals(userId);
+
+		const { storeUpload } = await import("$lib/server/uploads.js");
+		const storeUploadMock = storeUpload as ReturnType<typeof vi.fn>;
+		storeUploadMock.mockClear();
 
 		const request = new Request("http://localhost", {
 			method: "POST",
@@ -72,5 +76,6 @@ describe("Insiden page server", () => {
 		const result: any = await actions.selesaikanTugas({ request, locals } as any);
 
 		expect(result.status).toBe(404);
+		expect(storeUploadMock).not.toHaveBeenCalled();
 	});
 });

@@ -83,7 +83,12 @@ export async function selesaikanInsiden(insidenId: string, buktiFotoUrl: string)
 	const insiden = MOCK_INSIDEN.find((i) => i.id === insidenId);
 	if (!insiden) return null;
 	insiden.status = "SELESAI";
-	insiden.statusSla = "TEPAT_WAKTU";
+	// Jangan menimpa riwayat SLA: insiden yang sudah melanggar SLA tetap
+	// tercatat MELANGGAR_SLA setelah selesai; hanya yang belum melanggar
+	// yang ditandai TEPAT_WAKTU.
+	if (insiden.statusSla !== "MELANGGAR_SLA") {
+		insiden.statusSla = "TEPAT_WAKTU";
+	}
 	insiden.buktiFotoUrl = buktiFotoUrl;
 	insiden.terakhirDilihat = new Date().toISOString();
 	return insiden;

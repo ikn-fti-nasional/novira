@@ -174,8 +174,14 @@
 						{/if}
 					</div>
 					<div class="grid gap-3 sm:grid-cols-2">
-						<Input.Root name="kota" placeholder="Kota (mis. Bandung)" />
-						<Input.Root name="kecamatan" placeholder="Kecamatan (opsional)" />
+						<div class="space-y-1.5">
+							<Label.Root for="kota" class="text-xs font-medium">Kota</Label.Root>
+							<Input.Root id="kota" name="kota" placeholder="Kota (mis. Bandung)" />
+						</div>
+						<div class="space-y-1.5">
+							<Label.Root for="kecamatan" class="text-xs font-medium">Kecamatan</Label.Root>
+							<Input.Root id="kecamatan" name="kecamatan" placeholder="Kecamatan (opsional)" />
+						</div>
 					</div>
 				</div>
 
@@ -201,12 +207,16 @@
 						Deskripsi
 						<span class="ml-1 font-normal text-muted-foreground">(opsional)</span>
 					</Label.Root>
-					<Textarea
-						name="deskripsi"
-						rows={3}
-						placeholder="Contoh: tumpukan sampah sudah 3 hari, dekat lampu merah Jl. Sudirman"
-						class="resize-none"
-					/>
+					<div class="space-y-1.5">
+						<Label.Root for="deskripsi" class="text-xs font-medium">Isi deskripsi kondisi</Label.Root>
+						<Textarea
+							id="deskripsi"
+							name="deskripsi"
+							rows={3}
+							placeholder="Contoh: tumpukan sampah sudah 3 hari, dekat lampu merah Jl. Sudirman"
+							class="resize-none"
+						/>
+					</div>
 				</div>
 
 				<!-- Divider -->
@@ -219,8 +229,14 @@
 						<span class="ml-1 font-normal text-muted-foreground">(opsional, untuk follow-up)</span>
 					</Label.Root>
 					<div class="grid gap-3 sm:grid-cols-2">
-						<Input.Root name="pelaporNama" placeholder="Nama Anda" />
-						<Input.Root name="pelaporTelepon" placeholder="08xx — untuk follow-up" />
+						<div class="space-y-1.5">
+							<Label.Root for="pelaporNama" class="text-xs font-medium">Nama</Label.Root>
+							<Input.Root id="pelaporNama" name="pelaporNama" placeholder="Nama Anda" />
+						</div>
+						<div class="space-y-1.5">
+							<Label.Root for="pelaporTelepon" class="text-xs font-medium">Telepon</Label.Root>
+							<Input.Root id="pelaporTelepon" name="pelaporTelepon" placeholder="08xx — untuk follow-up" />
+						</div>
 					</div>
 				</div>
 

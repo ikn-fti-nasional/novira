@@ -12,17 +12,21 @@
 		formData.append("insidenId", insidenId);
 		formData.append("buktiFoto", buktiFile);
 
-		const response = await fetch("?/selesaikanTugas", {
-			method: "POST",
-			body: formData,
-		});
+		try {
+			const response = await fetch("?/selesaikanTugas", {
+				method: "POST",
+				body: formData,
+			});
 
-		if (response.ok) {
-			toast.success("Insiden ditandai selesai");
-			await invalidateAll();
-		} else {
-			const body = (await response.json().catch(() => null)) as { message?: string } | null;
-			toast.error(body?.message ?? "Gagal menandai insiden selesai, coba lagi");
+			if (response.ok) {
+				toast.success("Insiden ditandai selesai");
+				await invalidateAll();
+			} else {
+				const body = (await response.json().catch(() => null)) as { message?: string } | null;
+				toast.error(body?.message ?? "Gagal menandai insiden selesai, coba lagi");
+			}
+		} catch {
+			toast.error("Gagal menandai insiden selesai, coba lagi");
 		}
 	}
 </script>

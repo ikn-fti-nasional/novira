@@ -23,6 +23,13 @@ export const actions: Actions = {
 		const error = validateUpload(buktiFoto, "foto");
 		if (error) return fail(400, { message: error });
 
+		// Cek keberadaan insiden SEBELUM menyimpan file, supaya ID tak dikenal
+		// tidak meninggalkan upload yatim di /uploads.
+		const insiden = (await listInsiden()).find((i) => i.id === insidenId);
+		if (!insiden) {
+			return fail(404, { message: "Insiden tidak ditemukan." });
+		}
+
 		let buktiFotoUrl: string;
 		try {
 			buktiFotoUrl = await storeUpload(buktiFoto, "foto");
@@ -30,8 +37,8 @@ export const actions: Actions = {
 			return fail(500, { message: "Gagal menyimpan foto bukti, coba lagi." });
 		}
 
-		const insiden = await selesaikanInsiden(insidenId, buktiFotoUrl);
-		if (!insiden) {
+		const insidenSelesai = await selesaikanInsiden(insidenId, buktiFotoUrl);
+		if (!insidenSelesai) {
 			return fail(404, { message: "Insiden tidak ditemukan." });
 		}
 
