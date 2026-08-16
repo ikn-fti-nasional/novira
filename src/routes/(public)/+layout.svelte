@@ -1,5 +1,4 @@
 <script lang="ts">
-	import LeafIcon from "@lucide/svelte/icons/leaf";
 	import ThemeToggle from "$lib/components/theme-toggle.svelte";
 
 	let { children } = $props();

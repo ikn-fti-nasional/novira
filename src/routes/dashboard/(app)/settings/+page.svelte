@@ -16,8 +16,6 @@
 	import TabletIcon from "@lucide/svelte/icons/tablet";
 	import GlobeIcon from "@lucide/svelte/icons/globe";
 	import BellIcon from "@lucide/svelte/icons/bell";
-	import UserPlusIcon from "@lucide/svelte/icons/user-plus";
-	import FileTextIcon from "@lucide/svelte/icons/file-text";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import CalendarIcon from "@lucide/svelte/icons/calendar";

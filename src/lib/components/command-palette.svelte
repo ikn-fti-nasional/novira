@@ -6,7 +6,6 @@
 	import { toggleMode } from "mode-watcher";
 	import SearchIcon from "@lucide/svelte/icons/search";
 	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
-	import BarChart3Icon from "@lucide/svelte/icons/bar-chart-3";
 	import UsersIcon from "@lucide/svelte/icons/users";
 	import FileTextIcon from "@lucide/svelte/icons/file-text";
 	import ShieldIcon from "@lucide/svelte/icons/shield";

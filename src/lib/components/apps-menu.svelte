@@ -3,9 +3,7 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import LayoutGridIcon from "@lucide/svelte/icons/layout-grid";
 	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
-	import BarChart3Icon from "@lucide/svelte/icons/bar-chart-3";
 	import UsersIcon from "@lucide/svelte/icons/users";
-	import FileTextIcon from "@lucide/svelte/icons/file-text";
 	import ShieldIcon from "@lucide/svelte/icons/shield";
 	import BellIcon from "@lucide/svelte/icons/bell";
 	import DatabaseIcon from "@lucide/svelte/icons/database";

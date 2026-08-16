@@ -4,7 +4,6 @@
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
 	import ClipboardListIcon from "@lucide/svelte/icons/clipboard-list";
-	import BarChart3Icon from "@lucide/svelte/icons/bar-chart-3";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import UserCheckIcon from "@lucide/svelte/icons/user-check";
 	import TrophyIcon from "@lucide/svelte/icons/trophy";

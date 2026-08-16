@@ -21,7 +21,8 @@
 			toast.success("Insiden ditandai selesai");
 			await invalidateAll();
 		} else {
-			toast.error("Gagal menandai insiden selesai, coba lagi");
+			const body = (await response.json().catch(() => null)) as { message?: string } | null;
+			toast.error(body?.message ?? "Gagal menandai insiden selesai, coba lagi");
 		}
 	}
 </script>

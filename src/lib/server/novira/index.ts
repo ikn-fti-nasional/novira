@@ -73,6 +73,22 @@ export async function listInsiden(): Promise<Insiden[]> {
 	return MOCK_INSIDEN;
 }
 
+/**
+ * Tandai insiden selesai (diangkat) + simpan URL bukti foto penanganan.
+ * Insiden masih di-backing mock in-memory, jadi perubahan berlaku selama
+ * proses server hidup — kontrak async sama seperti saat adapter Postgres
+ * insiden datang nanti.
+ */
+export async function selesaikanInsiden(insidenId: string, buktiFotoUrl: string): Promise<Insiden | null> {
+	const insiden = MOCK_INSIDEN.find((i) => i.id === insidenId);
+	if (!insiden) return null;
+	insiden.status = "SELESAI";
+	insiden.statusSla = "TEPAT_WAKTU";
+	insiden.buktiFotoUrl = buktiFotoUrl;
+	insiden.terakhirDilihat = new Date().toISOString();
+	return insiden;
+}
+
 export async function listSkorWilayah(): Promise<SkorKebersihanWilayah[]> {
 	return MOCK_SKOR_WILAYAH;
 }
