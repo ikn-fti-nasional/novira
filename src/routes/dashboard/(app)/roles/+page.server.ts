@@ -35,7 +35,6 @@ const roleDefinitions = [
 			"Verify incidents",
 			"Assign petugas",
 			"Manage content",
-			"View analytics & reports",
 			"Export reports",
 		],
 	},
@@ -46,7 +45,6 @@ const roleDefinitions = [
 			"View live monitoring",
 			"View incidents",
 			"Escalate SLA violations",
-			"View analytics & reports",
 			"Export reports",
 		],
 	},
@@ -56,7 +54,6 @@ const roleDefinitions = [
 		permissions: [
 			"View executive dashboard",
 			"View area ranking",
-			"View analytics",
 			"View reports",
 			"Export reports",
 		],
@@ -67,7 +64,6 @@ const roleDefinitions = [
 		permissions: [
 			"View executive dashboard",
 			"View area ranking",
-			"View analytics",
 			"View reports",
 			"Export reports",
 		],

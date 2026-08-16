@@ -16,8 +16,6 @@
 	import TabletIcon from "@lucide/svelte/icons/tablet";
 	import GlobeIcon from "@lucide/svelte/icons/globe";
 	import BellIcon from "@lucide/svelte/icons/bell";
-	import UserPlusIcon from "@lucide/svelte/icons/user-plus";
-	import FileTextIcon from "@lucide/svelte/icons/file-text";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import CalendarIcon from "@lucide/svelte/icons/calendar";
@@ -59,16 +57,6 @@
 
 	const notifLabels: Record<string, { label: string; description: string; icon: typeof BellIcon }> =
 		{
-			notif_new_user: {
-				label: "New user registrations",
-				description: "Get notified when a new user signs up",
-				icon: UserPlusIcon,
-			},
-			notif_content_published: {
-				label: "Content published",
-				description: "Get notified when content is published",
-				icon: FileTextIcon,
-			},
 			notif_security_alert: {
 				label: "Security alerts",
 				description: "Important security notifications",

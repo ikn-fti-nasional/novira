@@ -57,6 +57,7 @@ export interface Insiden {
 	tingkatKepercayaan: number; // 0.0 - 1.0
 	urlSnapshot: string;
 	petugasDitugaskan?: string;
+	buktiFotoUrl?: string;
 	statusSla: "TEPAT_WAKTU" | "HAMPIR_BREACH" | "MELANGGAR_SLA";
 	bbox: { x: number; y: number; width: number; height: number };
 }

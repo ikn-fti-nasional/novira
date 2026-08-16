@@ -1,22 +1,31 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
 	import * as Table from "$lib/components/ui/table/index.js";
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
+	import { Label } from "$lib/components/ui/label/index.js";
 	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
 	import ClockIcon from "@lucide/svelte/icons/clock";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
 	import UserPlusIcon from "@lucide/svelte/icons/user-plus";
 	import XCircleIcon from "@lucide/svelte/icons/x-circle";
+	import UploadIcon from "@lucide/svelte/icons/upload";
 	import type { Insiden } from "$lib/types/novira.js";
 
 	type Props = {
 		insidenList: Insiden[];
+		onSelesaikanTugas?: (insidenId: string, buktiFile: File) => void;
 	};
 
-	let { insidenList }: Props = $props();
+	let { insidenList, onSelesaikanTugas }: Props = $props();
 
 	let filterStatus = $state<string>("SEMUA");
+
+	// State untuk dialog "Selesaikan Tugas"
+	let dialogTerbuka = $state(false);
+	let insidenDipilih = $state<Insiden | null>(null);
+	let buktiFile = $state<File | null>(null);
 
 	let insidenTersaring = $derived(
 		filterStatus === "SEMUA"
@@ -27,6 +36,25 @@
 						(filterStatus === "MELANGGAR_SLA" && i.statusSla === "MELANGGAR_SLA")
 				)
 	);
+
+	function bukaDialogSelesai(insiden: Insiden) {
+		insidenDipilih = insiden;
+		buktiFile = null;
+		dialogTerbuka = true;
+	}
+
+	function handlePilihFile(e: Event) {
+		const target = e.target as HTMLInputElement;
+		buktiFile = target.files?.[0] ?? null;
+	}
+
+	function konfirmasiSelesai() {
+		if (!insidenDipilih || !buktiFile) return;
+		onSelesaikanTugas?.(insidenDipilih.id, buktiFile);
+		dialogTerbuka = false;
+		insidenDipilih = null;
+		buktiFile = null;
+	}
 
 	function getBadgeKeparahanClass(keparahan: string) {
 		switch (keparahan) {
@@ -120,6 +148,14 @@
 				onclick={() => (filterStatus = "MELANGGAR_SLA")}
 			>
 				Melanggar SLA
+			</Button>
+			<Button
+				variant={filterStatus === "SELESAI" ? "secondary" : "ghost"}
+				size="sm"
+				class="h-7 px-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold"
+				onclick={() => (filterStatus = "SELESAI")}
+			>
+				Riwayat ({insidenList.filter((i) => i.status === "SELESAI").length})
 			</Button>
 		</div>
 	</Card.Header>
@@ -217,15 +253,27 @@
 						<!-- Tindakan Super Admin -->
 						<Table.Cell class="text-right">
 							<div class="flex items-center justify-end gap-1">
-								{#if insiden.status === "AKTIF"}
-									<Button
-										variant="outline"
-										size="sm"
-										class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
-									>
-										<UserPlusIcon class="mr-1 size-3" />
-										Tugaskan
-									</Button>
+								{#if insiden.status === "AKTIF" || insiden.status === "PERINGATAN"}
+									{#if insiden.petugasDitugaskan}
+										<Button
+											variant="outline"
+											size="sm"
+											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
+											onclick={() => bukaDialogSelesai(insiden)}
+										>
+											<CheckCircle2Icon class="mr-1 size-3" />
+											Selesaikan Tugas
+										</Button>
+									{:else}
+										<Button
+											variant="outline"
+											size="sm"
+											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
+										>
+											<UserPlusIcon class="mr-1 size-3" />
+											Tugaskan
+										</Button>
+									{/if}
 									<Button
 										variant="ghost"
 										size="sm"
@@ -252,3 +300,50 @@
 		</Table.Root>
 	</Card.Content>
 </Card.Root>
+
+<Dialog.Root bind:open={dialogTerbuka}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Selesaikan Tugas Insiden</Dialog.Title>
+			<Dialog.Description>
+				{#if insidenDipilih}
+					{insidenDipilih.lokasi} — {insidenDipilih.labelSampah}. Upload foto bukti sampah sudah
+					diangkut sebelum menandai insiden ini selesai.
+				{/if}
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<div class="space-y-2 py-2">
+			<Label for="bukti-foto" class="text-xs font-semibold">Foto Bukti Penanganan *</Label>
+			<label
+				for="bukti-foto"
+				class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/60 p-6 text-center hover:border-emerald-500/50 hover:bg-emerald-500/5"
+			>
+				<UploadIcon class="size-6 text-muted-foreground" />
+				<span class="text-xs text-muted-foreground">
+					{buktiFile ? buktiFile.name : "Klik untuk pilih foto (JPG/PNG)"}
+				</span>
+			</label>
+			<input
+				id="bukti-foto"
+				type="file"
+				accept="image/*"
+				class="hidden"
+				onchange={handlePilihFile}
+			/>
+		</div>
+
+		<Dialog.Footer>
+			<Button variant="outline" size="sm" onclick={() => (dialogTerbuka = false)}>Batal</Button>
+			<Button
+				size="sm"
+				class="bg-emerald-600 text-white hover:bg-emerald-700"
+				disabled={!buktiFile}
+				onclick={konfirmasiSelesai}
+			>
+				<CheckCircle2Icon class="mr-1.5 size-3.5" />
+				Tandai Selesai
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
