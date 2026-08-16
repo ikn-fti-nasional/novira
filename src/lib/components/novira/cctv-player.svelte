@@ -16,7 +16,10 @@
 
 	// $bindable: kameraIdDipilih dapat di-ubah dua arah — mengalir turun saat
 	// induk mengganti kamera, dan bisa di-set lokal lewat <select bind:value>.
-	let { kameraList, kameraIdDipilih = $bindable("CAM-003") }: Props = $props();
+	// Default "" (bukan ID kamera contoh): ID kamera asli datang dari DB
+	// (generateId() acak), jadi ID hardcode apa pun di sini tidak akan pernah
+	// cocok — biarkan fallback `?? kameraList[0]` di bawah yang menentukan.
+	let { kameraList, kameraIdDipilih = $bindable("") }: Props = $props();
 
 	let tampilkanOverlayAi = $state(true);
 	let mengunduhTangkapan = $state(false);

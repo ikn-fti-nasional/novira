@@ -1,5 +1,4 @@
 import type {
-	Kamera,
 	Insiden,
 	SkorKebersihanWilayah,
 	PetugasLapangan,
@@ -9,140 +8,16 @@ import type {
 	EksekutifKpiStats,
 } from "../types/novira.js";
 
-export const MOCK_PROVINSI = [
-	{ id: "PROV-32", nama: "Jawa Barat" },
-	{ id: "PROV-31", nama: "DKI Jakarta" },
-	{ id: "PROV-33", nama: "Jawa Tengah" },
-	{ id: "PROV-35", nama: "Jawa Timur" },
-];
-
-export const MOCK_KABUPATEN_KOTA = [
-	{ id: "KAB-3273", provinsiId: "PROV-32", nama: "Kota Bandung" },
-	{ id: "KAB-3204", provinsiId: "PROV-32", nama: "Kabupaten Bandung" },
-	{ id: "KAB-3277", provinsiId: "PROV-32", nama: "Kota Cimahi" },
-	{ id: "KAB-3174", provinsiId: "PROV-31", nama: "Kota Jakarta Selatan" },
-	{ id: "KAB-3374", provinsiId: "PROV-33", nama: "Kota Semarang" },
-];
-
-export const MOCK_KAMERA: Kamera[] = [
-	{
-		id: "CAM-001",
-		nama: "CCTV-001 Pasir Kaliki",
-		lokasi: "Jl. Pasir Kaliki No. 142 (Simpang RS Sentosa)",
-		kelurahan: "Pasir Kaliki",
-		kecamatan: "Cicendo",
-		kabupatenKota: "Kota Bandung",
-		provinsi: "Jawa Barat",
-		latitude: -6.9083,
-		longitude: 107.6025,
-		status: "ONLINE",
-		jumlahObjekTerdeteksi: 4,
-		statusDeteksi: "KRITIS",
-		fps: 30,
-		urlSnapshot:
-			"https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-	},
-	{
-		id: "CAM-002",
-		nama: "CCTV-002 Alun-Alun Pusat Kota",
-		lokasi: "Jl. Asia Afrika (Taman Alun-Alun Timur)",
-		kelurahan: "Balonggede",
-		kecamatan: "Regol",
-		kabupatenKota: "Kota Bandung",
-		provinsi: "Jawa Barat",
-		latitude: -6.9218,
-		longitude: 107.6071,
-		status: "ONLINE",
-		jumlahObjekTerdeteksi: 1,
-		statusDeteksi: "PERINGATAN",
-		fps: 28,
-		urlSnapshot:
-			"https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop&q=80",
-	},
-	{
-		id: "CAM-003",
-		nama: "CCTV-003 Jl. Ahmad Yani",
-		lokasi: "Jl. Ahmad Yani (Depan Pasar Kosambi)",
-		kelurahan: "Malabar",
-		kecamatan: "Lengkong",
-		kabupatenKota: "Kota Bandung",
-		provinsi: "Jawa Barat",
-		latitude: -6.9189,
-		longitude: 107.6214,
-		status: "ONLINE",
-		jumlahObjekTerdeteksi: 3,
-		statusDeteksi: "KRITIS",
-		fps: 30,
-		urlSnapshot:
-			"https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=800&auto=format&fit=crop&q=80",
-	},
-	{
-		id: "CAM-004",
-		nama: "CCTV-004 Flyover Dago",
-		lokasi: "Jl. Ir. H. Juanda (Bawah Flyover Pasupati)",
-		kelurahan: "Lebak Siliwangi",
-		kecamatan: "Coblong",
-		kabupatenKota: "Kota Bandung",
-		provinsi: "Jawa Barat",
-		latitude: -6.8995,
-		longitude: 107.6111,
-		status: "ONLINE",
-		jumlahObjekTerdeteksi: 0,
-		statusDeteksi: "NORMAL",
-		fps: 29,
-		urlSnapshot:
-			"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80",
-	},
-	{
-		id: "CAM-005",
-		nama: "CCTV-005 Stasiun Bandung",
-		lokasi: "Jl. Stasiun Barat (Pintu Keluar Selatan)",
-		kelurahan: "Kebon Jeruk",
-		kecamatan: "Andir",
-		kabupatenKota: "Kota Bandung",
-		provinsi: "Jawa Barat",
-		latitude: -6.9142,
-		longitude: 107.6022,
-		status: "ONLINE",
-		jumlahObjekTerdeteksi: 2,
-		statusDeteksi: "PERINGATAN",
-		fps: 30,
-		urlSnapshot:
-			"https://images.unsplash.com/photo-1577705998148-6da4f3963bc8?w=800&auto=format&fit=crop&q=80",
-	},
-	{
-		id: "CAM-006",
-		nama: "CCTV-006 Taman Cibeunying",
-		lokasi: "Jl. Taman Cibeunying Selatan",
-		kelurahan: "Cihapit",
-		kecamatan: "Bandung Wetan",
-		kabupatenKota: "Kota Bandung",
-		provinsi: "Jawa Barat",
-		latitude: -6.9035,
-		longitude: 107.6238,
-		status: "PERBAIKAN",
-		jumlahObjekTerdeteksi: 0,
-		statusDeteksi: "NORMAL",
-		fps: 0,
-	},
-	{
-		id: "CAM-007",
-		nama: "CCTV-007 Blok M Plaza",
-		lokasi: "Jl. Panglima Polim Raya",
-		kelurahan: "Kramat Pela",
-		kecamatan: "Kebayoran Baru",
-		kabupatenKota: "Kota Jakarta Selatan",
-		provinsi: "DKI Jakarta",
-		latitude: -6.2443,
-		longitude: 106.7978,
-		status: "ONLINE",
-		jumlahObjekTerdeteksi: 2,
-		statusDeteksi: "PERINGATAN",
-		fps: 30,
-		urlSnapshot:
-			"https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-	},
-];
+// Catatan: kamera CCTV TIDAK lagi berasal dari sini. Sebelumnya file ini
+// mengekspor `MOCK_KAMERA`, `MOCK_PROVINSI`, dan `MOCK_KABUPATEN_KOTA` (7
+// kamera fiktif kota Bandung/Jakarta Selatan berdurasi tetap), tapi sejak
+// kamera dipindah ke tabel Postgres `cameras` (lihat drizzle/schema.ts +
+// server/db/seed.ts), ketiga export itu tidak pernah diimpor lagi di mana
+// pun — dead code yang berisiko menyesatkan (dua "sumber kebenaran" kamera
+// yang beda: satu bilang 7 kamera 2 kota, satu lagi bilang jumlah kamera
+// nyata dari ATCS publik). Dihapus di sini; kamera/kota/provinsi asli ada
+// di `listKamera()` / `listKabupatenKota()` / `listProvinsi()` pada
+// `server/novira/index.ts`, yang membaca langsung dari DB.
 
 export const MOCK_INSIDEN: Insiden[] = [
 	{

@@ -240,7 +240,7 @@
 	<!-- Baris 2: Pemantauan Umpan CCTV & Tabel Insiden Peringatan -->
 	<div class="grid gap-6 lg:grid-cols-12">
 		<div class="min-w-0 lg:col-span-6">
-			<CctvPlayer kameraList={data.kameraList} kameraIdDipilih="CAM-003" />
+			<CctvPlayer kameraList={data.kameraList} />
 		</div>
 		<div class="min-w-0 lg:col-span-6">
 			<IncidentTable insidenList={data.insidenList} />

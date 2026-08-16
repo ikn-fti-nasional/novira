@@ -14,7 +14,7 @@
 	let kameraKotaDipilih = $state<string>("");
 	const slotTayang = $state<Map<string, Kamera>>(new Map());
 
-	const MAX_SLOT = 2;
+	const MAX_SLOT = 4;
 
 	const kotaList = $derived([...new Set(data.kameraList.map((k) => k.kabupatenKota))].sort());
 	const kameraPerKota = $derived(
@@ -52,7 +52,7 @@
 			</Badge>
 		</div>
 		<p class="text-sm text-muted-foreground">
-			Pilih kota, pilih CCTV, dan tampilkan hingga 2 umpan berdampingan.
+			Pilih kota, pilih CCTV, dan tampilkan hingga 4 umpan berdampingan.
 		</p>
 	</div>
 
@@ -118,8 +118,8 @@
 						</Button>
 					</Card.Header>
 					<Card.Content class="p-0">
-					<div class="relative aspect-video w-full overflow-hidden bg-slate-950 text-white">
-						<CctvStream kamera={kam} />
+						<div class="relative aspect-video w-full overflow-hidden bg-slate-950 text-white">
+							<CctvStream kamera={kam} />
 							<div class="absolute top-2 left-2">
 								{#if kam.status === "ONLINE"}
 									<span
