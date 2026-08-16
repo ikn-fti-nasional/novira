@@ -20,9 +20,7 @@
 
 	const allApps = [
 		{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
-		{ label: "Analytics", href: "/dashboard/analytics", icon: BarChart3Icon },
 		{ label: "Users", href: "/dashboard/users", icon: UsersIcon },
-		{ label: "Content", href: "/dashboard/content", icon: FileTextIcon },
 		{ label: "Roles", href: "/dashboard/roles", icon: ShieldIcon },
 		{ label: "Notifications", href: "/dashboard/notifications", icon: BellIcon },
 		{ label: "Database", href: "/dashboard/database", icon: DatabaseIcon },

@@ -59,16 +59,6 @@
 
 	const notifLabels: Record<string, { label: string; description: string; icon: typeof BellIcon }> =
 		{
-			notif_new_user: {
-				label: "New user registrations",
-				description: "Get notified when a new user signs up",
-				icon: UserPlusIcon,
-			},
-			notif_content_published: {
-				label: "Content published",
-				description: "Get notified when content is published",
-				icon: FileTextIcon,
-			},
 			notif_security_alert: {
 				label: "Security alerts",
 				description: "Important security notifications",

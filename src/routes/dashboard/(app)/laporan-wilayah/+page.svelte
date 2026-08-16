@@ -12,6 +12,23 @@
 
 	let provinsiFilter = $state("SEMUA");
 	let kabupatenFilter = $state("SEMUA");
+
+	// Filter yang benar-benar diterapkan ke tabel (baru berubah saat tombol diklik)
+	let provinsiTerapan = $state("SEMUA");
+	let kabupatenTerapan = $state("SEMUA");
+
+	let skorWilayahTersaring = $derived(
+		data.skorWilayahList.filter(
+			(row) =>
+				(provinsiTerapan === "SEMUA" || row.provinsi === provinsiTerapan) &&
+				(kabupatenTerapan === "SEMUA" || row.kabupatenKota === kabupatenTerapan)
+		)
+	);
+
+	function terapkanFilter() {
+		provinsiTerapan = provinsiFilter;
+		kabupatenTerapan = kabupatenFilter;
+	}
 </script>
 
 <svelte:head>
@@ -84,6 +101,15 @@
 					{/each}
 				</select>
 			</div>
+
+			<Button
+				size="sm"
+				class="h-9 bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+				onclick={terapkanFilter}
+			>
+				<FilterIcon class="mr-1.5 size-3.5" />
+				Terapkan Filter
+			</Button>
 		</div>
 	</Card.Root>
 

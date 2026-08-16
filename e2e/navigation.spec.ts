@@ -12,19 +12,7 @@ test.describe("Navigation", () => {
 		await expectHeading(page, "Users");
 	});
 
-	test("sidebar link to content works", async ({ page }) => {
-		await page.click('a[href="/content"]');
-		await page.waitForURL("/content");
-		await expectHeading(page, "Content");
-	});
-
-	test("sidebar link to analytics works", async ({ page }) => {
-		await page.click('a[href="/analytics"]');
-		await page.waitForURL("/analytics");
-		await expectHeading(page, "Analytics");
-	});
-
-	test("sidebar link to notifications works", async ({ page }) => {
+		test("sidebar link to notifications works", async ({ page }) => {
 		await page.click('a[href="/notifications"]');
 		await page.waitForURL("/notifications");
 		await expectHeading(page, "Notifications");

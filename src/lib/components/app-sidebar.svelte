@@ -46,27 +46,26 @@
 				{ title: "Beranda Dasbor", url: "/dashboard", icon: LayoutDashboardIcon },
 				{ title: "Dashboard Eksekutif", url: "/dashboard/eksekutif", icon: TrophyIcon },
 				{ title: "Pemantauan Langsung", url: "/dashboard/monitoring", icon: VideoIcon },
-				{
-					title: "Insiden & Alert",
-					url: "/dashboard/incidents",
-					icon: AlertTriangleIcon,
-					badge: "14",
-				},
+
 				{ title: "Peta Titik Rawan", url: "/dashboard/hotspots", icon: MapPinIcon },
-				{ title: "Analitik Kebersihan", url: "/dashboard/analytics", icon: BarChart3Icon },
 			],
 		},
 		{
 			label: "Manajemen Operasional",
 			items: [
 				{ title: "Kamera CCTV", url: "/dashboard/cameras", icon: CameraIcon },
+				{
+					title: "Insiden & Alert",
+					url: "/dashboard/incidents",
+					icon: AlertTriangleIcon,
+					badge: "14",
+				},
 				{ title: "Petugas Lapangan", url: "/dashboard/officers", icon: UserCheckIcon },
 				{
 					title: "Laporan Masyarakat",
 					url: "/dashboard/laporan-masyarakat",
 					icon: ClipboardListIcon,
 				},
-				{ title: "Peringkat Wilayah", url: "/dashboard/area-ranking", icon: TrophyIcon },
 			],
 		},
 		{
@@ -94,13 +93,11 @@
 			label: "Ringkasan Eksekutif",
 			items: [
 				{ title: "Dashboard Eksekutif", url: "/dashboard/eksekutif", icon: LayoutDashboardIcon },
-				{ title: "Peringkat Wilayah", url: "/dashboard/area-ranking", icon: TrophyIcon },
 				{
 					title: "Laporan Eksekutif",
 					url: "/dashboard/laporan-wilayah",
 					icon: FileSpreadsheetIcon,
 				},
-				{ title: "Analitik Kebersihan", url: "/dashboard/analytics", icon: BarChart3Icon },
 			],
 		},
 		{
@@ -112,6 +109,7 @@
 					icon: BellIcon,
 					badge: notificationCount > 0 ? String(notificationCount) : undefined,
 				},
+				{ title: "Pengaturan Sistem", url: "/dashboard/settings", icon: SettingsIcon },
 			],
 		},
 	]);

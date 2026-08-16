@@ -60,22 +60,10 @@
 			keywords: ["home", "overview", "kpi"],
 		},
 		{
-			label: "Analytics",
-			href: "/dashboard/analytics",
-			icon: BarChart3Icon,
-			keywords: ["charts", "stats", "reports"],
-		},
-		{
 			label: "Users",
 			href: "/dashboard/users",
 			icon: UsersIcon,
 			keywords: ["accounts", "members", "people"],
-		},
-		{
-			label: "Content",
-			href: "/dashboard/content",
-			icon: FileTextIcon,
-			keywords: ["pages", "blog", "articles"],
 		},
 		{
 			label: "Roles",

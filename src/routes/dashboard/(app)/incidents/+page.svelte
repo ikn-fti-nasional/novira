@@ -2,8 +2,28 @@
 	import IncidentTable from "$lib/components/novira/incident-table.svelte";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import { Badge } from "$lib/components/ui/badge/index.js";
+	import { invalidateAll } from "$app/navigation";
+	import { toast } from "svelte-sonner";
 
 	let { data } = $props();
+
+	async function handleSelesaikanTugas(insidenId: string, buktiFile: File) {
+		const formData = new FormData();
+		formData.append("insidenId", insidenId);
+		formData.append("buktiFoto", buktiFile);
+
+		const response = await fetch("?/selesaikanTugas", {
+			method: "POST",
+			body: formData,
+		});
+
+		if (response.ok) {
+			toast.success("Insiden ditandai selesai");
+			await invalidateAll();
+		} else {
+			toast.error("Gagal menandai insiden selesai, coba lagi");
+		}
+	}
 </script>
 
 <svelte:head>
@@ -23,5 +43,5 @@
 		</p>
 	</div>
 
-	<IncidentTable insidenList={data.insidenList} />
+	<IncidentTable insidenList={data.insidenList} onSelesaikanTugas={handleSelesaikanTugas} />
 </div>

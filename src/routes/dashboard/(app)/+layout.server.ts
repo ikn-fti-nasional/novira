@@ -17,7 +17,6 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		const restrictedPaths = [
 			"/dashboard/cameras",
 			"/dashboard/users",
-			"/dashboard/settings",
 			"/dashboard/roles",
 			"/dashboard/database",
 			"/dashboard/monitoring",
