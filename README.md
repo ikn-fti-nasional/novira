@@ -1,86 +1,203 @@
 # Novira
 
-**Web dashboard for EcoVision — a CCTV-based street litter detection system for local governments.**
+**Dashboard pemantauan kebersihan kota berbasis CCTV untuk pemerintah daerah.**
 
 ![SvelteKit](https://img.shields.io/badge/SvelteKit-2-FF3E00?logo=svelte)
 ![Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
+![Postgres](https://img.shields.io/badge/Postgres-16-4169E1?logo=postgresql)
 
-Novira turns a local government's existing CCTV network — hardware that's already installed and mostly idle — into an automatic cleanliness sensor. Instead of waiting for citizen reports, it detects trash piles as they appear, times how long they sit uncollected, and gives the sanitation department (DLH/Dinas Kebersihan) a live map, an SLA to enforce, and a leaderboard to rank neighborhoods by cleanliness.
+Novira mengubah jaringan CCTV yang sudah terpasang di kota menjadi sensor kebersihan otomatis. Sampah liar yang menumpuk di jalanan terdeteksi saat muncul, dihitung berapa lama dibiarkan, dan ditindaklanjuti melalui alur kerja yang terukur — dari deteksi, penugasan petugas, hingga bukti pembersihan.
 
-This repository is the **admin dashboard** — the piece operators, field officers, and department heads actually look at. The detection pipeline (YOLOv8 + ByteTrack on RTSP streams) is a separate service that talks to this app over an API.
+Repositori ini berisi **aplikasi web** (dashboard admin + halaman publik) yang dipakai oleh operator DLH, petugas lapangan, dan pimpinan daerah. Sisi deteksi (model YOLOv8 pada aliran RTSP) adalah layanan terpisah yang terhubung lewat API.
 
-## Why
+## Daftar Isi
 
-Indonesia produces roughly 68 million tons of waste per year, and most cities have no real-time visibility into where trash accumulates or how long it's left there. Handling is reactive (wait for a citizen report) and unmeasured (no SLA). Novira's pitch to a local government is simple: **turn the CCTV you already have into a 24/7 digital sanitation officer, with no new cameras required.**
+- [Apa yang dilakukan](#apa-yang-dilakukan)
+- [Alur kerja](#alur-kerja)
+- [Fitur](#fitur)
+- [Teknologi](#teknologi)
+- [Struktur proyek](#struktur-proyek)
+- [Menjalankan aplikasi](#menjalankan-aplikasi)
+- [Akun demo](#akun-demo)
+- [Perintah penting](#perintah-penting)
+- [Pengujian](#pengujian)
+- [Deployment](#deployment)
+- [Keamanan](#keamanan)
 
-| Problem                                   | Today                                | With Novira                                  |
-| ----------------------------------------- | ------------------------------------ | -------------------------------------------- |
-| No visibility into illegal dumping spots  | Manual patrols / waiting for reports | Automatic 24/7 detection from existing CCTV  |
-| No measure of how long trash sits         | Untracked                            | Automatic timer per trash pile (SLA)         |
-| Sanitation crew performance is unmeasured | Manual, unreliable reporting         | Response-time dashboard per area             |
-| No evidence of illegal dumping            | Hard to act on                       | Automatic event clip when trash appears      |
-| No ranking of area cleanliness            | Adipura award, once a year           | Real-time cleanliness score per neighborhood |
+## Apa yang dilakukan
 
-## Who uses it
+Kota umumnya baru tahu ada penumpukan sampah setelah warga melapor, dan tidak ada catatan berapa lama sampah dibiarkan. Novira menjawabnya dengan memanfaatkan kamera yang sudah ada:
 
-- **DLH admin (primary)** — monitors the dashboard, assigns officers, verifies detections.
-- **Field officers** — receive notifications about new incidents (mobile view / WhatsApp).
-- **Department head / mayor** — views neighborhood rankings, monthly reports, KPIs.
-- **General public (phase 2)** — a public dashboard showing area cleanliness scores (transparency + friendly competition between neighborhoods).
+| Masalah                                | Kondisi lama                      | Dengan Novira                           |
+| -------------------------------------- | --------------------------------- | --------------------------------------- |
+| Titik pembuangan liar tidak terlihat   | Patroli manual / menunggu laporan | Deteksi 24/7 dari CCTV yang ada         |
+| Durasi sampah menumpuk tidak terukur   | Tidak tercatat                    | Timer otomatis per penumpukan (SLA)     |
+| Kinerja petugas tidak terukur          | Laporan manual                    | Rekap waktu tanggap per wilayah         |
+| Kebersihan wilayah tidak terbandingkan | Penilaian Adipura tahunan         | Skor kebersihan real-time per kelurahan |
 
-## What this dashboard does
+Data kamera di-seed dari **stream CCTV publik asli** (ATCS kota Bandung, Surabaya, Klaten, Tangerang, Palembang, dll.) sehingga pemantauan langsung bisa dicoba tanpa kamera fisik sendiri.
 
-- **Live incident map** — every camera plotted with active trash markers (red = over 24h, yellow = under 24h).
-- **Camera monitoring** — live view per camera with detection overlays.
-- **Incident table** — location, snapshot, duration, status, "mark resolved" / assign-to-officer actions. Admins can flag false positives, which feeds back into model retraining.
-- **Area ranking** — a 0–100 cleanliness score per neighborhood, based on incident count, average time-to-clean, and weekly trend — the basis for a leaderboard between neighborhoods.
-- **Officer & notification management** — who gets alerted, and the SLA-breach escalation path.
-- **Reporting** — per-area reports for department review.
+## Alur kerja
 
-The detection side (what the model actually does, dataset strategy, tracking/persistence logic, and privacy/legal constraints on face and license-plate data) is documented separately in the product PRD — ask a maintainer if you need it.
+```
+ CCTV kota ──► deteksi penumpukan sampah
+                  │
+                  ▼
+        Insiden muncul di dashboard ──► timer SLA 24 jam berjalan
+                  │
+                  ▼
+        Petugas ditugaskan (via laporan / notifikasi)
+                  │
+                  ▼
+        Tandai selesai + unggah foto bukti ──► status SELESAI
+                  │
+                  ▼
+        Skor kebersihan & laporan wilayah ter-update
+```
 
-## Tech stack (this repo)
+Warga juga bisa melapor melalui **halaman publik** (foto/video + lokasi GPS); laporan masuk ke dashboard untuk diverifikasi dan ditindaklanjuti petugas.
 
-- **SvelteKit 2** + **Svelte 5** (runes API)
-- **Tailwind CSS v4** with `shadcn-svelte` components
-- **Drizzle ORM** over **Postgres** (deployed on [Neon](https://neon.tech))
-- Custom session-based auth (Argon2id, username/password)
-- **LayerChart** (D3-based) for charts
+## Fitur
 
-> Note: the broader EcoVision system plan (inference service, message queue, object storage, notifications) targets Python/FastAPI for inference. For geospatial data at scale, consider adding the [PostGIS](https://postgis.net) extension on top of this same Postgres/Neon database rather than a separate store.
+**Publik**
 
-## Getting started
+- Landing page dengan informasi layanan.
+- Formulir lapor sampah: unggah foto/video (max 5 MB / 20 MB), deteksi lokasi GPS otomatis, data pelapor opsional.
+
+**Pemantauan & operasional**
+
+- **Pemantauan CCTV langsung** — stream HLS/MP4 asli, hingga 4 umpan berdampingan, filter per kota. Stream non-CORS diproksi server-side dengan pinning sertifikat, timeout, dan dukungan range request.
+- **Insiden & Alert** — daftar deteksi penumpukan sampah: lokasi, durasi, status SLA, keparahan; tindakan tugaskan petugas, tandai selesai dengan bukti foto, riwayat selesai.
+- **Peta titik rawan** — hotspot penumpukan berdasarkan frekuensi insiden.
+- **Peringkat wilayah** — skor kebersihan 0–100 per kelurahan (jumlah insiden, rata-rata durasi, tren mingguan).
+- **Laporan masyarakat** — verifikasi dan tindak lanjut laporan warga.
+- **Petugas lapangan** — daftar dan status kesiapan petugas.
+
+**Manajemen & pelaporan**
+
+- **Kamera CCTV** — registri kamera beserta status dan URL stream.
+- **Laporan wilayah** — agregasi bertingkat provinsi → kabupaten/kota → kecamatan → kelurahan, dengan filter dan ekspor.
+- **Dashboard eksekutif** — ringkasan KPI untuk kepala dinas/walikota.
+- **Manajemen pengguna & peran** — RBAC: `admin`, `operator`, `kepala_seksi`, `kepala_dinas`, `walikota`, `petugas_lapangan`.
+- **Notifikasi** — notifikasi global/per-user dengan tanda belum dibaca.
+- **Audit log** — jejak aktivitas sistem.
+- **Pengaturan** — profil, notifikasi, mode pemeliharaan.
+
+## Teknologi
+
+| Lapisan    | Pilihan                                                                 |
+| ---------- | ----------------------------------------------------------------------- |
+| Framework  | SvelteKit 2 + Svelte 5 (runes API)                                      |
+| Styling    | Tailwind CSS v4 + shadcn-svelte                                         |
+| Database   | PostgreSQL (Neon) via Drizzle ORM                                       |
+| Otentikasi | Session berbasis cookie; Argon2id untuk password, token di-hash SHA-256 |
+| Chart      | LayerChart (D3)                                                         |
+| Testing    | Vitest (unit), Playwright (E2E)                                         |
+
+## Struktur proyek
+
+```
+src/
+├── lib/
+│   ├── components/        # UI (shadcn) + komponen aplikasi (sidebar, CCTV player, tabel insiden)
+│   ├── server/            # Kode server-only: auth, database, upload, seam data domain
+│   │   ├── db/            # Skema Drizzle, seed, migrasi
+│   │   └── novira/        # Satu-satunya pintu masuk data operasional (kamera, insiden, dll.)
+│   ├── types/             # Tipe data domain
+│   └── utils/             # Helper (export CSV/JSON, dll.)
+├── routes/
+│   ├── (public)/          # Landing page & form lapor sampah
+│   ├── (auth)/            # Login, registrasi, reset password, lock screen
+│   └── dashboard/(app)/   # Aplikasi admin (dilindungi guard otentikasi & RBAC)
+└── hooks.server.ts        # Validasi session di setiap request
+```
+
+File pengujian ditempatkan di sebelah kode yang diuji (mis. `users/users.test.ts`).
+
+## Menjalankan aplikasi
+
+**Prasyarat:** Node.js 20+, pnpm, dan satu database PostgreSQL (bisa gratis di [Neon](https://neon.tech)).
 
 ```bash
+# 1. Pasang dependensi
 pnpm install
-cp .env.example .env      # fill in ORIGIN
-pnpm db:push               # push the schema to your Postgres/Neon database
-pnpm db:seed                # optional: seed sample data
+
+# 2. Siapkan environment
+cp .env.example .env
+
+# 3. Isi variabel di .env
+#    DATABASE_URL=postgres://user:password@host/db?sslmode=require
+#    ORIGIN=http://localhost:5173
+
+# 4. Buat skema tabel di database
+pnpm db:push
+
+# 5. Seed data contoh (kamera CCTV publik, pengguna, insiden, dll.)
+pnpm db:seed
+
+# 6. Jalankan
 pnpm dev
 ```
 
-Other useful commands:
+Buka **http://localhost:5173** — halaman publik dan dashboard siap dicoba.
+
+## Akun demo
+
+Setelah `pnpm db:seed`, akun berikut tersedia (kecuali disebut, password `password123`):
+
+| Username       | Password          | Peran            | Keterangan                                                               |
+| -------------- | ----------------- | ---------------- | ------------------------------------------------------------------------ |
+| `demo`         | `NoviraDemo2026!` | operator         | Akun publik untuk demo; form login terisi otomatis bila `DEMO_MODE=true` |
+| `admin`        | `password123`     | admin            | Akses penuh (pengguna, peran, database, audit, pengaturan)               |
+| `operator`     | `password123`     | operator         | Ruang kendali operasional                                                |
+| `kepala_seksi` | `password123`     | kepala_seksi     | Operasional + laporan                                                    |
+| `kepala_dinas` | `password123`     | kepala_dinas     | Masuk langsung ke dashboard eksekutif                                    |
+| `walikota`     | `password123`     | walikota         | Masuk langsung ke dashboard eksekutif                                    |
+| `petugas`      | `password123`     | petugas_lapangan | Tampilan petugas                                                         |
+
+**Mode demo:** set `DEMO_MODE=true` di `.env` — form login terisi otomatis, dan admin mendapat tab **Demo** di Pengaturan untuk me-reset data ke kondisi awal.
+
+> Catatan data: kamera diambil dari tabel database (stream CCTV publik). Insiden, skor wilayah, dan petugas adalah data contoh; perubahan status insiden berlaku selama proses server berjalan.
+
+## Perintah penting
+
+| Perintah           | Fungsi                          |
+| ------------------ | ------------------------------- |
+| `pnpm dev`         | Server pengembangan             |
+| `pnpm build`       | Build produksi (adapter-node)   |
+| `pnpm preview`     | Pratinjau hasil build           |
+| `pnpm check`       | Pemeriksaan tipe (svelte-check) |
+| `pnpm db:push`     | Dorong skema ke database        |
+| `pnpm db:generate` | Buat migrasi dari skema         |
+| `pnpm db:studio`   | GUI Drizzle Studio              |
+| `pnpm db:seed`     | Seed data contoh                |
+| `pnpm test`        | Unit test (Vitest)              |
+| `pnpm test:e2e`    | E2E test (Playwright)           |
+| `pnpm lint`        | ESLint                          |
+| `pnpm format`      | Prettier (tulis otomatis)       |
+
+## Pengujian
+
+- **Unit test** (`pnpm test`) — menguji load & action server tiap route; memakai database Postgres in-memory (PGlite) sehingga tidak butuh database sungguhan.
+- **E2E** (`pnpm test:e2e`) — navigasi antarmuka dengan Playwright; server otomatis dibangun dan dijalankan dari konfigurasi (`pnpm build && pnpm preview`).
+
+## Deployment
+
+Build dengan adapter-node:
 
 ```bash
-pnpm build            # production build
-pnpm preview           # preview the production build
-pnpm check              # type-check
-pnpm test                # unit tests (Vitest)
-pnpm test:e2e            # E2E tests (Playwright)
-pnpm lint                # ESLint
-pnpm format               # Prettier (write)
+pnpm build
+node build
 ```
 
-See `CLAUDE.md` for a deeper architecture walkthrough (routing, auth, database, testing patterns).
+Variabel environment yang diperlukan saat produksi: `DATABASE_URL`, `ORIGIN` (URL publik aplikasi), opsional `DEMO_MODE`. Sesuai kebutuhan pilot pemerintah daerah, aplikasi dapat di-deploy on-premise (Docker/VPS) atau di platform Node mana pun.
 
-## Roadmap
+## Keamanan
 
-- **Phase 1 (MVP)** — real-time detection, trash-duration tracking, event recording, this dashboard, area ranking, WhatsApp/Telegram notifications.
-- **Phase 2** — trash-type classification (organic/inorganic/hazardous), public cleanliness dashboard, automated monthly PDF reports, dumping-vehicle detection, volume estimation.
-- **Phase 3 ("Indonesia Go Green")** — open Green Score API, waste-bank integration (turning detected inorganic waste into a circular-economy opportunity for registered waste pickers), estimated CO₂e impact reporting, hybrid citizen photo reports, predictive patrol scheduling.
-
-## Privacy note
-
-Novira is explicitly **not** a face-recognition system. Event clips exist as evidence that dumping occurred; identifying a person is left to authorized officers (Satpol PP) through official procedure, never automated. The public dashboard shows aggregate data only (counts, scores, locations) — no raw video or snapshots. Faces and license plates visible in non-case snapshots are auto-blurred, and clips/snapshots are retained for a limited period unless flagged as an active case.
+- Password di-hash Argon2id; tidak pernah disimpan plaintext.
+- Session token acak disimpan di cookie; database hanya menyimpan hash SHA-256-nya — kebocoran database tidak bisa dipakai memalsukan session.
+- Akses halaman dijaga server-side (guard RBAC), bukan hanya di tampilan.
+- Unggahan file divalidasi jenis dan ukurannya; nama file diacak.
+- Sistem ini bukan sistem pengenalan wajah — bukti visual hanya alat verifikasi penanganan untuk petugas berwenang.
