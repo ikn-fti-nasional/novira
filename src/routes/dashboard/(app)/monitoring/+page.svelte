@@ -3,9 +3,9 @@
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import VideoIcon from "@lucide/svelte/icons/video";
-	import CameraIcon from "@lucide/svelte/icons/camera";
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import XIcon from "@lucide/svelte/icons/x";
+	import CctvStream from "$lib/components/novira/cctv-stream.svelte";
 	import type { Kamera } from "$lib/types/novira.js";
 
 	let { data } = $props();
@@ -14,7 +14,7 @@
 	let kameraKotaDipilih = $state<string>("");
 	const slotTayang = $state<Map<string, Kamera>>(new Map());
 
-	const MAX_SLOT = 2;
+	const MAX_SLOT = 4;
 
 	const kotaList = $derived([...new Set(data.kameraList.map((k) => k.kabupatenKota))].sort());
 	const kameraPerKota = $derived(
@@ -52,7 +52,7 @@
 			</Badge>
 		</div>
 		<p class="text-sm text-muted-foreground">
-			Pilih kota, pilih CCTV, dan tampilkan hingga 2 umpan berdampingan.
+			Pilih kota, pilih CCTV, dan tampilkan hingga 4 umpan berdampingan.
 		</p>
 	</div>
 
@@ -119,27 +119,7 @@
 					</Card.Header>
 					<Card.Content class="p-0">
 						<div class="relative aspect-video w-full overflow-hidden bg-slate-950 text-white">
-							{#if kam.urlStream}
-								<video
-									src={kam.urlStream}
-									controls
-									autoplay
-									muted
-									playsinline
-									class="h-full w-full object-cover"
-								></video>
-							{:else if kam.urlSnapshot}
-								<img src={kam.urlSnapshot} alt={kam.nama} class="h-full w-full object-cover" />
-							{:else}
-								<div
-									class="flex h-full w-full items-center justify-center bg-slate-900 text-slate-500"
-								>
-									<div class="flex flex-col items-center gap-2">
-										<CameraIcon class="size-10 stroke-1" />
-										<span class="text-xs">Belum ada link stream/snapshot</span>
-									</div>
-								</div>
-							{/if}
+							<CctvStream kamera={kam} />
 							<div class="absolute top-2 left-2">
 								{#if kam.status === "ONLINE"}
 									<span

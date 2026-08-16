@@ -1319,18 +1319,152 @@ export async function seedDemo() {
 	}
 
 	// --- CAMERAS ---
+	// Umpan asli dari ATCS/dukcapil-CCTV publik (streaming HLS publik, hanya
+	// tautan — bukan rekaman). Berlaku sementara: kamera tambahan bisa
+	// ditambah lewat halaman /dashboard/cameras.
 	console.log("Creating cameras...");
 	const cameraData = [
-		{ nama: "CCTV Sudirman 1", kota: "Bandung", kecamatan: "Bandung Wetan" },
-		{ nama: "CCTV Sudirman 2", kota: "Bandung", kecamatan: "Cicendo" },
-		{ nama: "CCTV Asia Afrika", kota: "Bandung", kecamatan: "Regol" },
-		{ nama: "CCTV Kebon Kelapa", kota: "Jakarta Pusat", kecamatan: "Gambir" },
-		{ nama: "CCTV Thamrin", kota: "Jakarta Pusat", kecamatan: "Menteng" },
-		{ nama: "CCTV Tugu Muda", kota: "Semarang", kecamatan: "Semarang Tengah" },
-		{ nama: "CCTV Simpang Lima", kota: "Semarang", kecamatan: "Semarang Selatan" },
-		{ nama: "CCTV Tunjungan", kota: "Surabaya", kecamatan: "Genteng" },
-		{ nama: "CCTV Gubernur Suryo", kota: "Surabaya", kecamatan: "Gubeng" },
-		{ nama: "CCTV Malioboro", kota: "Yogyakarta", kecamatan: "Gedongtengen" },
+		{
+			nama: "Simpang Pasar Sumber 1",
+			kota: "Kabupaten Cirebon",
+			kecamatan: "Sumber",
+			latitude: "-6.758906",
+			longitude: "108.487653",
+			urlStream:
+				"https://cctv-backend.cirebonkab.go.id:6969/memfs/9e5cb528-a433-468d-9570-be0ec1316120.m3u8",
+		},
+		{
+			nama: "Bundaran Kedawung 2",
+			kota: "Kabupaten Cirebon",
+			kecamatan: "Kedawung",
+			latitude: "-6.7095371583598",
+			longitude: "108.53217478208",
+			urlStream:
+				"https://cctv-backend.cirebonkab.go.id:6969/memfs/a71f2a04-c4c0-4280-9d71-d572d01fe1e6.m3u8",
+		},
+		{
+			nama: "Tagog Padalarang (Arah Purwakarta)",
+			kota: "Kabupaten Bandung Barat",
+			kecamatan: "Padalarang",
+			latitude: "-6.8422437545735795",
+			longitude: "107.4852254184576",
+			urlStream:
+				"https://atcs-dishubkbb.urbanaccess.net/memfs/02e59fd8-d67a-40b3-bb2c-5f54c7bcadf9.m3u8",
+		},
+		{
+			nama: "SP 5 DPRD Provinsi",
+			kota: "Kota Palembang",
+			kecamatan: null,
+			latitude: "-2.980102",
+			longitude: "104.745707",
+			urlStream: "https://stream.palembang.go.id/cam7/index.m3u8",
+		},
+		{
+			nama: "Jembatan Dadap",
+			kota: "Kabupaten Tangerang",
+			kecamatan: "Kosambi",
+			latitude: "-6.092136145427569",
+			longitude: "106.71870867037522",
+			urlStream: "/api/cctv/tangerang/01jsrctg4pc3xdf5vkjjg4pcfd/01jsrctg4pc3xdf5vkjjg4pcfd.m3u8",
+		},
+		{
+			nama: "Jl. Pantura Bitung 2",
+			kota: "Kabupaten Tangerang",
+			kecamatan: "Kelapa Dua",
+			latitude: "-6.2230346323921495",
+			longitude: "106.5599518345196",
+			urlStream: "/api/cctv/tangerang/01jzvr0hphd8c104283f8g1d9n/01jzvr0hphd8c104283f8g1d9n.m3u8",
+		},
+		{
+			nama: "Simpang Rajeg Kukun 2",
+			kota: "Kabupaten Tangerang",
+			kecamatan: "Rajeg",
+			latitude: "-6.130006908709916",
+			longitude: "106.52675509902808",
+			urlStream: "/api/cctv/tangerang/01jsr0j5nwjcbthcb6aypa6dcr/01jsr0j5nwjcbthcb6aypa6dcr.m3u8",
+		},
+		{
+			nama: "Simpang Sepatan 1",
+			kota: "Kabupaten Tangerang",
+			kecamatan: "Sepatan",
+			latitude: "-6.118874199737398",
+			longitude: "106.57561217365658",
+			urlStream: "/api/cctv/tangerang/01jsr485tfw1cwwa1v6c3jpgfd/01jsr485tfw1cwwa1v6c3jpgfd.m3u8",
+		},
+		{
+			nama: "Thamrin Pandanaran 360",
+			kota: "Kota Semarang",
+			kecamatan: "Semarang Tengah",
+			latitude: "-6.9874484",
+			longitude: "110.417212",
+			urlStream:
+				"https://livepantau.semarangkota.go.id/e910f4f2-a77d-4cf8-8341-aa2e6c6b65c9/index.m3u8",
+		},
+		{
+			nama: "Simpang Seririt",
+			kota: "Kabupaten Buleleng",
+			kecamatan: "Seririt",
+			latitude: "-8.19305",
+			longitude: "114.933679",
+			urlStream:
+				"https://shinobi.bulelengkab.go.id/Amk60KFacq87lQMvTCMHu17u00ONuC/mp4/admin/edROyIUx2v80/s.mp4",
+		},
+		{
+			nama: "Cicadas Gateway 02",
+			kota: "Kota Bandung",
+			kecamatan: "Cibeunying Kidul",
+			latitude: "-6.907154",
+			longitude: "107.647198",
+			urlStream: "/api/cctv/bandung/DAHUA/CICAB.m3u8",
+		},
+		{
+			nama: "Cimindi Kharisma 01",
+			kota: "Kota Bandung",
+			kecamatan: "Sukasari",
+			latitude: "-6.899308",
+			longitude: "107.562477",
+			urlStream: "/api/cctv/bandung/DAHUA/CIMI.m3u8",
+		},
+		{
+			nama: "Taman Bungkul (Hadap Selatan)",
+			kota: "Kota Surabaya",
+			kecamatan: "Wonokromo",
+			latitude: "-7.291208",
+			longitude: "112.739011",
+			urlStream: "/api/cctv/surabaya/cctv_337/stream.m3u8",
+		},
+		{
+			nama: "Bratang - Krukah",
+			kota: "Kota Surabaya",
+			kecamatan: "Gubeng",
+			latitude: "-7.298521",
+			longitude: "112.755893",
+			urlStream: "/api/cctv/surabaya/cctv_84/stream.m3u8",
+		},
+		{
+			nama: "Kembang Jepun Kyakya (Parkir)",
+			kota: "Kota Surabaya",
+			kecamatan: "Pabean Cantian",
+			latitude: "-7.238402",
+			longitude: "112.744745",
+			urlStream: "/api/cctv/surabaya/cctv_501/stream.m3u8",
+		},
+		{
+			nama: "Simpang 3 Ngingas (Arah Ronggowarsito)",
+			kota: "Kabupaten Klaten",
+			kecamatan: "Klaten Utara",
+			latitude: "-7.6945934",
+			longitude: "110.6099004",
+			urlStream: "/api/cctv/klaten/simpang3ngingas_arahronggowarsito.m3u8",
+		},
+		{
+			nama: "Simpang 3 Ngingas (Arah Solo)",
+			kota: "Kabupaten Klaten",
+			kecamatan: "Klaten Utara",
+			latitude: "-7.6945934",
+			longitude: "110.6099004",
+			urlStream: "/api/cctv/klaten/simpang3ngingas_arahsolo.m3u8",
+		},
 	];
 
 	await db.insert(cameras).values(
@@ -1339,7 +1473,10 @@ export async function seedDemo() {
 			nama: c.nama,
 			kota: c.kota,
 			kecamatan: c.kecamatan,
-			status: "OFFLINE" as const,
+			latitude: c.latitude,
+			longitude: c.longitude,
+			urlStream: c.urlStream,
+			status: "ONLINE" as const,
 		}))
 	);
 	console.log(`  Created ${cameraData.length} cameras`);
