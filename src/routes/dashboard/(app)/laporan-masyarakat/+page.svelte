@@ -6,44 +6,106 @@
 	import * as Label from "$lib/components/ui/label/index.js";
 	import { Textarea } from "$lib/components/ui/textarea/index.js";
 	import { enhance } from "$app/forms";
+	import { toast } from "svelte-sonner";
 	import ClipboardListIcon from "@lucide/svelte/icons/clipboard-list";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import VideoIcon from "@lucide/svelte/icons/video";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
+	import SparklesIcon from "@lucide/svelte/icons/sparkles";
+	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
+	import CopyCheckIcon from "@lucide/svelte/icons/copy-check";
+	import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
+	import type { ActionData, PageData } from "./$types.js";
 
-	let { data } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	const statusBadge: Record<string, { label: string; class: string }> = {
 		MENUNGGU: { label: "Menunggu", class: "bg-amber-500 text-white" },
 		DIPROSES: { label: "Diproses", class: "bg-blue-500 text-white" },
 		SELESAI: { label: "Selesai", class: "bg-emerald-600 text-white" },
 		DITOLAK: { label: "Ditolak", class: "bg-slate-500 text-white" },
+		DUPLIKAT: { label: "Duplikat", class: "bg-slate-400 text-white" },
 	};
+
+	/**
+	 * Warna rekomendasi sengaja tidak memakai hijau/merah "benar/salah":
+	 * rekomendasi ini SARAN untuk mengurutkan perhatian operator, bukan vonis.
+	 * Operator tetap wajib melihat fotonya sebelum memutuskan.
+	 */
+	const rekomendasiBadge: Record<string, { label: string; class: string }> = {
+		SANGAT_MUNGKIN_VALID: {
+			label: "Kemungkinan besar valid",
+			class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+		},
+		PERLU_TINJAUAN: {
+			label: "Perlu tinjauan",
+			class: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+		},
+		KEMUNGKINAN_SPAM: {
+			label: "Kemungkinan spam",
+			class: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
+		},
+		GAGAL_PINDAI: {
+			label: "Belum terpindai",
+			class: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+		},
+	};
+
+	const jenisSampahOptions = [
+		{ value: "tumpukan_sampah", label: "Tumpukan sampah" },
+		{ value: "kantong_plastik", label: "Kantong plastik" },
+		{ value: "kardus_kemasan", label: "Kardus/kemasan" },
+		{ value: "botol_minuman", label: "Botol minuman" },
+		{ value: "pembuangan_liar_besar", label: "Pembuangan liar besar" },
+		{ value: "puing_bangunan", label: "Puing bangunan" },
+	];
+
+	function labelJenis(v: string | null): string {
+		return jenisSampahOptions.find((o) => o.value === v)?.label ?? "Pilih jenis sampah";
+	}
 
 	function tanggal(t: string | Date | null) {
 		if (!t) return "-";
 		return new Date(t).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
 	}
+
+	$effect(() => {
+		if (form?.success && "message" in form) toast.success(String(form.message));
+		else if (form && "message" in form && form.message) toast.error(String(form.message));
+	});
 </script>
 
 <svelte:head>
-	<title>Laporan Masyarakat - NOVIRA</title>
+	<title>Triase Laporan Masyarakat - NOVIRA</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div class="flex flex-col gap-1 border-b border-border/60 pb-4">
 		<div class="flex items-center gap-2">
 			<ClipboardListIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-			<h1 class="text-3xl font-extrabold tracking-tight">Laporan Masyarakat</h1>
+			<h1 class="text-3xl font-extrabold tracking-tight">Triase Laporan Masyarakat</h1>
 		</div>
 		<p class="text-sm text-muted-foreground">
-			Laporan sampah dari masyarakat — verifikasi dan proses menjadi tindakan lapangan.
+			Laporan warga dipindai AI sebagai bahan pertimbangan, lalu <strong>Anda</strong> yang memutuskan.
+			Laporan yang diverifikasi langsung menjadi insiden resmi dengan timer SLA berjalan.
 		</p>
 	</div>
 
-	<div class="flex gap-2">
-		{#each data.statuses as s}
+	<!-- Ringkasan triase -->
+	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+		{#each [{ label: "Menunggu triase", nilai: data.ringkasan.menunggu, warna: "text-amber-600" }, { label: "Jadi insiden", nilai: data.ringkasan.diproses + data.ringkasan.selesai, warna: "text-emerald-600" }, { label: "Ditolak", nilai: data.ringkasan.ditolak, warna: "text-rose-600" }, { label: "Akurasi laporan warga", nilai: `${data.ringkasan.persenValid}%`, warna: "text-blue-600" }] as kartu (kartu.label)}
+			<Card.Root>
+				<Card.Content class="pt-6">
+					<p class="text-xs font-medium text-muted-foreground">{kartu.label}</p>
+					<p class="mt-1 text-2xl font-bold {kartu.warna}">{kartu.nilai}</p>
+				</Card.Content>
+			</Card.Root>
+		{/each}
+	</div>
+
+	<div class="flex flex-wrap gap-2">
+		{#each data.statuses as s (s)}
 			<a
 				href="/dashboard/laporan-masyarakat?status={s}"
 				class="rounded-full border px-3 py-1 text-xs font-medium {s === data.statusAktif
@@ -68,11 +130,22 @@
 			<Card.Content class="space-y-4">
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div>
-						<div class="flex items-center gap-2">
-							<h2 class="font-bold">
-								{rep.jenisSampah ?? "Laporan sampah"}
-							</h2>
+						<div class="flex flex-wrap items-center gap-2">
+							<span class="font-mono text-xs text-muted-foreground">{rep.kodeTracking}</span>
+							<h2 class="font-bold">{labelJenis(rep.jenisSampah)}</h2>
 							<Badge class={statusBadge[rep.status].class}>{statusBadge[rep.status].label}</Badge>
+							{#if rep.aiRekomendasi}
+								<Badge class={rekomendasiBadge[rep.aiRekomendasi].class}>
+									<SparklesIcon class="mr-1 size-3" />
+									{rekomendasiBadge[rep.aiRekomendasi].label}
+								</Badge>
+							{/if}
+							{#if rep.reputasiPelapor !== null}
+								<Badge variant="outline" class="gap-1">
+									<ShieldCheckIcon class="size-3" />
+									Reputasi pelapor {rep.reputasiPelapor}/100
+								</Badge>
+							{/if}
 						</div>
 						<p class="mt-1 text-xs text-muted-foreground">
 							{rep.pelaporNama ?? "Anonim"}{rep.pelaporTelepon ? ` · ${rep.pelaporTelepon}` : ""} ·
@@ -113,42 +186,145 @@
 					{/if}
 				</div>
 
-				{#if rep.catatanPetugas}
-					<p class="rounded-md bg-muted px-3 py-2 text-xs">
-						Catatan: {rep.catatanPetugas}
-					</p>
+				<!-- Penjelasan rekomendasi AI, faktor per faktor -->
+				{#if rep.faktorAi.length > 0}
+					<div class="rounded-lg border bg-muted/40 p-3">
+						<p class="flex items-center gap-1.5 text-xs font-semibold">
+							<SparklesIcon class="size-3.5" />
+							Dasar rekomendasi
+						</p>
+						<ul class="mt-2 space-y-1">
+							{#each rep.faktorAi as f (f.label)}
+								<li class="flex items-start justify-between gap-3 text-xs">
+									<span class="text-muted-foreground">
+										<span class="font-medium text-foreground">{f.label}</span> — {f.keterangan}
+									</span>
+									<span
+										class="shrink-0 font-mono {f.poin > 0
+											? 'text-emerald-600'
+											: f.poin < 0
+												? 'text-rose-600'
+												: 'text-muted-foreground'}"
+									>
+										{f.poin > 0 ? "+" : ""}{f.poin}
+									</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
 				{/if}
 
-				<form
-					method="POST"
-					action="?/proses"
-					use:enhance
-					class="flex flex-wrap items-end gap-3 border-t pt-4"
-				>
-					<input type="hidden" name="id" value={rep.id} />
-					<div class="space-y-1.5">
-						<Label.Root class="text-xs">Status</Label.Root>
-						<Select.Root type="single" name="status" value={rep.status}>
-							<Select.Trigger class="w-40"
-								><span>{statusBadge[rep.status].label}</span></Select.Trigger
-							>
-							<Select.Content>
-								{#each data.statuses as s}
-									<Select.Item value={s} label={statusBadge[s].label}
-										>{statusBadge[s].label}</Select.Item
-									>
-								{/each}
-							</Select.Content>
-						</Select.Root>
+				<!-- Kandidat duplikat -->
+				{#if rep.duplikat.length > 0}
+					<div
+						class="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40"
+					>
+						<p class="flex items-center gap-1.5 text-xs font-semibold">
+							<CopyCheckIcon class="size-3.5" />
+							{rep.duplikat.length} laporan lain di lokasi yang sama (≤150 m, 48 jam terakhir)
+						</p>
+						<div class="mt-2 space-y-1.5">
+							{#each rep.duplikat as d (d.laporanId)}
+								<form
+									method="POST"
+									action="?/gabungkan"
+									use:enhance
+									class="flex flex-wrap items-center gap-2 text-xs"
+								>
+									<input type="hidden" name="id" value={rep.id} />
+									<input type="hidden" name="indukId" value={d.laporanId} />
+									<span class="font-mono">{d.kodeTracking}</span>
+									<span class="text-muted-foreground">
+										{d.jarakMeter} m · {tanggal(d.createdAt)} · {d.status}
+									</span>
+									<Button type="submit" size="sm" variant="outline" class="h-6 px-2 text-xs">
+										Gabungkan ke sini
+									</Button>
+								</form>
+							{/each}
+						</div>
 					</div>
-					<div class="min-w-48 flex-1 space-y-1.5">
-						<Label.Root class="text-xs">Catatan petugas</Label.Root>
-						<Textarea name="catatan" rows={1} placeholder="Catatan penindakan…" />
+				{/if}
+
+				{#if rep.catatanPetugas}
+					<p class="rounded-md bg-muted px-3 py-2 text-xs">Catatan: {rep.catatanPetugas}</p>
+				{/if}
+
+				{#if rep.insidenId}
+					<div
+						class="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs dark:border-emerald-800 dark:bg-emerald-950/40"
+					>
+						<ShieldCheckIcon class="size-4 text-emerald-600" />
+						<span>Sudah diverifikasi menjadi insiden.</span>
+						<a href="/dashboard/incidents/{rep.insidenId}" class="font-medium underline">
+							Buka insiden
+						</a>
 					</div>
-					<Button type="submit" size="sm" class="bg-emerald-600 text-white hover:bg-emerald-700">
-						Simpan
-					</Button>
-				</form>
+				{:else}
+					<div class="grid gap-4 border-t pt-4 lg:grid-cols-2">
+						<!-- Verifikasi -->
+						<form method="POST" action="?/verifikasi" use:enhance class="space-y-3">
+							<input type="hidden" name="id" value={rep.id} />
+							<div class="space-y-1.5">
+								<Label.Root class="text-xs">Jenis sampah (koreksi bila perlu)</Label.Root>
+								<Select.Root type="single" name="jenisSampah" value={rep.jenisSampah ?? ""}>
+									<Select.Trigger class="w-full">
+										<span>{labelJenis(rep.jenisSampah)}</span>
+									</Select.Trigger>
+									<Select.Content>
+										{#each jenisSampahOptions as opt (opt.value)}
+											<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
+							</div>
+							<div class="space-y-1.5">
+								<Label.Root class="text-xs">Catatan verifikasi (opsional)</Label.Root>
+								<Textarea
+									name="catatan"
+									rows={2}
+									placeholder="Mis. konfirmasi lokasi dengan pelapor…"
+								/>
+							</div>
+							<div class="flex flex-wrap gap-2">
+								<Button
+									type="submit"
+									size="sm"
+									class="bg-emerald-600 text-white hover:bg-emerald-700"
+								>
+									Verifikasi → jadikan insiden
+								</Button>
+								<Button
+									type="submit"
+									size="sm"
+									variant="outline"
+									formaction="?/pindaiUlang"
+									title="Pindai ulang foto dengan AI"
+								>
+									<RefreshCwIcon class="size-3.5" />
+									Pindai ulang
+								</Button>
+							</div>
+						</form>
+
+						<!-- Penolakan -->
+						<form method="POST" action="?/tolak" use:enhance class="space-y-3">
+							<input type="hidden" name="id" value={rep.id} />
+							<div class="space-y-1.5">
+								<Label.Root class="text-xs">Alasan penolakan (wajib)</Label.Root>
+								<Textarea
+									name="alasan"
+									rows={2}
+									placeholder="Mis. foto bukan sampah / lokasi di luar wilayah kerja…"
+								/>
+								<p class="text-[11px] text-muted-foreground">
+									Alasan ini ditampilkan ke pelapor di halaman pelacakan dan menurunkan reputasinya.
+								</p>
+							</div>
+							<Button type="submit" size="sm" variant="destructive">Tolak laporan</Button>
+						</form>
+					</div>
+				{/if}
 			</Card.Content>
 		</Card.Root>
 	{/each}

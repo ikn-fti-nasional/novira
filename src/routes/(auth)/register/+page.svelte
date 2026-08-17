@@ -4,27 +4,24 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
-	import ZapIcon from "@lucide/svelte/icons/zap";
 
 	let { form } = $props();
 </script>
 
 <svelte:head>
-	<title>Register - Novira</title>
+	<title>Daftar Akun - NOVIRA Environmental Monitoring</title>
 </svelte:head>
 
 <div class="bg-background flex min-h-screen items-center justify-center p-4">
-	<Card.Root class="w-full max-w-md">
-		<Card.Header class="space-y-1 text-center">
+	<Card.Root class="w-full max-w-md border-border/80 shadow-lg">
+		<Card.Header class="space-y-2 text-center">
 			<div class="flex justify-center">
-				<div
-					class="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-xl"
-				>
-					<ZapIcon class="size-6" />
+				<div class="size-20">
+					<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
 				</div>
 			</div>
-			<Card.Title class="text-2xl font-bold">Create an account</Card.Title>
-			<Card.Description>Get started with Novira</Card.Description>
+			<Card.Title class="text-2xl font-extrabold text-foreground">Buat Akun Baru</Card.Title>
+			<Card.Description>Mulai gunakan Novira</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			{#if form?.message}
@@ -34,7 +31,7 @@
 			{/if}
 			<form method="POST" use:enhance class="space-y-4">
 				<div class="space-y-2">
-					<Label for="name">Full Name</Label>
+					<Label for="name">Nama Lengkap</Label>
 					<Input
 						id="name"
 						name="name"
@@ -56,7 +53,7 @@
 					/>
 				</div>
 				<div class="space-y-2">
-					<Label for="username">Username</Label>
+					<Label for="username">Nama Pengguna</Label>
 					<Input
 						id="username"
 						name="username"
@@ -67,23 +64,28 @@
 					/>
 				</div>
 				<div class="space-y-2">
-					<Label for="password">Password</Label>
+					<Label for="password">Kata Sandi</Label>
 					<Input
 						id="password"
 						name="password"
 						type="password"
-						placeholder="6+ characters"
+						placeholder="Minimal 6 karakter"
 						required
 						autocomplete="new-password"
 					/>
 				</div>
-				<Button type="submit" class="w-full">Create account</Button>
+				<Button
+					type="submit"
+					class="w-full bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+				>
+					Buat Akun
+				</Button>
 			</form>
 		</Card.Content>
 		<Card.Footer class="justify-center">
 			<p class="text-muted-foreground text-sm">
-				Already have an account?
-				<a href="/login" class="text-primary underline-offset-4 hover:underline">Sign in</a>
+				Sudah punya akun?
+				<a href="/login" class="text-primary underline-offset-4 hover:underline">Masuk</a>
 			</p>
 		</Card.Footer>
 	</Card.Root>

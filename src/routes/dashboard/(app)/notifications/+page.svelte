@@ -16,7 +16,7 @@
 
 	$effect(() => {
 		if (form?.message) toast.error(form.message);
-		if (form?.success) toast.success("Done");
+		if (form?.success) toast.success("Berhasil");
 	});
 
 	const unreadCount = $derived(data.notifications.filter((n) => !n.read).length);
@@ -49,7 +49,7 @@
 
 	function formatDate(date: Date | null) {
 		if (!date) return "";
-		return new Intl.DateTimeFormat("en-US", {
+		return new Intl.DateTimeFormat("id-ID", {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",
@@ -59,18 +59,18 @@
 </script>
 
 <svelte:head>
-	<title>Notifications - Novira</title>
+	<title>Notifikasi - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Notifications</h1>
+			<h1 class="text-3xl font-bold tracking-tight">Notifikasi</h1>
 			<p class="text-muted-foreground">
 				{#if unreadCount > 0}
-					You have {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}.
+					Anda memiliki {unreadCount} notifikasi belum dibaca.
 				{:else}
-					All caught up. No unread notifications.
+					Semua sudah dibaca. Tidak ada notifikasi baru.
 				{/if}
 			</p>
 		</div>
@@ -78,7 +78,7 @@
 			<form method="POST" action="?/markAllRead" use:enhance>
 				<Button variant="outline" type="submit">
 					<CheckIcon class="mr-2 size-4" />
-					Mark All Read
+					Tandai Semua Dibaca
 				</Button>
 			</form>
 		{/if}
@@ -89,7 +89,7 @@
 			class="bg-muted/50 flex h-[300px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed"
 		>
 			<BellIcon class="text-muted-foreground size-10" />
-			<p class="text-muted-foreground text-sm">No notifications yet</p>
+			<p class="text-muted-foreground text-sm">Belum ada notifikasi</p>
 		</div>
 	{:else}
 		<div class="space-y-3">
@@ -106,7 +106,7 @@
 									<p class="text-sm leading-none font-medium">
 										{notification.title}
 										{#if !notification.read}
-											<Badge variant="default" class="ml-2 text-[10px]">New</Badge>
+											<Badge variant="default" class="ml-2 text-[10px]">Baru</Badge>
 										{/if}
 									</p>
 									<p class="text-muted-foreground mt-1 text-sm">{notification.message}</p>
@@ -125,7 +125,7 @@
 										size="icon"
 										class="size-8"
 										type="submit"
-										title="Mark as read"
+										title="Tandai dibaca"
 									>
 										<CheckIcon class="size-4" />
 									</Button>
@@ -138,7 +138,7 @@
 									size="icon"
 									class="text-destructive size-8"
 									type="submit"
-									title="Delete"
+									title="Hapus"
 									aria-label="Hapus notifikasi"
 								>
 									<TrashIcon class="size-4" />

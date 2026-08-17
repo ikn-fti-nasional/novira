@@ -15,13 +15,13 @@
 <AlertDialog.Root bind:open>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>Are you sure?</AlertDialog.Title>
+			<AlertDialog.Title>Apakah Anda yakin?</AlertDialog.Title>
 			<AlertDialog.Description>
-				This will permanently delete this {itemName}. This action cannot be undone.
+				Tindakan ini akan menghapus {itemName} secara permanen dan tidak dapat dibatalkan.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel>Batal</AlertDialog.Cancel>
 			<form
 				method="POST"
 				{action}
@@ -37,7 +37,7 @@
 					type="submit"
 					class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 				>
-					Delete
+					Hapus
 				</AlertDialog.Action>
 			</form>
 		</AlertDialog.Footer>

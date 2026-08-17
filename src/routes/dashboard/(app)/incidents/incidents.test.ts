@@ -1,6 +1,34 @@
 import { describe, it, expect, vi } from "vitest";
 import { createTestDb, createTestUser, createMockLocals } from "$lib/server/db/test-utils.js";
+import { cameras, incidents } from "$lib/server/db/schema.js";
 import { listInsiden } from "$lib/server/novira/index.js";
+
+async function seedInsidenFixture(db: Awaited<ReturnType<typeof createTestDb>>, insidenId: string) {
+	await db.insert(cameras).values({
+		id: `CAM-${insidenId}`,
+		nama: "CCTV Test",
+		kota: "Kota Bandung",
+		kecamatan: "Andir",
+		status: "ONLINE",
+	});
+	await db.insert(incidents).values({
+		id: insidenId,
+		cameraId: `CAM-${insidenId}`,
+		jenisSampah: "tumpukan_sampah",
+		labelSampah: "Pile",
+		pertamaDilihat: new Date(),
+		terakhirDilihat: new Date(),
+		status: "AKTIF",
+		keparahan: "SEDANG",
+		tingkatKepercayaan: "0.5",
+		urlSnapshot: "/uploads/snapshot.jpg",
+		statusSla: "TEPAT_WAKTU",
+		bboxX: "0.1",
+		bboxY: "0.1",
+		bboxWidth: "0.2",
+		bboxHeight: "0.2",
+	});
+}
 
 vi.mock("$lib/server/db/index.js", () => ({
 	get db() {
@@ -28,6 +56,7 @@ describe("Insiden page server", () => {
 		(globalThis as any).__testDb = db;
 		const userId = await createTestUser(db);
 		const locals = createMockLocals(userId);
+		await seedInsidenFixture(db, "INS-2026-0842");
 		const request = new Request("http://localhost", {
 			method: "POST",
 			body: formDataDenganBukti("INS-2026-0842"),

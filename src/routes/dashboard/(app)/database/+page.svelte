@@ -19,24 +19,24 @@
 </script>
 
 <svelte:head>
-	<title>Database - Novira</title>
+	<title>Basis Data - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Database</h1>
-		<p class="text-muted-foreground">Monitor your database status and table statistics.</p>
+		<h1 class="text-3xl font-bold tracking-tight">Basis Data</h1>
+		<p class="text-muted-foreground">Pantau status basis data dan statistik tabel.</p>
 	</div>
 
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Database Size</Card.Title>
+				<Card.Title class="text-sm font-medium">Ukuran Basis Data</Card.Title>
 				<HardDriveIcon class="text-muted-foreground size-4" />
 			</Card.Header>
 			<Card.Content>
 				<div class="text-2xl font-bold">{formatBytes(data.dbSize)}</div>
-				<p class="text-muted-foreground text-xs">Postgres database size</p>
+				<p class="text-muted-foreground text-xs">Ukuran basis data Postgres</p>
 			</Card.Content>
 		</Card.Root>
 
@@ -47,45 +47,45 @@
 			</Card.Header>
 			<Card.Content>
 				<div class="text-2xl font-bold uppercase">{data.walLevel}</div>
-				<p class="text-muted-foreground text-xs">Postgres write-ahead log level</p>
+				<p class="text-muted-foreground text-xs">Tingkat write-ahead log Postgres</p>
 			</Card.Content>
 		</Card.Root>
 
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Tables</Card.Title>
+				<Card.Title class="text-sm font-medium">Jumlah Tabel</Card.Title>
 				<TableIcon class="text-muted-foreground size-4" />
 			</Card.Header>
 			<Card.Content>
 				<div class="text-2xl font-bold">{data.tables.length}</div>
-				<p class="text-muted-foreground text-xs">Active tables</p>
+				<p class="text-muted-foreground text-xs">Tabel aktif</p>
 			</Card.Content>
 		</Card.Root>
 
 		<Card.Root>
 			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Total Rows</Card.Title>
+				<Card.Title class="text-sm font-medium">Total Baris</Card.Title>
 				<RowsIcon class="text-muted-foreground size-4" />
 			</Card.Header>
 			<Card.Content>
 				<div class="text-2xl font-bold">{data.totalRows.toLocaleString()}</div>
-				<p class="text-muted-foreground text-xs">Across all tables</p>
+				<p class="text-muted-foreground text-xs">Di seluruh tabel</p>
 			</Card.Content>
 		</Card.Root>
 	</div>
 
 	<Card.Root>
 		<Card.Header>
-			<Card.Title>Tables</Card.Title>
-			<Card.Description>Row counts for each table in the database.</Card.Description>
+			<Card.Title>Daftar Tabel</Card.Title>
+			<Card.Description>Jumlah baris tiap tabel dalam basis data.</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<Table.Root>
 				<Table.Header>
 					<Table.Row>
-						<Table.Head>Table Name</Table.Head>
-						<Table.Head class="text-right">Rows</Table.Head>
-						<Table.Head class="text-right">% of Total</Table.Head>
+						<Table.Head>Nama Tabel</Table.Head>
+						<Table.Head class="text-right">Baris</Table.Head>
+						<Table.Head class="text-right">% dari Total</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>

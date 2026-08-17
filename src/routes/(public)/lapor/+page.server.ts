@@ -3,6 +3,7 @@ import { db } from "$lib/server/db/index.js";
 import { publicReports } from "$lib/server/db/schema.js";
 import { storeUpload, validateUpload } from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
+import { buatKodeTracking, pindaiLaporan } from "$lib/server/novira/laporan.js";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 const RATE_LIMIT_MS = 30_000;
@@ -63,7 +64,14 @@ export const actions: Actions = {
 			}
 			const lat = Number(latRaw);
 			const lon = Number(lonRaw);
-			if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+			if (
+				!Number.isFinite(lat) ||
+				!Number.isFinite(lon) ||
+				lat < -90 ||
+				lat > 90 ||
+				lon < -180 ||
+				lon > 180
+			) {
 				return fail(400, { message: "Koordinat lokasi tidak valid." });
 			}
 			latitude = latRaw;
@@ -75,8 +83,12 @@ export const actions: Actions = {
 		const urlFoto = punyaFoto ? await storeUpload(foto as File, "foto") : null;
 		const urlVideo = punyaVideo ? await storeUpload(video as File, "video") : null;
 
+		const laporanId = generateId(16);
+		const kodeTracking = buatKodeTracking();
+
 		await db.insert(publicReports).values({
-			id: generateId(16),
+			id: laporanId,
+			kodeTracking,
 			pelaporNama: pelaporNama || null,
 			pelaporTelepon: pelaporTelepon || null,
 			deskripsi: deskripsi || null,
@@ -92,6 +104,15 @@ export const actions: Actions = {
 
 		recentSubmissions.set(ip, Date.now());
 
-		redirect(303, "/lapor/berhasil");
+		// Pindai AI sengaja TIDAK ditunggu. Inferensi bisa memakan puluhan detik
+		// dan warga sering melapor dari jaringan seluler di pinggir jalan —
+		// menahan halaman konfirmasi selama itu akan membuat sebagian orang
+		// mengira laporannya gagal lalu mengirim ulang. Hasil pindai menyusul
+		// masuk ke baris laporan, dan operator melihatnya di antrian triase.
+		void pindaiLaporan(laporanId).catch((err) => {
+			console.error("[novira] Pindai laporan gagal dijadwalkan:", err);
+		});
+
+		redirect(303, `/lapor/berhasil?kode=${kodeTracking}`);
 	},
 };

@@ -1,18 +1,34 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import * as Popover from "$lib/components/ui/popover/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
+	import { Input } from "$lib/components/ui/input/index.js";
 	import VideoIcon from "@lucide/svelte/icons/video";
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import XIcon from "@lucide/svelte/icons/x";
+	import SearchIcon from "@lucide/svelte/icons/search";
+	import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
 	import CctvStream from "$lib/components/novira/cctv-stream.svelte";
 	import type { Kamera } from "$lib/types/novira.js";
+	import { invalidateAll } from "$app/navigation";
+	import { SvelteMap } from "svelte/reactivity";
 
 	let { data } = $props();
 
+	// Data cuma berubah lewat siklus deteksi (cron 12:00 & 15:00 WIB, atau
+	// trigger manual di Settings) -- poll ringan supaya status kamera/insiden
+	// tidak butuh refresh manual, tanpa perlu infrastruktur push (SSE/WS).
+	$effect(() => {
+		const interval = setInterval(() => invalidateAll(), 2 * 60 * 1000);
+		return () => clearInterval(interval);
+	});
+
 	let kotaDipilih = $state<string>("");
 	let kameraKotaDipilih = $state<string>("");
-	const slotTayang = $state<Map<string, Kamera>>(new Map());
+	let cctvPopoverOpen = $state(false);
+	let cctvSearch = $state("");
+	const slotTayang = new SvelteMap<string, Kamera>();
 
 	const MAX_SLOT = 4;
 
@@ -20,12 +36,24 @@
 	const kameraPerKota = $derived(
 		kotaDipilih ? data.kameraList.filter((k) => k.kabupatenKota === kotaDipilih) : []
 	);
+	const kameraTerfilter = $derived(
+		cctvSearch.trim()
+			? kameraPerKota.filter((k) => k.nama.toLowerCase().includes(cctvSearch.trim().toLowerCase()))
+			: kameraPerKota
+	);
+	const kameraDipilih = $derived(kameraPerKota.find((k) => k.id === kameraKotaDipilih));
 
 	$effect(() => {
 		if (kotaDipilih && !kameraPerKota.find((k) => k.id === kameraKotaDipilih)) {
 			kameraKotaDipilih = kameraPerKota[0]?.id ?? "";
 		}
 	});
+
+	function pilihCctv(id: string) {
+		kameraKotaDipilih = id;
+		cctvSearch = "";
+		cctvPopoverOpen = false;
+	}
 
 	function tambahKeSlot() {
 		const kam = kameraPerKota.find((k) => k.id === kameraKotaDipilih);
@@ -71,18 +99,53 @@
 			</select>
 		</div>
 		<div class="space-y-1.5">
-			<label for="pilih-cctv" class="text-xs font-medium text-muted-foreground">CCTV</label>
-			<select
-				id="pilih-cctv"
-				bind:value={kameraKotaDipilih}
-				class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
-				disabled={!kotaDipilih}
-			>
-				<option value="">-- Pilih CCTV --</option>
-				{#each kameraPerKota as kam (kam.id)}
-					<option value={kam.id}>{kam.nama}</option>
-				{/each}
-			</select>
+			<span id="pilih-cctv-label" class="text-xs font-medium text-muted-foreground">CCTV</span>
+			<Popover.Root bind:open={cctvPopoverOpen}>
+				<Popover.Trigger disabled={!kotaDipilih}>
+					{#snippet child({ props })}
+						<button
+							{...props}
+							id="pilih-cctv"
+							type="button"
+							aria-labelledby="pilih-cctv-label"
+							disabled={!kotaDipilih}
+							class="flex h-9 w-56 items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+						>
+							<span class="truncate">{kameraDipilih?.nama ?? "-- Pilih CCTV --"}</span>
+							<ChevronsUpDownIcon class="size-4 shrink-0 text-muted-foreground" />
+						</button>
+					{/snippet}
+				</Popover.Trigger>
+				<Popover.Content class="w-64 p-2" align="start">
+					<div class="relative mb-2">
+						<SearchIcon
+							class="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
+						/>
+						<Input
+							placeholder="Cari CCTV..."
+							class="h-8 pl-8 text-sm"
+							bind:value={cctvSearch}
+							autofocus
+						/>
+					</div>
+					<div class="max-h-56 space-y-0.5 overflow-y-auto">
+						{#each kameraTerfilter as kam (kam.id)}
+							<button
+								type="button"
+								onclick={() => pilihCctv(kam.id)}
+								class="w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground {kam.id ===
+								kameraKotaDipilih
+									? 'bg-accent/60 font-medium'
+									: ''}"
+							>
+								{kam.nama}
+							</button>
+						{:else}
+							<p class="px-2 py-1.5 text-sm text-muted-foreground">Tidak ada CCTV yang cocok.</p>
+						{/each}
+					</div>
+				</Popover.Content>
+			</Popover.Root>
 		</div>
 		<Button
 			class="h-9 bg-emerald-600 text-white hover:bg-emerald-700"

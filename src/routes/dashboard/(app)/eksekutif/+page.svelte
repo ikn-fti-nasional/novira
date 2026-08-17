@@ -429,7 +429,7 @@
 							</Table.Cell>
 						</Table.Row>
 					{:else}
-						{#each filteredLeaderboard as item (item.kelurahan)}
+						{#each filteredLeaderboard as item (item.kecamatan + "|" + item.kabupatenKota)}
 							<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
 								<Table.Cell class="text-center font-bold">
 									<span

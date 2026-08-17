@@ -12,18 +12,51 @@
 
 	let { children, data } = $props();
 
+	/** Route slug → display label, matching the wording used in the sidebar and each page's own <h1>. */
+	const ROUTE_LABELS: Record<string, string> = {
+		eksekutif: "Dashboard Eksekutif",
+		monitoring: "Pemantauan Langsung",
+		hotspots: "Peta Titik Rawan",
+		cameras: "Kamera CCTV",
+		incidents: "Insiden & Alert",
+		officers: "Petugas Lapangan",
+		"laporan-masyarakat": "Laporan Masyarakat",
+		"laporan-wilayah": "Laporan Wilayah & Provinsi",
+		"area-ranking": "Peringkat Wilayah",
+		audit: "Audit & Log Aktivitas",
+		notifications: "Notifikasi Sistem",
+		settings: "Pengaturan Sistem",
+		users: "Manajemen Pengguna",
+		roles: "Peran & Hak Akses",
+		database: "Basis Data",
+	};
+
+	function labelFor(segment: string) {
+		return (
+			ROUTE_LABELS[segment] ??
+			segment
+				.split("-")
+				.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+				.join(" ")
+		);
+	}
+
 	function getBreadcrumbs() {
 		const segments = page.url.pathname.split("/").filter(Boolean).slice(1);
-		if (segments.length === 0) return [{ label: "Dashboard", href: "/dashboard" }];
+		if (segments.length === 0) return [{ label: "Beranda Dasbor", href: "/dashboard" }];
 		return segments.map((segment, i) => ({
-			label: segment.charAt(0).toUpperCase() + segment.slice(1),
+			label: labelFor(segment),
 			href: "/dashboard/" + segments.slice(0, i + 1).join("/"),
 		}));
 	}
 </script>
 
 <Sidebar.Provider>
-	<AppSidebar user={data.user} notificationCount={data.unreadNotificationCount} />
+	<AppSidebar
+		user={data.user}
+		notificationCount={data.unreadNotificationCount}
+		incidentCount={data.activeIncidentCount}
+	/>
 	<Sidebar.Inset class="min-w-0">
 		<header
 			class="bg-background sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b px-4"

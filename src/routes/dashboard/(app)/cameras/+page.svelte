@@ -6,15 +6,38 @@
 	import * as Input from "$lib/components/ui/input/index.js";
 	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Label from "$lib/components/ui/label/index.js";
+	import DataTablePagination from "$lib/components/data-table-pagination.svelte";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
+	import SearchIcon from "@lucide/svelte/icons/search";
 	import { enhance } from "$app/forms";
 
 	let { data, form } = $props();
 
 	let showForm = $state(false);
+	let search = $state("");
+	let pageSize = $state(10);
+	let currentPage = $state(1);
+
+	const filtered = $derived(
+		data.kameraList.filter(
+			(cam) =>
+				cam.nama.toLowerCase().includes(search.toLowerCase()) ||
+				cam.kota.toLowerCase().includes(search.toLowerCase()) ||
+				(cam.kecamatan ?? "").toLowerCase().includes(search.toLowerCase())
+		)
+	);
+
+	const paginated = $derived(
+		filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+	);
+
+	$effect(() => {
+		search;
+		currentPage = 1;
+	});
 
 	const statusOptions = [
 		{ value: "ONLINE", label: "ONLINE" },
@@ -125,6 +148,11 @@
 		</Card.Root>
 	{/if}
 
+	<div class="relative max-w-sm">
+		<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+		<Input.Root placeholder="Cari nama kamera, kota, atau kecamatan..." class="pl-9" bind:value={search} />
+	</div>
+
 	<Card.Root>
 		<Card.Content class="p-0">
 			<Table.Root>
@@ -138,7 +166,7 @@
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
-					{#each data.kameraList as cam (cam.id)}
+					{#each paginated as cam (cam.id)}
 						<Table.Row class="text-xs">
 							<Table.Cell class="font-bold">{cam.nama}</Table.Cell>
 							<Table.Cell>{cam.kota}{cam.kecamatan ? `, ${cam.kecamatan}` : ""}</Table.Cell>
@@ -186,6 +214,7 @@
 											size="sm"
 											class="h-7 text-xs text-red-600 hover:text-red-700"
 											title="Hapus Kamera"
+											aria-label="Hapus Kamera"
 										>
 											<TrashIcon class="size-3.5" />
 										</Button>
@@ -193,9 +222,16 @@
 								</div>
 							</Table.Cell>
 						</Table.Row>
+					{:else}
+						<Table.Row>
+							<Table.Cell colspan={5} class="h-24 text-center text-xs text-muted-foreground">
+								{search ? "Tidak ada kamera yang cocok dengan pencarian." : "Belum ada kamera CCTV."}
+							</Table.Cell>
+						</Table.Row>
 					{/each}
 				</Table.Body>
 			</Table.Root>
+			<DataTablePagination totalItems={filtered.length} bind:pageSize bind:currentPage />
 		</Card.Content>
 	</Card.Root>
 </div>

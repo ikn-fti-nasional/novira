@@ -18,9 +18,9 @@
 <Dialog.Root bind:open>
 	<Dialog.Content class="sm:max-w-[350px]">
 		<Dialog.Header>
-			<Dialog.Title>Change Role</Dialog.Title>
+			<Dialog.Title>Ubah Peran</Dialog.Title>
 			<Dialog.Description>
-				Change role for {userName}. Current role: {currentRole}.
+				Ubah peran untuk {userName}. Peran saat ini: {currentRole}.
 			</Dialog.Description>
 		</Dialog.Header>
 		<form
@@ -38,7 +38,7 @@
 			<input type="hidden" name="userId" value={userId} />
 			<div class="grid gap-4 py-4">
 				<div class="grid gap-2">
-					<Label for="newRole">New Role</Label>
+					<Label for="newRole">Peran Baru</Label>
 					<Select.Root name="newRole" type="single" value={currentRole}>
 						<Select.Trigger>
 							<span>{currentRole}</span>
@@ -55,7 +55,7 @@
 				</div>
 			</div>
 			<Dialog.Footer>
-				<Button type="submit">Update Role</Button>
+				<Button type="submit">Perbarui Peran</Button>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

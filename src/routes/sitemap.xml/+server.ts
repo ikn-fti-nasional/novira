@@ -1,6 +1,3 @@
-import { db } from "$lib/server/db/index.js";
-import { pages } from "$lib/server/db/schema.js";
-import { eq } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
 
 const SITE_URL = "https://novira.id";
@@ -8,23 +5,10 @@ const SITE_URL = "https://novira.id";
 const staticRoutes = ["/login", "/register"];
 
 export const GET: RequestHandler = async () => {
-	const publishedPages = await db
-		.select({ slug: pages.slug, updatedAt: pages.updatedAt })
-		.from(pages)
-		.where(eq(pages.status, "published"));
-
-	const urls = [
-		...staticRoutes.map((path) => ({
-			loc: `${SITE_URL}${path}`,
-			lastmod: new Date().toISOString().split("T")[0],
-		})),
-		...publishedPages.map((page) => ({
-			loc: `${SITE_URL}/dashboard/content/${page.slug}`,
-			lastmod: page.updatedAt
-				? new Date(page.updatedAt).toISOString().split("T")[0]
-				: new Date().toISOString().split("T")[0],
-		})),
-	];
+	const urls = staticRoutes.map((path) => ({
+		loc: `${SITE_URL}${path}`,
+		lastmod: new Date().toISOString().split("T")[0],
+	}));
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

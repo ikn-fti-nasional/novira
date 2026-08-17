@@ -78,7 +78,7 @@
 	$effect(() => {
 		if (form?.message) toast.error(form.message);
 		if (form?.success) {
-			toast.success("User updated successfully");
+			toast.success("Pengguna berhasil diperbarui");
 			selectedIds = new Set();
 		}
 	});
@@ -131,7 +131,7 @@
 
 	function formatDate(date: Date | null) {
 		if (!date) return "—";
-		return new Intl.DateTimeFormat("en-US", {
+		return new Intl.DateTimeFormat("id-ID", {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
@@ -167,27 +167,27 @@
 	}
 
 	const columns = [
-		{ key: "name", label: "Name" },
-		{ key: "username", label: "Username" },
+		{ key: "name", label: "Nama" },
+		{ key: "username", label: "Nama Pengguna" },
 		{ key: "email", label: "Email" },
-		{ key: "role", label: "Role" },
-		{ key: "createdAt", label: "Joined" },
+		{ key: "role", label: "Peran" },
+		{ key: "createdAt", label: "Bergabung" },
 	];
 </script>
 
 <svelte:head>
-	<title>Users - Novira</title>
+	<title>Manajemen Pengguna - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Users</h1>
-			<p class="text-muted-foreground">Manage user accounts and permissions.</p>
+			<h1 class="text-3xl font-bold tracking-tight">Manajemen Pengguna</h1>
+			<p class="text-muted-foreground">Kelola akun dan hak akses pengguna.</p>
 		</div>
 		<Button onclick={() => (createOpen = true)}>
 			<PlusIcon class="mr-2 size-4" />
-			Add User
+			Tambah Pengguna
 		</Button>
 	</div>
 
@@ -195,10 +195,10 @@
 	<div class="flex items-center gap-2">
 		<div class="relative max-w-sm flex-1">
 			<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-			<Input placeholder="Search users..." class="pl-9" bind:value={search} />
+			<Input placeholder="Cari pengguna..." class="pl-9" bind:value={search} />
 		</div>
 		<p class="text-muted-foreground text-sm">
-			{filtered.length} user{filtered.length !== 1 ? "s" : ""}
+			{filtered.length} pengguna
 		</p>
 		<div class="ml-auto flex items-center gap-2">
 			{#if selectedIds.size > 0}
@@ -206,7 +206,7 @@
 					<input type="hidden" name="ids" value={[...selectedIds].join(",")} />
 					<Button variant="destructive" size="sm" type="submit">
 						<TrashIcon class="mr-2 size-4" />
-						Delete {selectedIds.size}
+						Hapus {selectedIds.size}
 					</Button>
 				</form>
 			{/if}
@@ -215,13 +215,17 @@
 					{#snippet child({ props })}
 						<Button variant="outline" size="sm" {...props}>
 							<DownloadIcon class="mr-2 size-4" />
-							Export
+							Ekspor
 						</Button>
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content>
-					<DropdownMenu.Item onclick={() => handleExport("csv")}>Export as CSV</DropdownMenu.Item>
-					<DropdownMenu.Item onclick={() => handleExport("json")}>Export as JSON</DropdownMenu.Item>
+					<DropdownMenu.Item onclick={() => handleExport("csv")}
+						>Ekspor sebagai CSV</DropdownMenu.Item
+					>
+					<DropdownMenu.Item onclick={() => handleExport("json")}
+						>Ekspor sebagai JSON</DropdownMenu.Item
+					>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 		</div>
@@ -252,7 +256,7 @@
 							</button>
 						</Table.Head>
 					{/each}
-					<Table.Head class="w-[100px]">Actions</Table.Head>
+					<Table.Head class="w-[100px]">Tindakan</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -275,7 +279,14 @@
 						<Table.Cell class="text-muted-foreground">{formatDate(user.createdAt)}</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-center gap-1">
-								<Button variant="ghost" size="icon" class="size-8" onclick={() => openEdit(user)}>
+								<Button
+									variant="ghost"
+									size="icon"
+									class="size-8"
+									title="Edit pengguna"
+									aria-label="Edit pengguna"
+									onclick={() => openEdit(user)}
+								>
 									<PencilIcon class="size-4" />
 								</Button>
 								{#if user.id !== data.currentUserId}
@@ -283,6 +294,8 @@
 										variant="ghost"
 										size="icon"
 										class="text-destructive size-8"
+										title="Hapus pengguna"
+										aria-label="Hapus pengguna"
 										onclick={() => openDelete(user.id)}
 									>
 										<TrashIcon class="size-4" />
@@ -294,7 +307,7 @@
 				{:else}
 					<Table.Row>
 						<Table.Cell colspan={7} class="h-24 text-center">
-							{search ? "No users match your search." : "No users found."}
+							{search ? "Tidak ada pengguna yang cocok dengan pencarian." : "Belum ada pengguna."}
 						</Table.Cell>
 					</Table.Row>
 				{/each}
@@ -306,4 +319,4 @@
 
 <UserFormDialog bind:open={createOpen} mode="create" />
 <UserFormDialog bind:open={editOpen} mode="edit" user={editUser} />
-<DeleteConfirmDialog bind:open={deleteOpen} action="?/delete" id={deleteId} itemName="user" />
+<DeleteConfirmDialog bind:open={deleteOpen} action="?/delete" id={deleteId} itemName="pengguna" />

@@ -1,3 +1,12 @@
+/** Kategori baris audit. `LAPORAN_WARGA` dan `ESKALASI` menyusul fitur triase laporan & tangga SLA. */
+export type TipeAudit =
+	| "DETEKSI_AI"
+	| "TUGAS_PETUGAS"
+	| "UBAH_STATUS"
+	| "KONFIGURASI"
+	| "LAPORAN_WARGA"
+	| "ESKALASI";
+
 export type TingkatTingkatKeparahan = "KRITIS" | "TINGGI" | "SEDANG" | "RENDAH";
 
 export type StatusInsiden = "AKTIF" | "PERINGATAN" | "SELESAI" | "POSITIF_PALSU";
@@ -37,9 +46,34 @@ export interface Kamera {
 	fps: number;
 }
 
+/** Satu baris penjelasan skor prioritas — bentuknya cermin `FaktorPrioritas` di server. */
+export interface FaktorPrioritasView {
+	label: string;
+	poin: number;
+	keterangan: string;
+}
+
 export interface Insiden {
 	id: string;
-	kameraId: string;
+	/** `null` untuk insiden hasil laporan warga yang tidak dekat kamera mana pun. */
+	kameraId: string | null;
+	/** Asal insiden — menentukan ikon/badge sumber di UI. */
+	sumber: "CCTV" | "LAPORAN_WARGA";
+	/** Kode laporan warga asal (kalau ada), supaya operator bisa membuka laporannya. */
+	kodeLaporan?: string;
+	/** Skor prioritas 0..100 beserta faktor pembentuknya. */
+	skorPrioritas: number;
+	rincianPrioritas: FaktorPrioritasView[];
+	/** 0 = belum dieskalasi, 1 petugas, 2 kepala seksi, 3 kepala dinas. */
+	tingkatEskalasi: number;
+	/**
+	 * Koordinat insiden untuk pemetaan. Diambil dari kamera (sumber CCTV) atau
+	 * dari koordinat GPS laporan warga. `null` bila keduanya tidak tersedia —
+	 * insiden seperti itu tidak bisa dipetakan dan sengaja tidak digambar
+	 * di titik tebakan mana pun.
+	 */
+	latitude: number | null;
+	longitude: number | null;
 	namaKamera: string;
 	lokasi: string;
 	kelurahan: string;
@@ -56,10 +90,23 @@ export interface Insiden {
 	keparahan: TingkatTingkatKeparahan;
 	tingkatKepercayaan: number; // 0.0 - 1.0
 	urlSnapshot: string;
+	urlSnapshotPertama?: string;
 	petugasDitugaskan?: string;
 	buktiFotoUrl?: string;
+	catatanPenyelesaian?: string;
 	statusSla: "TEPAT_WAKTU" | "HAMPIR_BREACH" | "MELANGGAR_SLA";
 	bbox: { x: number; y: number; width: number; height: number };
+}
+
+/** Satu baris jejak audit yang sudah difilter untuk satu insiden spesifik -- dipakai di halaman detail/timeline insiden. */
+export interface RiwayatInsidenEntry {
+	id: string;
+	waktu: string;
+	pengguna: string;
+	peran: string;
+	tindakan: string;
+	rincian: string;
+	tipe: TipeAudit;
 }
 
 export interface SkorKebersihanWilayah {
@@ -84,6 +131,8 @@ export interface PetugasLapangan {
 	status: "SIAP_TUGAS" | "SEDANG_BERTUGAS" | "OFFLINE";
 	jumlahTugasAktif: number;
 	avatar?: string;
+	/** Akun login (role petugas_lapangan) yang terhubung ke petugas ini, kalau ada. */
+	userId?: string;
 }
 
 export interface TrenSampahJam {
@@ -101,7 +150,7 @@ export interface LogAuditSistem {
 	tindakan: string;
 	rincian: string;
 	wilayah: string;
-	tipe: "DETEKSI_AI" | "TUGAS_PETUGAS" | "UBAH_STATUS" | "KONFIGURASI";
+	tipe: TipeAudit;
 }
 
 export interface TrenSkorKecamatan {

@@ -2,6 +2,14 @@ import { invalidateSession } from "$lib/server/auth.js";
 import { db } from "$lib/server/db/index.js";
 import { users, sessions, appSettings } from "$lib/server/db/schema.js";
 import { seedDemo } from "$lib/server/db/seed.js";
+import {
+	jalankanSiklusDeteksi,
+	ambilPengaturanModel,
+	simpanPengaturanModel,
+	MODEL_TYPES_TERSEDIA,
+	type ModelTypeDeteksi,
+} from "$lib/server/novira/deteksi.js";
+import { periksaKesehatanKamera } from "$lib/server/novira/kesehatanKamera.js";
 import { hashPassword, verifyPassword } from "$lib/server/password.js";
 import { requireRoleOrFail, isRole } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
@@ -87,6 +95,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}
 	}
 
+	const pengaturanModel = user.role === "admin" ? await ambilPengaturanModel() : null;
+
 	return {
 		profile,
 		settings,
@@ -95,6 +105,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		sessions: userSessions,
 		currentSessionId: locals.session.id,
 		notificationPrefs: notifPrefs,
+		pengaturanModel,
+		modelTypesTersedia: MODEL_TYPES_TERSEDIA,
 	};
 };
 
@@ -116,12 +128,12 @@ export const actions: Actions = {
 			return fail(400, { message: "Valid email is required" });
 		}
 
-try {
-		await db
-			.update(users)
-			.set({ name, email: email.toLowerCase(), updatedAt: new Date() })
-			.where(eq(users.id, locals.user.id));
-	} catch {
+		try {
+			await db
+				.update(users)
+				.set({ name, email: email.toLowerCase(), updatedAt: new Date() })
+				.where(eq(users.id, locals.user.id));
+		} catch {
 			return fail(400, { message: "Email already taken" });
 		}
 
@@ -271,6 +283,56 @@ try {
 		}
 
 		return { success: true, action: "resetDemo" };
+	},
+
+	jalankanDeteksi: async ({ locals }) => {
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		if (denied) return denied;
+
+		try {
+			const ringkasan = await jalankanSiklusDeteksi();
+			return { success: true, action: "jalankanDeteksi", ringkasan };
+		} catch (err) {
+			console.error("Siklus deteksi manual gagal:", err);
+			return fail(500, { message: "Siklus deteksi gagal — cek log server (pLitter API jalan?)" });
+		}
+	},
+
+	updateModelDeteksi: async ({ request, locals }) => {
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		if (denied) return denied;
+
+		const formData = await request.formData();
+		const modelType = formData.get("modelType");
+		const confThresRaw = formData.get("confThres");
+
+		if (
+			typeof modelType !== "string" ||
+			!(MODEL_TYPES_TERSEDIA as readonly string[]).includes(modelType)
+		) {
+			return fail(400, { message: "Model deteksi tidak valid" });
+		}
+		const confThres = Number(confThresRaw);
+		if (!Number.isFinite(confThres) || confThres <= 0 || confThres > 1) {
+			return fail(400, { message: "Ambang kepercayaan harus di antara 0 dan 1" });
+		}
+
+		await simpanPengaturanModel({ modelType: modelType as ModelTypeDeteksi, confThres });
+
+		return { success: true, action: "updateModelDeteksi" };
+	},
+
+	cekKesehatanKamera: async ({ locals }) => {
+		const denied = requireRoleOrFail(locals.user, ["admin"]);
+		if (denied) return denied;
+
+		try {
+			const ringkasan = await periksaKesehatanKamera();
+			return { success: true, action: "cekKesehatanKamera", ringkasan };
+		} catch (err) {
+			console.error("Cek kesehatan kamera manual gagal:", err);
+			return fail(500, { message: "Cek kesehatan kamera gagal — cek log server" });
+		}
 	},
 
 	updateNotificationPrefs: async ({ request, locals }) => {

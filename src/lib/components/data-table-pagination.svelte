@@ -30,14 +30,14 @@
 <div class="flex items-center justify-between px-2 py-4">
 	<div class="text-muted-foreground text-sm">
 		{#if totalItems > 0}
-			Showing {startItem}–{endItem} of {totalItems}
+			Menampilkan {startItem}–{endItem} dari {totalItems}
 		{:else}
-			No results
+			Tidak ada hasil
 		{/if}
 	</div>
 	<div class="flex items-center gap-4">
 		<div class="flex items-center gap-2">
-			<span class="text-muted-foreground text-sm">Rows</span>
+			<span class="text-muted-foreground text-sm">Baris</span>
 			<Select.Root
 				type="single"
 				value={String(pageSize)}
@@ -67,7 +67,7 @@
 				onclick={() => goToPage(1)}
 			>
 				<ChevronsLeftIcon class="size-4" />
-				<span class="sr-only">First page</span>
+				<span class="sr-only">Halaman pertama</span>
 			</Button>
 			<Button
 				variant="outline"
@@ -77,7 +77,7 @@
 				onclick={() => goToPage(currentPage - 1)}
 			>
 				<ChevronLeftIcon class="size-4" />
-				<span class="sr-only">Previous page</span>
+				<span class="sr-only">Halaman sebelumnya</span>
 			</Button>
 			<span class="text-muted-foreground px-2 text-sm">
 				{currentPage} / {totalPages}
@@ -90,7 +90,7 @@
 				onclick={() => goToPage(currentPage + 1)}
 			>
 				<ChevronRightIcon class="size-4" />
-				<span class="sr-only">Next page</span>
+				<span class="sr-only">Halaman berikutnya</span>
 			</Button>
 			<Button
 				variant="outline"
@@ -100,7 +100,7 @@
 				onclick={() => goToPage(totalPages)}
 			>
 				<ChevronsRightIcon class="size-4" />
-				<span class="sr-only">Last page</span>
+				<span class="sr-only">Halaman terakhir</span>
 			</Button>
 		</div>
 	</div>

@@ -1,8 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { put } from "@vercel/blob";
 
-const UPLOAD_DIR = path.resolve("static/uploads");
 const MAX_SIZE = {
 	foto: 5 * 1024 * 1024,
 	video: 20 * 1024 * 1024,
@@ -32,13 +30,17 @@ export function validateUpload(file: File, kind: "foto" | "video"): string | nul
 	return null;
 }
 
+/**
+ * Simpan berkas unggahan ke Vercel Blob (bukan disk lokal) -- filesystem
+ * container/serverless bersifat efemeral, jadi foto/video bukti yang ditulis
+ * ke disk hilang begitu instans-nya didaur ulang. Blob mengembalikan URL
+ * publik permanen yang langsung dipakai sebagai `urlSnapshot`/`urlFoto`/dst.
+ */
 export async function storeUpload(file: File, kind: "foto" | "video"): Promise<string> {
 	const error = validateUpload(file, kind);
 	if (error) throw new Error(error);
 
-	await mkdir(UPLOAD_DIR, { recursive: true });
-	const name = `${Date.now()}-${randomBytes(6).toString("hex")}.${EXTENSION[file.type] ?? "bin"}`;
-	const filePath = path.join(UPLOAD_DIR, name);
-	await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
-	return `/uploads/${name}`;
+	const name = `${kind}/${Date.now()}-${randomBytes(6).toString("hex")}.${EXTENSION[file.type] ?? "bin"}`;
+	const blob = await put(name, file, { access: "public", contentType: file.type });
+	return blob.url;
 }

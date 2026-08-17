@@ -3,8 +3,11 @@
 	import VideoIcon from "@lucide/svelte/icons/video";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
+	import ActivityIcon from "@lucide/svelte/icons/activity";
 	import ClipboardListIcon from "@lucide/svelte/icons/clipboard-list";
+	import ClipboardCheckIcon from "@lucide/svelte/icons/clipboard-check";
 	import CameraIcon from "@lucide/svelte/icons/camera";
+	import UploadCloudIcon from "@lucide/svelte/icons/upload-cloud";
 	import UserCheckIcon from "@lucide/svelte/icons/user-check";
 	import TrophyIcon from "@lucide/svelte/icons/trophy";
 	import BellIcon from "@lucide/svelte/icons/bell";
@@ -30,9 +33,10 @@
 			role: string;
 		};
 		notificationCount?: number;
+		incidentCount?: number;
 	};
 
-	let { user, notificationCount = 0 }: Props = $props();
+	let { user, notificationCount = 0, incidentCount = 0 }: Props = $props();
 
 	const isExecutive = $derived(user.role === "kepala_dinas" || user.role === "walikota");
 
@@ -53,13 +57,15 @@
 			label: "Manajemen Operasional",
 			items: [
 				{ title: "Kamera CCTV", url: "/dashboard/cameras", icon: CameraIcon },
+				{ title: "Unggah & Analisa", url: "/dashboard/analisa-unggah", icon: UploadCloudIcon },
 				{
 					title: "Insiden & Alert",
 					url: "/dashboard/incidents",
 					icon: AlertTriangleIcon,
-					badge: "14",
+					badge: incidentCount > 0 ? String(incidentCount) : undefined,
 				},
 				{ title: "Petugas Lapangan", url: "/dashboard/officers", icon: UserCheckIcon },
+				{ title: "Tugas Saya", url: "/dashboard/tugas-saya", icon: ClipboardCheckIcon },
 				{
 					title: "Laporan Masyarakat",
 					url: "/dashboard/laporan-masyarakat",
@@ -70,6 +76,7 @@
 		{
 			label: "Tata Kelola",
 			items: [
+				{ title: "Analitik Lanjutan", url: "/dashboard/analitik", icon: ActivityIcon },
 				{
 					title: "Laporan Wilayah & Provinsi",
 					url: "/dashboard/laporan-wilayah",
@@ -92,6 +99,7 @@
 			label: "Ringkasan Eksekutif",
 			items: [
 				{ title: "Dashboard Eksekutif", url: "/dashboard/eksekutif", icon: LayoutDashboardIcon },
+				{ title: "Analitik Lanjutan", url: "/dashboard/analitik", icon: ActivityIcon },
 				{
 					title: "Laporan Eksekutif",
 					url: "/dashboard/laporan-wilayah",

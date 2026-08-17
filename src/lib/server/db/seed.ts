@@ -9,10 +9,16 @@ import {
 	passwordResetTokens,
 	cameras,
 	publicReports,
+	officers,
+	incidents,
+	auditLog,
+	reporterTrust,
+	areaSnapshots,
 } from "./schema.js";
 import { hashPassword } from "../password.js";
 import { generateId } from "../id.js";
 import { createUser } from "./users.js";
+import { KAMERA_BANDUNG } from "./data/kamera-bandung.js";
 
 function daysAgo(n: number): Date {
 	return new Date(Date.now() - n * 86400000);
@@ -30,11 +36,17 @@ export async function seedDemo() {
 	console.log("Clearing existing data...");
 	// Delete children before parents — users is referenced by every other table.
 	// password_reset_tokens must be cleared too or the users delete below fails
-	// with a foreign-key violation.
+	// with a foreign-key violation. incidents references cameras + officers, so
+	// it must go before both.
 	await db.delete(notifications);
 	await db.delete(pages);
+	await db.delete(auditLog);
+	await db.delete(incidents);
 	await db.delete(cameras);
+	await db.delete(officers);
 	await db.delete(publicReports);
+	await db.delete(reporterTrust);
+	await db.delete(areaSnapshots);
 	await db.delete(sessions);
 	await db.delete(passwordResetTokens);
 	await db.delete(appSettings);
@@ -1023,264 +1035,264 @@ export async function seedDemo() {
 	console.log("Creating notifications...");
 	const notificationData = [
 		{
-			title: "Welcome to Novira",
-			message: "Your admin dashboard is ready to use.",
+			title: "Selamat Datang di Novira",
+			message: "Dasbor pengawasan sampah Anda siap digunakan.",
 			type: "success" as const,
 			days: 365,
 			read: true,
 			global: true,
 		},
 		{
-			title: "New user registered",
-			message: "Marcus Johnson has joined as an editor.",
+			title: "Petugas baru bergabung",
+			message: "Marcus Johnson telah bergabung sebagai Petugas Lapangan.",
 			type: "info" as const,
 			days: 340,
 			read: true,
 			global: false,
 		},
 		{
-			title: "Content published",
-			message: '"Getting Started Guide" is now live.',
+			title: "Insiden diselesaikan",
+			message: "Insiden sampah di Kelurahan Sukajadi telah ditangani petugas lapangan.",
 			type: "success" as const,
 			days: 335,
 			read: true,
 			global: false,
 		},
 		{
-			title: "Server maintenance scheduled",
-			message: "Planned downtime on Saturday 2AM-4AM UTC.",
+			title: "Pemeliharaan sistem terjadwal",
+			message: "Downtime terjadwal hari Sabtu pukul 02.00-04.00 WIB untuk pemeliharaan server.",
 			type: "warning" as const,
 			days: 320,
 			read: true,
 			global: true,
 		},
 		{
-			title: "New user registered",
-			message: "Alex Turner has joined as a viewer.",
+			title: "Pengguna baru terdaftar",
+			message: "Alex Turner telah bergabung sebagai Petugas Lapangan.",
 			type: "info" as const,
 			days: 298,
 			read: true,
 			global: false,
 		},
 		{
-			title: "Database backup completed",
-			message: "Automatic backup ran successfully.",
+			title: "Pencadangan basis data selesai",
+			message: "Backup otomatis basis data berhasil dijalankan.",
 			type: "success" as const,
 			days: 280,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Security scan passed",
-			message: "No vulnerabilities detected in latest scan.",
+			title: "Pemindaian keamanan lolos",
+			message: "Tidak ditemukan kerentanan pada pemindaian keamanan terbaru.",
 			type: "success" as const,
 			days: 260,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Content published",
-			message: '"API Reference" documentation is now live.',
+			title: "Kamera baru ditambahkan",
+			message: "CCTV Pasar Ciroyom 02 berhasil ditambahkan ke jaringan pemantauan.",
 			type: "success" as const,
 			days: 245,
 			read: true,
 			global: false,
 		},
 		{
-			title: "Disk space warning",
-			message: "Server disk usage at 72%. Consider cleanup.",
+			title: "Peringatan ruang penyimpanan",
+			message: "Penggunaan disk server mencapai 72%. Pertimbangkan pembersihan.",
 			type: "warning" as const,
 			days: 230,
 			read: true,
 			global: true,
 		},
 		{
-			title: "New user registered",
-			message: "Sophie Martin has joined as an admin.",
+			title: "Pengguna baru terdaftar",
+			message: "Sophie Martin telah bergabung sebagai Admin.",
 			type: "info" as const,
 			days: 202,
 			read: true,
 			global: false,
 		},
 		{
-			title: "SSL certificate renewed",
-			message: "Certificate auto-renewed successfully.",
+			title: "Sertifikat SSL diperbarui",
+			message: "Sertifikat domain berhasil diperbarui secara otomatis.",
 			type: "success" as const,
 			days: 190,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Failed login attempt",
-			message: "5 failed login attempts from IP 203.0.113.42.",
+			title: "Percobaan login gagal",
+			message: "5 percobaan login gagal terdeteksi dari alamat IP 203.0.113.42.",
 			type: "error" as const,
 			days: 175,
 			read: true,
 			global: false,
 		},
 		{
-			title: "System update applied",
-			message: "SvelteKit updated to 2.50. All tests passing.",
-			type: "success" as const,
+			title: "Insiden melanggar SLA",
+			message: "Insiden di Kecamatan Malabar melewati batas waktu pengangkutan 24 jam.",
+			type: "warning" as const,
 			days: 160,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Content milestone",
-			message: "Platform reached 30 published pages!",
+			title: "Pencapaian skor kebersihan",
+			message: "Skor kebersihan rata-rata Kota Bandung mencapai 93/100.",
 			type: "success" as const,
 			days: 145,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Database backup completed",
-			message: "Weekly backup completed successfully.",
+			title: "Pencadangan basis data selesai",
+			message: "Backup mingguan berhasil diselesaikan.",
 			type: "success" as const,
 			days: 130,
 			read: true,
 			global: true,
 		},
 		{
-			title: "New editor onboarded",
-			message: "Kai Nakamura has been promoted to editor.",
+			title: "Petugas dipromosikan",
+			message: "Kai Nakamura dipromosikan menjadi Koordinator Lapangan.",
 			type: "info" as const,
 			days: 102,
 			read: true,
 			global: false,
 		},
 		{
-			title: "Performance alert",
-			message: "API response time increased by 15%. Investigating.",
+			title: "Peringatan performa",
+			message: "Waktu respons sistem meningkat 15%. Sedang diselidiki.",
 			type: "warning" as const,
 			days: 95,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Content published",
-			message: '"Design System Launch" blog post is live.',
+			title: "Insiden diselesaikan",
+			message: "Insiden sampah di Kecamatan Andir telah ditangani petugas lapangan.",
 			type: "success" as const,
 			days: 80,
 			read: true,
 			global: false,
 		},
 		{
-			title: "User milestone",
-			message: "Platform reached 40 registered users!",
+			title: "Pencapaian pengguna",
+			message: "Platform mencapai 40 pengguna terdaftar.",
 			type: "success" as const,
 			days: 72,
 			read: true,
 			global: true,
 		},
 		{
-			title: "New user registered",
-			message: "Kenji Watanabe has joined as an editor.",
+			title: "Pengguna baru terdaftar",
+			message: "Kenji Watanabe telah bergabung sebagai Operator.",
 			type: "info" as const,
 			days: 55,
 			read: true,
 			global: false,
 		},
 		{
-			title: "Database optimization",
-			message: "VACUUM completed. Reclaimed 18MB.",
+			title: "Optimasi basis data",
+			message: "VACUUM selesai dijalankan. 18MB ruang penyimpanan direklamasi.",
 			type: "success" as const,
 			days: 48,
 			read: true,
 			global: true,
 		},
 		{
-			title: "Disk space warning",
-			message: "Server disk usage at 78%. Consider cleanup.",
+			title: "Peringatan ruang penyimpanan",
+			message: "Penggunaan disk server mencapai 78%. Pertimbangkan pembersihan.",
 			type: "warning" as const,
 			days: 42,
 			read: false,
 			global: true,
 		},
 		{
-			title: "Failed API call",
-			message: "External API timeout on analytics endpoint.",
+			title: "Kamera CCTV offline",
+			message: "3 kamera CCTV di Kota Bandung tidak merespons pada siklus deteksi terakhir.",
 			type: "error" as const,
 			days: 35,
 			read: false,
 			global: true,
 		},
 		{
-			title: "Content published",
-			message: '"Roadmap 2025" blog post is now live.',
+			title: "Laporan masyarakat baru",
+			message: "Laporan sampah baru dari masyarakat masuk dan menunggu verifikasi.",
 			type: "success" as const,
 			days: 30,
 			read: false,
 			global: false,
 		},
 		{
-			title: "New user registered",
-			message: "Ruby Anderson has joined as a viewer.",
+			title: "Pengguna baru terdaftar",
+			message: "Ruby Anderson telah bergabung sebagai Petugas Lapangan.",
 			type: "info" as const,
 			days: 28,
 			read: false,
 			global: false,
 		},
 		{
-			title: "Backup storage warning",
-			message: "Backup volume at 90%. Rotate old backups.",
+			title: "Peringatan ruang cadangan",
+			message: "Volume backup mencapai 90%. Rotasi backup lama disarankan.",
 			type: "warning" as const,
 			days: 22,
 			read: false,
 			global: true,
 		},
 		{
-			title: "High memory usage",
-			message: "Server memory at 88%. Monitor closely.",
+			title: "Penggunaan memori tinggi",
+			message: "Memori server pada 88%. Pantau secara berkala.",
 			type: "error" as const,
 			days: 18,
 			read: false,
 			global: true,
 		},
 		{
-			title: "Scheduled task failed",
-			message: "Email digest cron job failed. Check logs.",
+			title: "Tugas terjadwal gagal",
+			message: "Cron job notifikasi harian gagal dijalankan. Periksa log sistem.",
 			type: "error" as const,
 			days: 14,
 			read: false,
 			global: true,
 		},
 		{
-			title: "Content update",
-			message: '"Blog: Year in Review" was edited by Elena.',
+			title: "Insiden diperbarui",
+			message: "Status insiden di Kelurahan Kiaracondong diperbarui oleh Elena.",
 			type: "info" as const,
 			days: 10,
 			read: false,
 			global: false,
 		},
 		{
-			title: "New user registered",
-			message: "Wesley Morgan has joined as a viewer.",
+			title: "Pengguna baru terdaftar",
+			message: "Wesley Morgan telah bergabung sebagai Petugas Lapangan.",
 			type: "info" as const,
 			days: 6,
 			read: false,
 			global: false,
 		},
 		{
-			title: "System health check",
-			message: "All services operational. Uptime: 99.97%.",
+			title: "Pemeriksaan kesehatan sistem",
+			message: "Seluruh layanan beroperasi normal. Uptime: 99.97%.",
 			type: "success" as const,
 			days: 3,
 			read: false,
 			global: true,
 		},
 		{
-			title: "New user registered",
-			message: "Xia Zhang has joined as a viewer.",
+			title: "Pengguna baru terdaftar",
+			message: "Xia Zhang telah bergabung sebagai Petugas Lapangan.",
 			type: "info" as const,
 			days: 2,
 			read: false,
 			global: false,
 		},
 		{
-			title: "Security update available",
-			message: "Critical patch for Node.js 22. Update recommended.",
+			title: "Pembaruan keamanan tersedia",
+			message: "Patch kritis untuk Node.js 22 tersedia. Segera perbarui server.",
 			type: "warning" as const,
 			days: 0,
 			read: false,
@@ -1305,7 +1317,7 @@ export async function seedDemo() {
 	console.log("Creating app settings...");
 	const settingsData = [
 		{ key: "siteName", value: "Novira" },
-		{ key: "timezone", value: "America/New_York" },
+		{ key: "timezone", value: "Asia/Jakarta" },
 		{ key: "defaultRole", value: "operator" },
 		{ key: "maintenanceMode", value: "false" },
 	];
@@ -1319,167 +1331,196 @@ export async function seedDemo() {
 	}
 
 	// --- CAMERAS ---
-	// Umpan asli dari ATCS/dukcapil-CCTV publik (streaming HLS publik, hanya
-	// tautan — bukan rekaman). Berlaku sementara: kamera tambahan bisa
-	// ditambah lewat halaman /dashboard/cameras.
+	// Registri kamera diambil dari feed ATCS publik Kota Bandung dan sudah
+	// disaring: hanya stream yang benar-benar mengudara saat verifikasi yang
+	// masuk (lihat catatan lengkap di data/kamera-bandung.ts). Kota lain
+	// sengaja dihapus -- cakupan satu kota penuh jauh lebih berguna untuk
+	// mengukur kebersihan wilayah daripada sebaran tipis di sembilan kota,
+	// karena skor kebersihan dihitung per kecamatan dan butuh kepadatan
+	// kamera yang memadai agar angkanya berarti.
 	console.log("Creating cameras...");
-	const cameraData = [
-		{
-			nama: "Simpang Pasar Sumber 1",
-			kota: "Kabupaten Cirebon",
-			kecamatan: "Sumber",
-			latitude: "-6.758906",
-			longitude: "108.487653",
-			urlStream:
-				"https://cctv-backend.cirebonkab.go.id:6969/memfs/9e5cb528-a433-468d-9570-be0ec1316120.m3u8",
-		},
-		{
-			nama: "Bundaran Kedawung 2",
-			kota: "Kabupaten Cirebon",
-			kecamatan: "Kedawung",
-			latitude: "-6.7095371583598",
-			longitude: "108.53217478208",
-			urlStream:
-				"https://cctv-backend.cirebonkab.go.id:6969/memfs/a71f2a04-c4c0-4280-9d71-d572d01fe1e6.m3u8",
-		},
-		{
-			nama: "Tagog Padalarang (Arah Purwakarta)",
-			kota: "Kabupaten Bandung Barat",
-			kecamatan: "Padalarang",
-			latitude: "-6.8422437545735795",
-			longitude: "107.4852254184576",
-			urlStream:
-				"https://atcs-dishubkbb.urbanaccess.net/memfs/02e59fd8-d67a-40b3-bb2c-5f54c7bcadf9.m3u8",
-		},
-		{
-			nama: "SP 5 DPRD Provinsi",
-			kota: "Kota Palembang",
-			kecamatan: null,
-			latitude: "-2.980102",
-			longitude: "104.745707",
-			urlStream: "https://stream.palembang.go.id/cam7/index.m3u8",
-		},
-		{
-			nama: "Jembatan Dadap",
-			kota: "Kabupaten Tangerang",
-			kecamatan: "Kosambi",
-			latitude: "-6.092136145427569",
-			longitude: "106.71870867037522",
-			urlStream: "/api/cctv/tangerang/01jsrctg4pc3xdf5vkjjg4pcfd/01jsrctg4pc3xdf5vkjjg4pcfd.m3u8",
-		},
-		{
-			nama: "Jl. Pantura Bitung 2",
-			kota: "Kabupaten Tangerang",
-			kecamatan: "Kelapa Dua",
-			latitude: "-6.2230346323921495",
-			longitude: "106.5599518345196",
-			urlStream: "/api/cctv/tangerang/01jzvr0hphd8c104283f8g1d9n/01jzvr0hphd8c104283f8g1d9n.m3u8",
-		},
-		{
-			nama: "Simpang Rajeg Kukun 2",
-			kota: "Kabupaten Tangerang",
-			kecamatan: "Rajeg",
-			latitude: "-6.130006908709916",
-			longitude: "106.52675509902808",
-			urlStream: "/api/cctv/tangerang/01jsr0j5nwjcbthcb6aypa6dcr/01jsr0j5nwjcbthcb6aypa6dcr.m3u8",
-		},
-		{
-			nama: "Simpang Sepatan 1",
-			kota: "Kabupaten Tangerang",
-			kecamatan: "Sepatan",
-			latitude: "-6.118874199737398",
-			longitude: "106.57561217365658",
-			urlStream: "/api/cctv/tangerang/01jsr485tfw1cwwa1v6c3jpgfd/01jsr485tfw1cwwa1v6c3jpgfd.m3u8",
-		},
-		{
-			nama: "Thamrin Pandanaran 360",
-			kota: "Kota Semarang",
-			kecamatan: "Semarang Tengah",
-			latitude: "-6.9874484",
-			longitude: "110.417212",
-			urlStream:
-				"https://livepantau.semarangkota.go.id/e910f4f2-a77d-4cf8-8341-aa2e6c6b65c9/index.m3u8",
-		},
-		{
-			nama: "Simpang Seririt",
-			kota: "Kabupaten Buleleng",
-			kecamatan: "Seririt",
-			latitude: "-8.19305",
-			longitude: "114.933679",
-			urlStream:
-				"https://shinobi.bulelengkab.go.id/Amk60KFacq87lQMvTCMHu17u00ONuC/mp4/admin/edROyIUx2v80/s.mp4",
-		},
-		{
-			nama: "Cicadas Gateway 02",
-			kota: "Kota Bandung",
-			kecamatan: "Cibeunying Kidul",
-			latitude: "-6.907154",
-			longitude: "107.647198",
-			urlStream: "/api/cctv/bandung/DAHUA/CICAB.m3u8",
-		},
-		{
-			nama: "Cimindi Kharisma 01",
-			kota: "Kota Bandung",
-			kecamatan: "Sukasari",
-			latitude: "-6.899308",
-			longitude: "107.562477",
-			urlStream: "/api/cctv/bandung/DAHUA/CIMI.m3u8",
-		},
-		{
-			nama: "Taman Bungkul (Hadap Selatan)",
-			kota: "Kota Surabaya",
-			kecamatan: "Wonokromo",
-			latitude: "-7.291208",
-			longitude: "112.739011",
-			urlStream: "/api/cctv/surabaya/cctv_337/stream.m3u8",
-		},
-		{
-			nama: "Bratang - Krukah",
-			kota: "Kota Surabaya",
-			kecamatan: "Gubeng",
-			latitude: "-7.298521",
-			longitude: "112.755893",
-			urlStream: "/api/cctv/surabaya/cctv_84/stream.m3u8",
-		},
-		{
-			nama: "Kembang Jepun Kyakya (Parkir)",
-			kota: "Kota Surabaya",
-			kecamatan: "Pabean Cantian",
-			latitude: "-7.238402",
-			longitude: "112.744745",
-			urlStream: "/api/cctv/surabaya/cctv_501/stream.m3u8",
-		},
-		{
-			nama: "Simpang 3 Ngingas (Arah Ronggowarsito)",
-			kota: "Kabupaten Klaten",
-			kecamatan: "Klaten Utara",
-			latitude: "-7.6945934",
-			longitude: "110.6099004",
-			urlStream: "/api/cctv/klaten/simpang3ngingas_arahronggowarsito.m3u8",
-		},
-		{
-			nama: "Simpang 3 Ngingas (Arah Solo)",
-			kota: "Kabupaten Klaten",
-			kecamatan: "Klaten Utara",
-			latitude: "-7.6945934",
-			longitude: "110.6099004",
-			urlStream: "/api/cctv/klaten/simpang3ngingas_arahsolo.m3u8",
-		},
-	];
-
 	await db.insert(cameras).values(
-		cameraData.map((c) => ({
+		KAMERA_BANDUNG.map((c) => ({
 			id: generateId(10),
 			nama: c.nama,
-			kota: c.kota,
+			kota: "Kota Bandung",
 			kecamatan: c.kecamatan,
+			kelurahan: c.kelurahan,
 			latitude: c.latitude,
 			longitude: c.longitude,
 			urlStream: c.urlStream,
 			status: "ONLINE" as const,
 		}))
 	);
-	console.log(`  Created ${cameraData.length} cameras`);
+	console.log(`  Created ${KAMERA_BANDUNG.length} cameras`);
+
+	// --- OFFICERS (petugas lapangan) ---
+	// Roster is genuinely operational/HR data, not something the detection
+	// pipeline can infer from CCTV -- seeded as a starter roster the same way
+	// cameras/users are, editable later from /dashboard/officers.
+	console.log("Creating officers...");
+	const officerData = [
+		{
+			nama: "Asep Suryana",
+			peran: "Petugas Kebersihan",
+			telepon: "081234567801",
+			wilayahTugas: "Andir",
+			status: "SIAP_TUGAS" as const,
+		},
+		{
+			nama: "Dedi Kurniawan",
+			peran: "Petugas Kebersihan",
+			telepon: "081234567802",
+			wilayahTugas: "Kiaracondong",
+			status: "SIAP_TUGAS" as const,
+		},
+		{
+			nama: "Euis Rohaeni",
+			peran: "Koordinator Lapangan",
+			telepon: "081234567803",
+			wilayahTugas: "Astanaanyar",
+			status: "SEDANG_BERTUGAS" as const,
+		},
+		{
+			nama: "Cecep Hidayat",
+			peran: "Petugas Kebersihan",
+			telepon: "081234567804",
+			wilayahTugas: "Sukajadi",
+			status: "SIAP_TUGAS" as const,
+		},
+		{
+			nama: "Yayat Hidayat",
+			peran: "Petugas Kebersihan",
+			telepon: "081234567805",
+			wilayahTugas: "Cibeunying Kidul",
+			status: "SIAP_TUGAS" as const,
+		},
+		{
+			nama: "Nia Kurnia",
+			peran: "Koordinator Lapangan",
+			telepon: "081234567806",
+			wilayahTugas: "Regol",
+			status: "OFFLINE" as const,
+		},
+	];
+	await db.insert(officers).values(
+		officerData.map((o) => ({
+			id: generateId(10),
+			...o,
+		}))
+	);
+	console.log(`  Created ${officerData.length} officers`);
+
+	// --- LAPORAN MASYARAKAT ---
+	// Antrian triase kosong membuat fitur verifikasi laporan warga tidak bisa
+	// didemokan sama sekali, jadi beberapa laporan contoh diseed di sini —
+	// termasuk sepasang laporan yang sengaja berdekatan (±40 m) supaya deteksi
+	// duplikat benar-benar terlihat bekerja.
+	console.log("Creating public reports...");
+	const laporanData = [
+		{
+			pelaporNama: "Rina Wijaya",
+			pelaporTelepon: "081234500001",
+			deskripsi: "Tumpukan sampah menutup separuh trotoar depan sekolah, sudah dua hari.",
+			jenisSampah: "tumpukan_sampah",
+			latitude: "-6.92180",
+			longitude: "107.60700",
+			kecamatan: "Regol",
+			status: "MENUNGGU" as const,
+			aiSkor: "0.71",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 3,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			hariLalu: 0,
+		},
+		{
+			// ±40 m dari laporan di atas → muncul sebagai kandidat duplikat.
+			pelaporNama: "Dedi Kurniawan",
+			pelaporTelepon: "081234500002",
+			deskripsi: "Sampah menumpuk di pinggir jalan, bau menyengat.",
+			jenisSampah: "tumpukan_sampah",
+			latitude: "-6.92215",
+			longitude: "107.60723",
+			kecamatan: "Regol",
+			status: "MENUNGGU" as const,
+			aiSkor: "0.52",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 2,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			hariLalu: 0,
+		},
+		{
+			pelaporNama: "Anonim",
+			pelaporTelepon: null,
+			deskripsi: null,
+			jenisSampah: "kantong_plastik",
+			latitude: null,
+			longitude: null,
+			kecamatan: "Andir",
+			status: "MENUNGGU" as const,
+			aiSkor: "0.08",
+			aiLabel: null,
+			aiJumlahDeteksi: 0,
+			aiRekomendasi: "PERLU_TINJAUAN" as const,
+			hariLalu: 1,
+		},
+		{
+			pelaporNama: "Siti Aminah",
+			pelaporTelepon: "081234500003",
+			deskripsi: "Pembuangan liar di bantaran sungai, ada puing bangunan juga.",
+			jenisSampah: "pembuangan_liar_besar",
+			latitude: "-6.91500",
+			longitude: "107.61200",
+			kecamatan: "Coblong",
+			status: "MENUNGGU" as const,
+			aiSkor: "0.63",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 5,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			hariLalu: 2,
+		},
+		{
+			pelaporNama: "Bambang S.",
+			pelaporTelepon: "081234500004",
+			deskripsi: "Cek lokasi.",
+			jenisSampah: "botol_minuman",
+			latitude: null,
+			longitude: null,
+			kecamatan: "Lengkong",
+			status: "DITOLAK" as const,
+			catatanPetugas: "Foto tidak menunjukkan tumpukan sampah.",
+			aiSkor: "0.03",
+			aiLabel: null,
+			aiJumlahDeteksi: 0,
+			aiRekomendasi: "KEMUNGKINAN_SPAM" as const,
+			hariLalu: 5,
+		},
+	];
+
+	await db.insert(publicReports).values(
+		laporanData.map(({ hariLalu, ...l }) => ({
+			id: generateId(16),
+			// Kode deterministik dari nomor urut supaya tidak bentrok antar-reset
+			// demo, tapi tetap berbentuk seperti kode asli.
+			kodeTracking: `LPR-${generateId(6)
+				.toUpperCase()
+				.replace(/[01OIL]/g, "X")}`,
+			urlFoto: "/uploads/contoh-laporan.jpg",
+			kota: "Kota Bandung",
+			...l,
+			aiDipindaiPada: daysAgo(hariLalu),
+			createdAt: daysAgo(hariLalu),
+			updatedAt: daysAgo(hariLalu),
+		}))
+	);
+	console.log(`  Created ${laporanData.length} public reports`);
+
+	// Reputasi pelapor yang konsisten dengan riwayat di atas, supaya kolom
+	// "reputasi pelapor" di antrian triase tidak kosong saat demo.
+	await db.insert(reporterTrust).values([
+		{ telepon: "6281234500001", laporanTotal: 6, laporanValid: 5, laporanDitolak: 1, skor: 75 },
+		{ telepon: "6281234500004", laporanTotal: 5, laporanValid: 0, laporanDitolak: 5, skor: 14 },
+	]);
 
 	console.log(`  Created ${settingsData.length} app settings`);
 

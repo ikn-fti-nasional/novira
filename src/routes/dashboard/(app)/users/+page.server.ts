@@ -189,10 +189,7 @@ export const actions: Actions = {
 		let result: "ok" | "missing" | "lastAdmin";
 		try {
 			result = await db.transaction(async (tx) => {
-				const [target] = await tx
-					.select({ role: users.role })
-					.from(users)
-					.where(eq(users.id, id));
+				const [target] = await tx.select({ role: users.role }).from(users).where(eq(users.id, id));
 				if (!target) return "missing" as const;
 				if (target.role === "admin") {
 					const [adminCount] = await tx
@@ -247,10 +244,7 @@ export const actions: Actions = {
 		let result: "ok" | "lastAdmin";
 		try {
 			result = await db.transaction(async (tx) => {
-				const admins = await tx
-					.select({ id: users.id })
-					.from(users)
-					.where(eq(users.role, "admin"));
+				const admins = await tx.select({ id: users.id }).from(users).where(eq(users.role, "admin"));
 				const remainingAdmins = admins.filter((a) => !toDelete.includes(a.id));
 				if (remainingAdmins.length === 0) {
 					return "lastAdmin" as const;

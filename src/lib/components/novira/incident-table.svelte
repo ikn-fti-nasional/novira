@@ -2,23 +2,36 @@
 	import * as Card from "$lib/components/ui/card/index.js";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import * as Dialog from "$lib/components/ui/dialog/index.js";
+	import * as Select from "$lib/components/ui/select/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
+	import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
 	import ClockIcon from "@lucide/svelte/icons/clock";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
 	import UserPlusIcon from "@lucide/svelte/icons/user-plus";
 	import XCircleIcon from "@lucide/svelte/icons/x-circle";
 	import UploadIcon from "@lucide/svelte/icons/upload";
-	import type { Insiden } from "$lib/types/novira.js";
+	import EyeIcon from "@lucide/svelte/icons/eye";
+	import UsersIcon from "@lucide/svelte/icons/users";
+	import type { Insiden, PetugasLapangan } from "$lib/types/novira.js";
 
 	type Props = {
 		insidenList: Insiden[];
-		onSelesaikanTugas?: (insidenId: string, buktiFile: File) => void;
+		petugasList?: PetugasLapangan[];
+		onSelesaikanTugas?: (insidenId: string, buktiFile: File, catatan: string) => void;
+		onTugaskanPetugas?: (insidenId: string, petugasId: string) => void;
+		onTandaiPositifPalsu?: (insidenId: string) => void;
 	};
 
-	let { insidenList, onSelesaikanTugas }: Props = $props();
+	let {
+		insidenList,
+		petugasList = [],
+		onSelesaikanTugas,
+		onTugaskanPetugas,
+		onTandaiPositifPalsu,
+	}: Props = $props();
 
 	let filterStatus = $state<string>("SEMUA");
 
@@ -26,6 +39,37 @@
 	let dialogTerbuka = $state(false);
 	let insidenDipilih = $state<Insiden | null>(null);
 	let buktiFile = $state<File | null>(null);
+	let catatanPenyelesaian = $state("");
+
+	// State untuk dialog "Tugaskan Petugas"
+	let dialogTugaskanTerbuka = $state(false);
+	let insidenUntukTugaskan = $state<Insiden | null>(null);
+	let petugasDipilih = $state<string>("");
+
+	function bukaDialogTugaskan(insiden: Insiden) {
+		insidenUntukTugaskan = insiden;
+		petugasDipilih = "";
+		dialogTugaskanTerbuka = true;
+	}
+
+	function konfirmasiTugaskan() {
+		if (!insidenUntukTugaskan || !petugasDipilih) return;
+		onTugaskanPetugas?.(insidenUntukTugaskan.id, petugasDipilih);
+		dialogTugaskanTerbuka = false;
+		insidenUntukTugaskan = null;
+		petugasDipilih = "";
+	}
+
+	function tandaiPositifPalsu(insiden: Insiden) {
+		if (
+			!confirm(
+				`Tandai insiden di ${insiden.lokasi} (${insiden.labelSampah}) sebagai positif palsu?`
+			)
+		) {
+			return;
+		}
+		onTandaiPositifPalsu?.(insiden.id);
+	}
 
 	let insidenTersaring = $derived(
 		filterStatus === "SEMUA"
@@ -40,6 +84,7 @@
 	function bukaDialogSelesai(insiden: Insiden) {
 		insidenDipilih = insiden;
 		buktiFile = null;
+		catatanPenyelesaian = "";
 		dialogTerbuka = true;
 	}
 
@@ -50,10 +95,19 @@
 
 	function konfirmasiSelesai() {
 		if (!insidenDipilih || !buktiFile) return;
-		onSelesaikanTugas?.(insidenDipilih.id, buktiFile);
+		onSelesaikanTugas?.(insidenDipilih.id, buktiFile, catatanPenyelesaian);
 		dialogTerbuka = false;
 		insidenDipilih = null;
 		buktiFile = null;
+		catatanPenyelesaian = "";
+	}
+
+	/** Ambangnya sengaja sama dengan pemetaan skor→keparahan di `prioritas.ts`. */
+	function warnaPrioritas(skor: number) {
+		if (skor >= 75) return "text-red-600 dark:text-red-400";
+		if (skor >= 55) return "text-amber-600 dark:text-amber-400";
+		if (skor >= 35) return "text-blue-600 dark:text-blue-400";
+		return "text-muted-foreground";
 	}
 
 	function getBadgeKeparahanClass(keparahan: string) {
@@ -164,6 +218,7 @@
 		<Table.Root>
 			<Table.Header>
 				<Table.Row class="bg-muted/50 text-xs">
+					<Table.Head class="w-[92px]">Prioritas</Table.Head>
 					<Table.Head class="w-[110px]">Tingkat Keparahan</Table.Head>
 					<Table.Head>Lokasi &amp; Kamera</Table.Head>
 					<Table.Head>Jenis Sampah</Table.Head>
@@ -177,6 +232,59 @@
 			<Table.Body>
 				{#each insidenTersaring as insiden (insiden.id)}
 					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
+						<!--
+							Skor prioritas + penjelasannya. Angka tanpa alasan tidak
+							membantu siapa pun memutuskan, jadi rinciannya tampil di
+							tooltip -- operator bisa langsung melihat "kenapa 87".
+						-->
+						<Table.Cell>
+							<Tooltip.Provider>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<div class="flex items-center gap-1.5">
+											<span
+												class={`font-mono text-sm font-bold ${warnaPrioritas(insiden.skorPrioritas)}`}
+											>
+												{insiden.skorPrioritas}
+											</span>
+											{#if insiden.sumber === "LAPORAN_WARGA"}
+												<UsersIcon class="size-3 text-blue-600 dark:text-blue-400" />
+											{/if}
+											{#if insiden.tingkatEskalasi > 0}
+												<span
+													class="rounded bg-amber-100 px-1 text-[9px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+												>
+													E{insiden.tingkatEskalasi}
+												</span>
+											{/if}
+										</div>
+									</Tooltip.Trigger>
+									<Tooltip.Content class="max-w-xs">
+										{#if insiden.rincianPrioritas.length === 0}
+											<p class="text-xs">Skor belum dihitung untuk insiden ini.</p>
+										{:else}
+											<p class="mb-1 text-xs font-semibold">
+												Skor prioritas {insiden.skorPrioritas}/100
+											</p>
+											<ul class="space-y-0.5">
+												{#each insiden.rincianPrioritas as f (f.label)}
+													<li class="text-[11px]">
+														<span class="font-mono">{f.poin > 0 ? "+" : ""}{f.poin}</span>
+														{f.label} — {f.keterangan}
+													</li>
+												{/each}
+											</ul>
+										{/if}
+										{#if insiden.sumber === "LAPORAN_WARGA"}
+											<p class="mt-1 border-t pt-1 text-[11px]">
+												Dari laporan warga{insiden.kodeLaporan ? ` ${insiden.kodeLaporan}` : ""}
+											</p>
+										{/if}
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</Tooltip.Provider>
+						</Table.Cell>
+
 						<!-- Keparahan -->
 						<Table.Cell>
 							<div class="flex flex-col gap-1">
@@ -202,7 +310,7 @@
 							<div class="flex flex-col">
 								<span class="font-bold text-foreground">{insiden.lokasi}</span>
 								<span class="text-[11px] text-muted-foreground"
-									>{insiden.namaKamera} ({insiden.kelurahan})</span
+									>{insiden.namaKamera}{insiden.kelurahan ? ` (${insiden.kelurahan})` : ""}</span
 								>
 							</div>
 						</Table.Cell>
@@ -253,6 +361,16 @@
 						<!-- Tindakan Super Admin -->
 						<Table.Cell class="text-right">
 							<div class="flex items-center justify-end gap-1">
+								<Button
+									variant="ghost"
+									size="sm"
+									class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
+									title="Lihat Detail & Riwayat"
+									aria-label="Lihat detail insiden"
+									href="/dashboard/incidents/{insiden.id}"
+								>
+									<EyeIcon class="size-3.5" />
+								</Button>
 								{#if insiden.status === "AKTIF" || insiden.status === "PERINGATAN"}
 									{#if insiden.petugasDitugaskan}
 										<Button
@@ -269,6 +387,7 @@
 											variant="outline"
 											size="sm"
 											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
+											onclick={() => bukaDialogTugaskan(insiden)}
 										>
 											<UserPlusIcon class="mr-1 size-3" />
 											Tugaskan
@@ -279,6 +398,7 @@
 										size="sm"
 										class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
 										title="Tandai Positif Palsu"
+										onclick={() => tandaiPositifPalsu(insiden)}
 									>
 										<XCircleIcon class="size-3.5" />
 									</Button>
@@ -333,6 +453,19 @@
 			/>
 		</div>
 
+		<div class="space-y-2 pb-2">
+			<Label for="catatan-penyelesaian" class="text-xs font-semibold">
+				Catatan Hasil (opsional)
+			</Label>
+			<textarea
+				id="catatan-penyelesaian"
+				bind:value={catatanPenyelesaian}
+				rows="3"
+				placeholder="Contoh: sampah sudah diangkut 2 karung, area dibersihkan."
+				class="w-full rounded-md border border-border/60 bg-transparent p-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500"
+			></textarea>
+		</div>
+
 		<Dialog.Footer>
 			<Button variant="outline" size="sm" onclick={() => (dialogTerbuka = false)}>Batal</Button>
 			<Button
@@ -343,6 +476,61 @@
 			>
 				<CheckCircle2Icon class="mr-1.5 size-3.5" />
 				Tandai Selesai
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<Dialog.Root bind:open={dialogTugaskanTerbuka}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Tugaskan Petugas Lapangan</Dialog.Title>
+			<Dialog.Description>
+				{#if insidenUntukTugaskan}
+					{insidenUntukTugaskan.lokasi} — {insidenUntukTugaskan.labelSampah}. Pilih petugas yang
+					akan menangani insiden ini.
+				{/if}
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<div class="space-y-2 py-2">
+			<Label class="text-xs font-semibold">Petugas Lapangan *</Label>
+			{#if petugasList.length === 0}
+				<p class="text-xs text-muted-foreground">
+					Belum ada petugas terdaftar. Tambahkan lewat halaman Petugas Lapangan.
+				</p>
+			{:else}
+				<Select.Root type="single" bind:value={petugasDipilih}>
+					<Select.Trigger>
+						<span>
+							{petugasDipilih
+								? (petugasList.find((p) => p.id === petugasDipilih)?.nama ?? "Pilih petugas")
+								: "Pilih petugas"}
+						</span>
+					</Select.Trigger>
+					<Select.Content>
+						{#each petugasList as petugas (petugas.id)}
+							<Select.Item value={petugas.id}>
+								{petugas.nama} — {petugas.peran} ({petugas.wilayahTugas})
+							</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			{/if}
+		</div>
+
+		<Dialog.Footer>
+			<Button variant="outline" size="sm" onclick={() => (dialogTugaskanTerbuka = false)}
+				>Batal</Button
+			>
+			<Button
+				size="sm"
+				class="bg-emerald-600 text-white hover:bg-emerald-700"
+				disabled={!petugasDipilih}
+				onclick={konfirmasiTugaskan}
+			>
+				<UserPlusIcon class="mr-1.5 size-3.5" />
+				Tugaskan
 			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>

@@ -32,6 +32,11 @@ export const OPERATIONAL_ROLES: readonly Role[] = ["admin", "operator", "kepala_
 /** Roles that can access system administration (users, roles, settings, database). */
 export const SYSTEM_ADMIN_ROLES: readonly Role[] = ["admin"];
 
+/** Every role except the read-only executives — i.e. anyone who can act on operational data. */
+export const NON_EXECUTIVE_ROLES: readonly Role[] = ALL_ROLES.filter(
+	(role) => !EXECUTIVE_ROLES.includes(role)
+);
+
 /**
  * Single source of truth for "who may see which page" — consumed by the
  * sidebar, apps menu, command palette, and the server-side route guards, so
@@ -40,11 +45,12 @@ export const SYSTEM_ADMIN_ROLES: readonly Role[] = ["admin"];
 export const PAGE_ACCESS: Record<string, readonly Role[]> = {
 	"/dashboard": ALL_ROLES,
 	"/dashboard/eksekutif": ["admin", "kepala_dinas", "walikota"],
-	"/dashboard/monitoring": ALL_ROLES,
-	"/dashboard/incidents": ALL_ROLES,
+	"/dashboard/monitoring": NON_EXECUTIVE_ROLES,
+	"/dashboard/incidents": NON_EXECUTIVE_ROLES,
+	"/dashboard/tugas-saya": ["petugas_lapangan", "admin"],
 	"/dashboard/hotspots": ALL_ROLES,
-	"/dashboard/analytics": ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota"],
 	"/dashboard/cameras": OPERATIONAL_ROLES,
+	"/dashboard/analisa-unggah": OPERATIONAL_ROLES,
 	"/dashboard/officers": OPERATIONAL_ROLES,
 	"/dashboard/area-ranking": ALL_ROLES,
 	"/dashboard/laporan-wilayah": ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota"],
@@ -54,8 +60,10 @@ export const PAGE_ACCESS: Record<string, readonly Role[]> = {
 	"/dashboard/users": SYSTEM_ADMIN_ROLES,
 	"/dashboard/roles": SYSTEM_ADMIN_ROLES,
 	"/dashboard/database": SYSTEM_ADMIN_ROLES,
-	"/dashboard/content": OPERATIONAL_ROLES,
 	"/dashboard/laporan-masyarakat": OPERATIONAL_ROLES,
+	// Analitik turunan (titik kronis, jam rawan, eskalasi) juga dibuka untuk
+	// eksekutif: isinya bahan keputusan anggaran, bukan operasional harian.
+	"/dashboard/analitik": ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota"],
 };
 
 /** Pure predicate — may `role` open `path`? */

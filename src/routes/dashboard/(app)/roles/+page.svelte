@@ -17,7 +17,7 @@
 
 	$effect(() => {
 		if (form?.message) toast.error(form.message);
-		if (form?.success) toast.success("Role updated");
+		if (form?.success) toast.success("Peran berhasil diperbarui");
 	});
 
 	function getInitials(name: string) {
@@ -46,16 +46,42 @@
 				return "border-muted";
 		}
 	}
+
+	const permissionLabels: Record<string, string> = {
+		"Manage users": "Kelola pengguna",
+		"Manage roles": "Kelola peran",
+		"Manage settings": "Kelola pengaturan",
+		"View database": "Lihat basis data",
+		"Manage content": "Kelola konten",
+		"Manage cameras & officers": "Kelola kamera & petugas",
+		"Verify incidents": "Verifikasi insiden",
+		"Export reports": "Ekspor laporan",
+		"Manage cameras": "Kelola kamera",
+		"Manage officers": "Kelola petugas",
+		"Assign petugas": "Tugaskan petugas",
+		"View executive dashboard": "Lihat dashboard eksekutif",
+		"View area ranking": "Lihat peringkat wilayah",
+		"View reports": "Lihat laporan",
+		"View live monitoring": "Lihat pemantauan langsung",
+		"View incidents": "Lihat insiden",
+		"Escalate SLA violations": "Eskalasi pelanggaran SLA",
+		"View assigned incidents": "Lihat insiden yang ditugaskan",
+		"Update incident status": "Perbarui status insiden",
+	};
+
+	function translatePermission(perm: string) {
+		return permissionLabels[perm] ?? perm;
+	}
 </script>
 
 <svelte:head>
-	<title>Roles - Novira</title>
+	<title>Peran - Novira</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Roles</h1>
-		<p class="text-muted-foreground">Configure roles and access control policies.</p>
+		<h1 class="text-3xl font-bold tracking-tight">Peran & Hak Akses</h1>
+		<p class="text-muted-foreground">Konfigurasi peran dan kebijakan hak akses.</p>
 	</div>
 
 	<div class="grid gap-6">
@@ -76,20 +102,20 @@
 						</div>
 						<Badge variant="secondary" class="gap-1">
 							<UsersIcon class="size-3" />
-							{role.count} user{role.count !== 1 ? "s" : ""}
+							{role.count} pengguna
 						</Badge>
 					</div>
 				</Card.Header>
 				<Card.Content class="space-y-4">
 					<div>
 						<p class="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-							Permissions
+							Hak Akses
 						</p>
 						<div class="flex flex-wrap gap-2">
 							{#each role.permissions as perm}
 								<Badge variant="outline" class="gap-1">
 									<CheckIcon class="size-3" />
-									{perm}
+									{translatePermission(perm)}
 								</Badge>
 							{/each}
 						</div>
@@ -98,7 +124,7 @@
 					{#if role.users.length > 0}
 						<div>
 							<p class="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-								Users
+								Pengguna
 							</p>
 							<div class="space-y-2">
 								{#each role.users as user (user.id)}
@@ -119,7 +145,7 @@
 												openRoleChange({ id: user.id, name: user.name, role: role.name })}
 										>
 											<PencilIcon class="mr-1 size-3" />
-											Change
+											Ubah
 										</Button>
 									</div>
 								{/each}

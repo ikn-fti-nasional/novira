@@ -53,40 +53,40 @@
 
 	const allNavItems: NavItem[] = [
 		{
-			label: "Dashboard",
+			label: "Dasbor",
 			href: "/dashboard",
 			icon: LayoutDashboardIcon,
-			keywords: ["home", "overview", "kpi"],
+			keywords: ["home", "overview", "kpi", "dashboard", "beranda"],
 		},
 		{
-			label: "Users",
+			label: "Pengguna",
 			href: "/dashboard/users",
 			icon: UsersIcon,
-			keywords: ["accounts", "members", "people"],
+			keywords: ["accounts", "members", "people", "users"],
 		},
 		{
-			label: "Roles",
+			label: "Peran",
 			href: "/dashboard/roles",
 			icon: ShieldIcon,
-			keywords: ["permissions", "access", "admin"],
+			keywords: ["permissions", "access", "admin", "roles"],
 		},
 		{
-			label: "Notifications",
+			label: "Notifikasi",
 			href: "/dashboard/notifications",
 			icon: BellIcon,
-			keywords: ["alerts", "messages"],
+			keywords: ["alerts", "messages", "notifications"],
 		},
 		{
-			label: "Database",
+			label: "Basis Data",
 			href: "/dashboard/database",
 			icon: DatabaseIcon,
-			keywords: ["tables", "sql", "storage"],
+			keywords: ["tables", "sql", "storage", "database"],
 		},
 		{
-			label: "Settings",
+			label: "Pengaturan",
 			href: "/dashboard/settings",
 			icon: SettingsIcon,
-			keywords: ["preferences", "profile", "config"],
+			keywords: ["preferences", "profile", "config", "settings"],
 		},
 	];
 
@@ -149,11 +149,12 @@
 
 <button
 	type="button"
+	aria-label="Cari"
 	class="border-input bg-muted/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center gap-2 rounded-md border px-3 text-sm transition-colors"
 	onclick={() => (open = true)}
 >
 	<SearchIcon class="size-3.5" />
-	<span class="hidden sm:inline">Search...</span>
+	<span class="hidden sm:inline">Cari...</span>
 	<kbd
 		class="bg-background pointer-events-none hidden h-5 items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium sm:inline-flex"
 	>
@@ -181,7 +182,7 @@
 				<SearchIcon class="text-muted-foreground mr-2 size-4 shrink-0" />
 				<Command.Input
 					class="placeholder:text-muted-foreground flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
-					placeholder="Type a command or search..."
+					placeholder="Ketik perintah atau kata kunci pencarian..."
 					bind:value={query}
 				/>
 				{#if loading}
@@ -190,12 +191,12 @@
 			</div>
 			<Command.List class="max-h-[300px] overflow-x-hidden overflow-y-auto px-1 py-1.5">
 				<Command.Empty class="text-muted-foreground py-6 text-center text-sm">
-					No results found.
+					Tidak ada hasil ditemukan.
 				</Command.Empty>
 
 				<Command.Group value="navigation">
 					<Command.GroupHeading class="text-muted-foreground px-2 py-1.5 text-xs font-medium">
-						Navigation
+						Navigasi
 					</Command.GroupHeading>
 					<Command.GroupItems>
 						{#each navItems as item (item.href)}
@@ -216,7 +217,7 @@
 					<Command.Separator class="bg-border -mx-1 my-1 h-px" />
 					<Command.Group value="search-results" forceMount>
 						<Command.GroupHeading class="text-muted-foreground px-2 py-1.5 text-xs font-medium">
-							Search Results
+							Hasil Pencarian
 						</Command.GroupHeading>
 						<Command.GroupItems>
 							{#each searchResults as result (result.id)}
@@ -243,26 +244,26 @@
 				<Command.Separator class="bg-border -mx-1 my-1 h-px" />
 				<Command.Group value="actions">
 					<Command.GroupHeading class="text-muted-foreground px-2 py-1.5 text-xs font-medium">
-						Quick Actions
+						Aksi Cepat
 					</Command.GroupHeading>
 					<Command.GroupItems>
 						<Command.Item
-							value="New Page"
-							keywords={["create", "add", "content"]}
-							onSelect={() => navigate("/dashboard/content/new")}
+							value="Kamera Baru"
+							keywords={["create", "add", "camera", "cctv", "kamera"]}
+							onSelect={() => navigate("/dashboard/cameras")}
 							class="data-[selected]:bg-accent data-[selected]:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none"
 						>
 							<PlusIcon class="text-muted-foreground size-4" />
-							New Page
+							Kamera Baru
 						</Command.Item>
 						<Command.Item
-							value="Toggle Theme"
-							keywords={["dark", "light", "mode", "switch"]}
+							value="Ganti Tema"
+							keywords={["dark", "light", "mode", "switch", "gelap", "terang", "tema"]}
 							onSelect={() => handleAction(toggleMode)}
 							class="data-[selected]:bg-accent data-[selected]:text-accent-foreground relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none"
 						>
 							<SunMoonIcon class="text-muted-foreground size-4" />
-							Toggle Theme
+							Ganti Tema
 						</Command.Item>
 					</Command.GroupItems>
 				</Command.Group>

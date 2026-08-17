@@ -1,6 +1,6 @@
 import { json, error } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
-import { users, pages, notifications } from "$lib/server/db/schema.js";
+import { users, notifications } from "$lib/server/db/schema.js";
 import { visibleTo, notDismissedBy } from "$lib/server/db/notification-visibility.js";
 import { sql, or, and } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
@@ -29,13 +29,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 					.limit(5)
 			: Promise.resolve([]);
 
-	const [userResults, pageResults, notificationResults] = await Promise.all([
+	const [userResults, notificationResults] = await Promise.all([
 		userSearch,
-		db
-			.select({ id: pages.id, title: pages.title, slug: pages.slug })
-			.from(pages)
-			.where(sql`${pages.title} ILIKE ${pattern}`)
-			.limit(5),
 		db
 			.select({ id: notifications.id, title: notifications.title, message: notifications.message })
 			.from(notifications)
@@ -56,13 +51,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			title: u.name,
 			subtitle: u.email,
 			href: "/dashboard/users",
-		})),
-		...pageResults.map((p) => ({
-			type: "page" as const,
-			id: p.id,
-			title: p.title,
-			subtitle: `/${p.slug}`,
-			href: `/dashboard/content/${p.id}/edit`,
 		})),
 		...notificationResults.map((n) => ({
 			type: "notification" as const,

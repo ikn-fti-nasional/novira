@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS cameras (
 	nama text NOT NULL,
 	kota text NOT NULL,
 	kecamatan text,
+	kelurahan text,
 	url_stream text,
 	url_snapshot text,
 	status text DEFAULT 'OFFLINE' NOT NULL,
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS cameras (
 
 CREATE TABLE IF NOT EXISTS public_reports (
 	id text PRIMARY KEY NOT NULL,
+	kode_tracking text NOT NULL UNIQUE,
 	pelapor_nama text,
 	pelapor_telepon text,
 	deskripsi text,
@@ -103,8 +105,102 @@ CREATE TABLE IF NOT EXISTS public_reports (
 	status text DEFAULT 'MENUNGGU' NOT NULL,
 	catatan_petugas text,
 	diproses_oleh text REFERENCES users(id),
+	ai_skor text,
+	ai_label text,
+	ai_jumlah_deteksi integer,
+	ai_rekomendasi text,
+	ai_rincian text,
+	ai_dipindai_pada timestamp,
+	-- insiden_id sengaja tanpa REFERENCES di sini: public_reports dibuat
+	-- sebelum incidents, dan keduanya saling menunjuk. Di Postgres asli
+	-- Drizzle menambahkan constraint-nya lewat ALTER TABLE terpisah.
+	insiden_id text,
+	duplikat_dari_id text,
 	created_at timestamp NOT NULL,
 	updated_at timestamp NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS reporter_trust (
+	telepon text PRIMARY KEY NOT NULL,
+	laporan_total integer DEFAULT 0 NOT NULL,
+	laporan_valid integer DEFAULT 0 NOT NULL,
+	laporan_ditolak integer DEFAULT 0 NOT NULL,
+	skor integer DEFAULT 50 NOT NULL,
+	updated_at timestamp NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS area_snapshots (
+	id text PRIMARY KEY NOT NULL,
+	tanggal text NOT NULL,
+	kecamatan text NOT NULL,
+	kota text NOT NULL,
+	skor_kebersihan integer NOT NULL,
+	jumlah_insiden integer DEFAULT 0 NOT NULL,
+	insiden_baru integer DEFAULT 0 NOT NULL,
+	insiden_selesai integer DEFAULT 0 NOT NULL,
+	rata_rata_durasi_jam text DEFAULT '0' NOT NULL,
+	created_at timestamp NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS area_snapshots_tanggal_area_idx
+	ON area_snapshots (tanggal, kota, kecamatan);
+
+CREATE TABLE IF NOT EXISTS officers (
+	id text PRIMARY KEY NOT NULL,
+	nama text NOT NULL,
+	peran text NOT NULL,
+	telepon text NOT NULL,
+	wilayah_tugas text NOT NULL,
+	status text DEFAULT 'SIAP_TUGAS' NOT NULL,
+	avatar text,
+	user_id text UNIQUE REFERENCES users(id) ON DELETE SET NULL,
+	created_at timestamp NOT NULL,
+	updated_at timestamp NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS incidents (
+	id text PRIMARY KEY NOT NULL,
+	camera_id text REFERENCES cameras(id),
+	sumber text DEFAULT 'CCTV' NOT NULL,
+	laporan_id text REFERENCES public_reports(id) ON DELETE SET NULL,
+	latitude text,
+	longitude text,
+	lokasi_teks text,
+	jenis_sampah text NOT NULL,
+	label_sampah text NOT NULL,
+	pertama_dilihat timestamp NOT NULL,
+	terakhir_dilihat timestamp NOT NULL,
+	status text DEFAULT 'AKTIF' NOT NULL,
+	keparahan text NOT NULL,
+	tingkat_kepercayaan text NOT NULL,
+	url_snapshot text NOT NULL,
+	url_snapshot_pertama text,
+	petugas_ditugaskan text REFERENCES officers(id) ON DELETE SET NULL,
+	bukti_foto_url text,
+	catatan_penyelesaian text,
+	status_sla text DEFAULT 'TEPAT_WAKTU' NOT NULL,
+	skor_prioritas integer DEFAULT 0 NOT NULL,
+	rincian_prioritas text,
+	tingkat_eskalasi integer DEFAULT 0 NOT NULL,
+	terakhir_eskalasi_pada timestamp,
+	bbox_x text NOT NULL,
+	bbox_y text NOT NULL,
+	bbox_width text NOT NULL,
+	bbox_height text NOT NULL,
+	created_at timestamp NOT NULL,
+	updated_at timestamp NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+	id text PRIMARY KEY NOT NULL,
+	waktu timestamp NOT NULL,
+	pengguna text NOT NULL,
+	peran text NOT NULL,
+	tindakan text NOT NULL,
+	rincian text NOT NULL,
+	wilayah text NOT NULL,
+	tipe text NOT NULL,
+	incident_id text REFERENCES incidents(id) ON DELETE SET NULL
 );
 `;
 

@@ -20,11 +20,11 @@
 </script>
 
 <svelte:head>
-	<title>Locked - Novira</title>
+	<title>Terkunci - Novira</title>
 </svelte:head>
 
 <div class="bg-background flex min-h-screen items-center justify-center p-4">
-	<Card.Root class="w-full max-w-md">
+	<Card.Root class="w-full max-w-md border-border/80 shadow-lg">
 		<Card.Header class="space-y-4 text-center">
 			<div class="flex justify-center">
 				<Avatar.Root class="size-20">
@@ -32,7 +32,7 @@
 				</Avatar.Root>
 			</div>
 			<div>
-				<Card.Title class="text-2xl font-bold">{data.user.name}</Card.Title>
+				<Card.Title class="text-2xl font-extrabold text-foreground">{data.user.name}</Card.Title>
 				<Card.Description>{data.user.email}</Card.Description>
 			</div>
 		</Card.Header>
@@ -44,26 +44,29 @@
 			{/if}
 			<form method="POST" use:enhance class="space-y-4">
 				<div class="space-y-2">
-					<Label for="password">Password</Label>
+					<Label for="password">Kata Sandi</Label>
 					<Input
 						id="password"
 						name="password"
 						type="password"
-						placeholder="Enter your password to unlock"
+						placeholder="Masukkan kata sandi untuk membuka kunci"
 						required
 						autocomplete="current-password"
 					/>
 				</div>
-				<Button type="submit" class="w-full">
+				<Button
+					type="submit"
+					class="w-full bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+				>
 					<LockIcon class="mr-2 size-4" />
-					Unlock
+					Buka Kunci
 				</Button>
 			</form>
 		</Card.Content>
 		<Card.Footer class="justify-center">
 			<p class="text-muted-foreground text-sm">
-				Not you?
-				<a href="/logout" class="text-primary underline-offset-4 hover:underline">Sign out</a>
+				Bukan Anda?
+				<a href="/logout" class="text-primary underline-offset-4 hover:underline">Keluar</a>
 			</p>
 		</Card.Footer>
 	</Card.Root>

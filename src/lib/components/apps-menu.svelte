@@ -17,12 +17,12 @@
 	let { role }: Props = $props();
 
 	const allApps = [
-		{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
-		{ label: "Users", href: "/dashboard/users", icon: UsersIcon },
-		{ label: "Roles", href: "/dashboard/roles", icon: ShieldIcon },
-		{ label: "Notifications", href: "/dashboard/notifications", icon: BellIcon },
-		{ label: "Database", href: "/dashboard/database", icon: DatabaseIcon },
-		{ label: "Settings", href: "/dashboard/settings", icon: SettingsIcon },
+		{ label: "Dasbor", href: "/dashboard", icon: LayoutDashboardIcon },
+		{ label: "Pengguna", href: "/dashboard/users", icon: UsersIcon },
+		{ label: "Peran", href: "/dashboard/roles", icon: ShieldIcon },
+		{ label: "Notifikasi", href: "/dashboard/notifications", icon: BellIcon },
+		{ label: "Basis Data", href: "/dashboard/database", icon: DatabaseIcon },
+		{ label: "Pengaturan", href: "/dashboard/settings", icon: SettingsIcon },
 	];
 
 	const apps = $derived(allApps.filter((app) => canAccessRole(role, app.href)));
@@ -35,7 +35,7 @@
 		{#snippet child({ props })}
 			<Button variant="ghost" size="icon" {...props}>
 				<LayoutGridIcon class="size-4" />
-				<span class="sr-only">Apps menu</span>
+				<span class="sr-only">Menu aplikasi</span>
 			</Button>
 		{/snippet}
 	</Popover.Trigger>

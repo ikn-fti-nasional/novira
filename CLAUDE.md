@@ -42,15 +42,16 @@ pnpm format:check     # Prettier (check only)
 - **Custom session auth** — SHA-256 hashed tokens with @oslojs/crypto, Argon2id password hashing
 - **Drizzle ORM** — Postgres via `postgres` (postgres.js), pointed at a Neon connection string in production. Schema in `src/lib/server/db/schema.ts`
 - **LayerChart v2** — D3-based charts. Marked `noExternal` in `vite.config.ts` alongside `svelte-ux` for SSR compatibility
+- **Leaflet + leaflet.markercluster** — hotspot map (`hotspot-map.svelte`). Leaflet touches `window` on import, so it and its CSS are **dynamically imported inside `$effect`**, never at module top level — a static import breaks SSR. Camera markers are clustered (290 of them overlap unreadably otherwise); incident markers live in a custom pane at `z-index: 650` so the cluster layer can't hide them
 - **Package manager:** pnpm
 
 ### Routing & Auth
 
 Routes use SvelteKit route groups for layout separation:
 
-- `(app)/` — Protected routes behind the app shell. Auth guard in `(app)/+layout.server.ts` redirects unauthenticated users to `/login`. Features: dashboard (`+page`), `cameras/`, `incidents/`, `hotspots/`, `area-ranking/`, `laporan-wilayah/`, `officers/`, `monitoring/`, `users/`, `roles/`, `content/` (CMS — list, `new/`, `[id]/edit/`), `analytics/`, `notifications/`, `database/`, `settings/`, `audit/`
+- `(app)/` — Protected routes behind the app shell. Auth guard in `(app)/+layout.server.ts` redirects unauthenticated users to `/login`. Features: dashboard (`+page`), `cameras/`, `incidents/`, `hotspots/`, `area-ranking/`, `laporan-wilayah/`, `officers/`, `monitoring/`, `users/`, `roles/`, `content/` (CMS — list, `new/`, `[id]/edit/`), `analytics/`, `analitik/` (chronic spots, risk hours, escalation status), `laporan-masyarakat/` (citizen-report triage queue), `notifications/`, `database/`, `settings/`, `audit/`
 - `(auth)/` — Public auth routes: `login/`, `register/`, `forgot-password/`, `reset-password/`, `lock/` (re-auth screen, requires an existing session)
-- `(public)/` — Public marketing/landing pages
+- `(public)/` — Public pages: marketing/landing, `lapor/` (citizen report form), `lacak/` (report tracking by code, no account needed)
 - `logout/` — Standalone logout action (server-only)
 - `api/search/` — Search endpoint for command palette
 - `sitemap.xml/` — Auto-generated sitemap
@@ -67,8 +68,11 @@ The `(app)/+layout.server.ts` guard also enforces **maintenance mode**: when `ap
 
 - `src/lib/server/` — Server-only code (auth, database). Never import from client-side code
 - `src/lib/server/auth.ts` — Session management (create, validate, invalidate, cookies)
-- `src/lib/server/db/schema.ts` — Drizzle schema (users, sessions, pages, notifications, appSettings, passwordResetTokens)
+- `src/lib/server/db/schema.ts` — Drizzle schema (users, sessions, pages, notifications, appSettings, passwordResetTokens, cameras, incidents, publicReports, reporterTrust, areaSnapshots, officers, auditLog)
+- `src/lib/server/novira/` — Domain logic. `index.ts` is the data seam every page reads through; the rest are single-purpose modules (see "Domain modules" below)
 - `src/lib/server/db/seed.ts` — Database seeder (run via `pnpm db:seed`, uses `npx tsx` not SvelteKit aliases)
+- `src/lib/server/db/data/kamera-bandung.ts` — Generated registry of 290 **verified-live** Bandung ATCS cameras across 27 kecamatan. Every stream in it returned a non-empty HLS playlist when checked; 85 of the city's 377 listed cameras answer 404 and are deliberately excluded. Don't hand-add entries — a dead camera makes its kecamatan look clean when it is simply unmonitored
+- `scripts/sinkron-kamera-bandung.ts` — Non-destructive camera sync for databases that already hold operational data (matches on `urlStream`, refuses to delete a stale camera that still has incidents). Use this instead of `db:seed` when you only want to refresh the registry
 - `src/lib/server/id.ts` — Crypto ID generator (`generateId()`)
 - `src/lib/components/ui/` — shadcn-svelte components (don't edit directly, re-add to update)
 - `src/lib/components/` — App-level components (sidebar, theme toggle, command palette, notification bell)
@@ -80,6 +84,8 @@ The `(app)/+layout.server.ts` guard also enforces **maintenance mode**: when `ap
 
 Database connection comes from `DATABASE_URL` (Postgres/Neon connection string, gitignored via `.env`). Roles enum: `admin | editor | viewer`. First registered user gets `admin` role.
 
+Camera coverage is Bandung-only (290 cameras, 27 of the city's 30 kecamatan — Cibiru, Mandalajati, and Panyileukan have none). This matters for any area-level metric: a kecamatan without cameras produces no score at all rather than a good one, so the leaderboard compares only monitored areas.
+
 **Notifications with `userId = NULL` are global** — every user sees them. Per-user notifications set `userId` to the recipient. The `(app)/+layout.server.ts` filter (`eq(userId, X) OR isNull(userId)`) is the canonical pattern for any notification query.
 
 ### Demo Mode
@@ -90,6 +96,28 @@ Gated by the `DEMO_MODE=true` env var (read directly via `process.env` in `setti
 2. A **self-modification guard on the shared `demo` account** — `updateProfile`/`changePassword` refuse to touch `username === "demo"` so one visitor can't lock everyone else out between resets.
 
 Leave it unset on real deployments. For a hands-off public demo, an hourly cron runs `pnpm db:seed` (this is why deploy syncs `src/` too — see below).
+
+### Domain modules (`src/lib/server/novira/`)
+
+| Module               | Responsibility                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `index.ts`           | Data seam — every `+page.server.ts` reads operational data through here                                 |
+| `deteksi.ts`         | Twice-daily CCTV detection cycle against the pLitter API, IoU persistence matching                      |
+| `prioritas.ts`       | **Pure** 0–100 priority engine. No DB, no I/O — callers supply the inputs                               |
+| `laporan.ts`         | Citizen-report pipeline: AI scan → duplicate detection → triage → promote to incident → public tracking |
+| `eskalasi.ts`        | SLA escalation ladder (12 h → operator, 24 h → kepala seksi, 48 h → kepala dinas)                       |
+| `snapshot.ts`        | Daily cleanliness-score archive + trend readers                                                         |
+| `analitik.ts`        | Chronic-spot detection, risk-hour distribution, patrol-window suggestions                               |
+| `geo.ts`             | Haversine distance, coordinate parsing, phone normalization                                             |
+| `kesehatanKamera.ts` | 15-minute camera reachability probe                                                                     |
+| `scheduler.ts`       | Registers every cron above (guarded against double registration)                                        |
+
+**Two invariants worth knowing before editing:**
+
+1. **`incidents.cameraId` is nullable.** Verified citizen reports become incidents with GPS but no camera. Every read path must `leftJoin(cameras)` — an `innerJoin` silently hides every citizen-sourced incident. `insidenFromRow()` already handles the null case.
+2. **AI never decides, it only recommends.** `laporan.ts` writes `ai*` columns and a recommendation; only an operator action changes a report's status, and every such action writes to `audit_log`. Keep it that way — the detector is trained on CCTV frames and is not reliable enough on phone photos to act alone.
+
+Trend numbers depend on `areaSnapshots`. Where the archive is too short, the code returns `null` and the UI says so, rather than emitting a fabricated `+0.0%`. Preserve that distinction.
 
 ### Testing
 
@@ -114,6 +142,7 @@ After modifying `schema.ts`, also update the `SCHEMA_SQL` in `test-utils.ts` and
 
 - Forms use SvelteKit form actions with `use:enhance` for progressive enhancement
 - Dark/light mode via `mode-watcher` — use `mode.current` (runes object), NOT `$mode`
+- **`$effect` dependency order:** read every reactive value *before* any early-return guard. An effect that bails out before touching a rune never registers it as a dependency and will never re-run — this silently killed the hotspot map's layer toggle, and only an E2E test caught it
 - App shell layout: sidebar (`app-sidebar.svelte`) + topbar with breadcrumbs (generated from URL pathname)
 - `App.Locals` typed in `src/app.d.ts` — `user: SessionUser | null`, `session: Session | null`
 - `seed.ts` runs outside SvelteKit context — use relative imports (not `$lib/`) and `generateId()` from `$lib/server/id.js`

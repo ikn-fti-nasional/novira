@@ -5,8 +5,33 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 	import DownloadIcon from "@lucide/svelte/icons/download";
+	import { downloadCsvReport } from "$lib/utils/export-report.js";
 
 	let { data } = $props();
+
+	function unduhCsv() {
+		const headers = [
+			"ID Audit",
+			"Waktu",
+			"Pengguna",
+			"Peran",
+			"Tindakan",
+			"Rincian",
+			"Wilayah",
+			"Tipe",
+		];
+		const rows = data.auditLogList.map((log) => [
+			log.id,
+			new Date(log.waktu).toLocaleString(),
+			log.pengguna,
+			log.peran,
+			log.tindakan,
+			log.rincian,
+			log.wilayah,
+			log.tipe,
+		]);
+		downloadCsvReport("Log_Audit_Sistem", headers, rows);
+	}
 </script>
 
 <svelte:head>
@@ -29,7 +54,7 @@
 			</p>
 		</div>
 
-		<Button variant="outline" size="sm" class="h-9 text-xs font-semibold">
+		<Button variant="outline" size="sm" class="h-9 text-xs font-semibold" onclick={unduhCsv}>
 			<DownloadIcon class="mr-1.5 size-3.5" />
 			Unduh Log Audit (CSV)
 		</Button>

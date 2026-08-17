@@ -93,8 +93,16 @@ describe("Notifications page server", () => {
 	it("marking a global notification as read only affects the acting user", async () => {
 		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
-		const userA = await createTestUser(db, { role: "admin", username: "usera", email: "a@test.com" });
-		const userB = await createTestUser(db, { role: "admin", username: "userb", email: "b@test.com" });
+		const userA = await createTestUser(db, {
+			role: "admin",
+			username: "usera",
+			email: "a@test.com",
+		});
+		const userB = await createTestUser(db, {
+			role: "admin",
+			username: "userb",
+			email: "b@test.com",
+		});
 		const notifId = await seedNotification(db, null, { title: "Global Alert" });
 
 		const { actions, load } = await import("./+page.server.js");
@@ -133,8 +141,6 @@ describe("Notifications page server", () => {
 		await expect(actions.markRead({ request, locals } as any)).rejects.toMatchObject({
 			status: 302,
 		});
-		await expect(
-			actions.delete({ request, locals } as any)
-		).rejects.toMatchObject({ status: 302 });
+		await expect(actions.delete({ request, locals } as any)).rejects.toMatchObject({ status: 302 });
 	});
 });

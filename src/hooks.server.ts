@@ -7,6 +7,7 @@ import {
 import { db } from "$lib/server/db/index.js";
 import { sessions } from "$lib/server/db/schema.js";
 import { migrateLegacyRoles } from "$lib/server/db/migrate-legacy-roles.js";
+import { startDetectionScheduler } from "$lib/server/novira/scheduler.js";
 import { eq } from "drizzle-orm";
 import type { Handle } from "@sveltejs/kit";
 
@@ -14,6 +15,12 @@ import type { Handle } from "@sveltejs/kit";
 // exist in production databases. Idempotent and cheap-to-no-op; runs once per
 // process start so no user falls outside the new authorization groups.
 await migrateLegacyRoles();
+
+// Twice-daily Bandung CCTV detection cron (12:00 & 15:00 WIB) — see
+// $lib/server/novira/deteksi.ts. Runs in-process (adapter-node is a
+// long-lived Node process, not serverless) so no external cron/systemd unit
+// is required.
+startDetectionScheduler();
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get(SESSION_COOKIE_NAME);

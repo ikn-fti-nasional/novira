@@ -59,7 +59,7 @@
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each skorWilayahList as area (area.kelurahan)}
+				{#each skorWilayahList as area (area.kecamatan + "|" + area.kabupatenKota)}
 					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
 						<Table.Cell class="text-center font-bold">
 							<span
