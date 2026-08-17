@@ -92,22 +92,18 @@ async function analisaFoto(
 	buffer: ArrayBuffer,
 	opsi: PengaturanAnalisa
 ): Promise<HasilAnalisaFoto> {
-	const jsonRes = await kirimKePlitter("/detect/image", file, buffer, opsi, { annotate: "false" });
-	if (!jsonRes.ok) throw new Error(await pesanError(jsonRes));
-	const data = (await jsonRes.json()) as {
+	// pLitter mengembalikan JSON deteksi + gambar beranotasi (base64) dalam satu
+	// response saat include_annotated=true -- satu kali hit, bukan dua.
+	const res = await kirimKePlitter("/detect/image", file, buffer, opsi, {
+		include_annotated: "true",
+	});
+	if (!res.ok) throw new Error(await pesanError(res));
+	const data = (await res.json()) as {
 		width: number;
 		height: number;
 		detections: PlitterDetectionRaw[];
+		annotated_image_base64: string;
 	};
-
-	// Panggilan kedua khusus untuk pratinjau bergambar kotak deteksi -- pLitter
-	// menggambar kotaknya sendiri lewat draw_boxes_on_image, jadi tidak perlu
-	// duplikasi logika itu di sisi Node.
-	const annotatedRes = await kirimKePlitter("/detect/image", file, buffer, opsi, {
-		annotate: "true",
-	});
-	if (!annotatedRes.ok) throw new Error(await pesanError(annotatedRes));
-	const annotatedBuffer = Buffer.from(await annotatedRes.arrayBuffer());
 
 	return {
 		kind: "foto",
@@ -116,7 +112,7 @@ async function analisaFoto(
 		width: data.width,
 		height: data.height,
 		deteksi: data.detections.map(petakanDeteksi),
-		annotatedDataUrl: `data:image/jpeg;base64,${annotatedBuffer.toString("base64")}`,
+		annotatedDataUrl: `data:image/jpeg;base64,${data.annotated_image_base64}`,
 	};
 }
 
