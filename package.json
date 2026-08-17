@@ -29,6 +29,7 @@
 		"@lucide/svelte": "^1.21.0",
 		"@playwright/test": "^1.61.1",
 		"@sveltejs/adapter-node": "^5.5.7",
+		"@sveltejs/adapter-vercel": "^6.3.4",
 		"@sveltejs/kit": "^2.70.2",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/typography": "^0.5.20",
@@ -67,9 +68,9 @@
 	},
 	"dependencies": {
 		"@node-rs/argon2": "^2.0.2",
-		"@vercel/blob": "^2.0.0",
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
+		"@vercel/blob": "^2.0.0",
 		"clsx": "^2.1.1",
 		"drizzle-orm": "^0.45.2",
 		"hls.js": "^1.7.0",
