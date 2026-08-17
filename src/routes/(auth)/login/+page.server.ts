@@ -3,6 +3,7 @@ import { db } from "$lib/server/db/index.js";
 import { users } from "$lib/server/db/schema.js";
 import { verifyPassword } from "$lib/server/password.js";
 import { EXECUTIVE_ROLES, hasRole } from "$lib/authorize.js";
+import { dev } from "$app/environment";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
@@ -12,8 +13,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		redirect(302, hasRole(locals.user, EXECUTIVE_ROLES) ? "/dashboard/eksekutif" : "/dashboard");
 	}
 	return {
-		// Only surface pre-filled demo credentials when the public demo is on.
-		demoMode: process.env.DEMO_MODE === "true",
+		// Only surface pre-filled demo credentials when the public demo is on —
+		// or in local dev, where the seeded accounts are the only ones that exist
+		// and hiding them just slows everyone down.
+		demoMode: process.env.DEMO_MODE === "true" || dev,
 	};
 };
 

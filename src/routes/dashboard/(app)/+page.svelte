@@ -7,13 +7,14 @@
 	import { AreaChart } from "layerchart";
 	import { scaleBand } from "d3-scale";
 	import { mode } from "mode-watcher";
+	import { invalidateAll } from "$app/navigation";
+	import { toast } from "svelte-sonner";
+	import { downloadCsvReport } from "$lib/utils/export-report.js";
 
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import VideoIcon from "@lucide/svelte/icons/video";
-	import Trash2Icon from "@lucide/svelte/icons/trash-2";
+	import ScanSearchIcon from "@lucide/svelte/icons/scan-search";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
-	import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
-	import TrendingDownIcon from "@lucide/svelte/icons/trending-down";
 	import ActivityIcon from "@lucide/svelte/icons/activity";
 	import GlobeIcon from "@lucide/svelte/icons/globe";
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
@@ -27,6 +28,10 @@
 
 	let { data } = $props();
 
+	/** Jumlah baris insiden & log audit yang digambar di dashboard. */
+	const BATAS_INSIDEN = 8;
+	const BATAS_AUDIT = 6;
+
 	// Sapaan berdasarkan waktu setempat
 	const jam = new Date().getHours();
 	const sapaan =
@@ -38,9 +43,53 @@
 					? "Selamat Sore"
 					: "Selamat Malam";
 
-	// Scope Filter Super Admin
+	// --- Filter cakupan wilayah ---------------------------------------------
+	// Filter ini menyaring data yang sudah ada di klien (kamera, insiden, skor
+	// wilayah) — bukan hanya hiasan header. Sebelumnya kedua <select> tidak
+	// terhubung ke apa pun, jadi mengubahnya tidak berpengaruh sama sekali.
 	let provinsiDipilih = $state<string>("SEMUA");
 	let kabupatenDipilih = $state<string>("SEMUA");
+
+	// Kota yang ditawarkan menyempit mengikuti provinsi terpilih, dan pilihan
+	// kota yang jadi tidak valid direset supaya tidak ada kombinasi yang
+	// menghasilkan nol data tanpa penjelasan.
+	const kabupatenTersedia = $derived(
+		provinsiDipilih === "SEMUA"
+			? data.kabupatenKotaList
+			: data.kabupatenKotaList.filter((k) => k.provinsi === provinsiDipilih)
+	);
+
+	$effect(() => {
+		if (
+			kabupatenDipilih !== "SEMUA" &&
+			!kabupatenTersedia.some((k) => k.nama === kabupatenDipilih)
+		) {
+			kabupatenDipilih = "SEMUA";
+		}
+	});
+
+	function cocokWilayah(item: { provinsi: string; kabupatenKota: string }): boolean {
+		if (provinsiDipilih !== "SEMUA" && item.provinsi !== provinsiDipilih) return false;
+		if (kabupatenDipilih !== "SEMUA" && item.kabupatenKota !== kabupatenDipilih) return false;
+		return true;
+	}
+
+	const adaFilter = $derived(provinsiDipilih !== "SEMUA" || kabupatenDipilih !== "SEMUA");
+
+	const kameraTersaring = $derived(data.kameraList.filter(cocokWilayah));
+	const insidenTersaring = $derived(data.insidenList.filter(cocokWilayah));
+	const skorWilayahTersaring = $derived(
+		adaFilter ? data.skorWilayahList.filter(cocokWilayah) : data.skorWilayahList
+	);
+
+	// --- Data poll -----------------------------------------------------------
+	// Insiden hanya berubah lewat siklus deteksi (cron 12:00 & 15:00 WIB) atau
+	// tindakan operator; poll ringan supaya dashboard tidak perlu refresh
+	// manual, tanpa infrastruktur push.
+	$effect(() => {
+		const interval = setInterval(() => invalidateAll(), 2 * 60 * 1000);
+		return () => clearInterval(interval);
+	});
 
 	// LayerChart Config Tren Sampah
 	const trendChartConfig = {
@@ -53,66 +102,221 @@
 			time: d.jam,
 			active: d.insidenAktif,
 			resolved: d.insidenSelesai,
-			volume: d.volumeSampahKg,
 		}))
+	);
+
+	// --- KPI ----------------------------------------------------------------
+	// Setiap angka dan setiap label di bawah ini diturunkan dari data nyata.
+	// Versi sebelumnya menempelkan delta karangan ("+12% vs kemarin", "38 titik
+	// terlacak AI", "2 wilayah kritis") ke angka yang benar — di laporan resmi
+	// itu jauh lebih berbahaya daripada tidak menampilkan delta sama sekali.
+	// Delta harian baru bisa dihitung setelah ada arsip `areaSnapshots`.
+	const kameraOnlineTersaring = $derived(
+		kameraTersaring.filter((k) => k.status === "ONLINE").length
+	);
+	const insidenAktifTersaring = $derived(
+		insidenTersaring.filter((i) => i.status === "AKTIF").length
+	);
+	const slaTersaring = $derived(
+		insidenTersaring.filter((i) => i.statusSla === "MELANGGAR_SLA").length
+	);
+	const titikTerdampak = $derived(
+		new Set(
+			insidenTersaring
+				.filter((i) => i.status === "AKTIF" || i.status === "PERINGATAN")
+				.map((i) => i.kameraId)
+				.filter(Boolean)
+		).size
+	);
+	const kecamatanKritis = $derived(
+		new Set(
+			insidenTersaring
+				.filter(
+					(i) =>
+						(i.status === "AKTIF" || i.status === "PERINGATAN") &&
+						(i.keparahan === "KRITIS" || i.statusSla === "MELANGGAR_SLA")
+				)
+				.map((i) => i.kecamatan)
+				.filter(Boolean)
+		).size
+	);
+	const insidenBaruHariIni = $derived(
+		adaFilter
+			? insidenTersaring.filter(
+					(i) => new Date(i.pertamaDilihat).toDateString() === new Date().toDateString()
+				).length
+			: data.kpi.insidenBaruHariIni
+	);
+	const persenUptime = $derived(
+		kameraTersaring.length === 0
+			? 0
+			: Math.round((kameraOnlineTersaring / kameraTersaring.length) * 100)
 	);
 
 	const stats = $derived([
 		{
 			title: "Insiden Aktif",
-			value: data.kpi.insidenAktif,
-			subtitle: "Perlu Penanganan Petugas",
+			value: insidenAktifTersaring,
+			subtitle: "Perlu penanganan petugas",
 			icon: AlertTriangleIcon,
-			statusColor: "text-red-600 dark:text-red-400",
 			badgeBg: "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400",
-			trend: "+12%",
-			trendUp: true,
-			trendLabel: "vs kemarin",
+			catatan: `${titikTerdampak} titik pantau terdampak`,
+			catatanBg: "bg-red-600/10 text-red-700 dark:text-red-400",
 		},
 		{
 			title: "CCTV Online",
-			value: `${data.kpi.cctvOnline}/${data.kpi.totalCctv}`,
-			subtitle: `${data.kpi.persentaseUptimeCctv}% Uptime Umpan Kamera`,
+			value: `${kameraOnlineTersaring}/${kameraTersaring.length}`,
+			subtitle: `${persenUptime}% umpan kamera dapat diakses`,
 			icon: VideoIcon,
-			statusColor: "text-emerald-600 dark:text-emerald-400",
 			badgeBg: "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400",
-			trend: "Normal",
-			trendUp: true,
-			trendLabel: "5 dari 6 feed live",
+			catatan: persenUptime >= 80 ? "Cakupan baik" : "Cakupan menurun",
+			catatanBg:
+				persenUptime >= 80
+					? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+					: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
 		},
 		{
-			title: "Sampah Terdeteksi Hari Ini",
-			value: `${data.kpi.volumeSampahHariIniKg ?? 142} kg`,
-			subtitle: "38 Titik Terlacak AI",
-			icon: Trash2Icon,
-			statusColor: "text-amber-600 dark:text-amber-400",
+			title: "Terdeteksi Hari Ini",
+			value: insidenBaruHariIni,
+			subtitle: "Insiden baru dari siklus deteksi CCTV",
+			icon: ScanSearchIcon,
 			badgeBg: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400",
-			trend: "-8%",
-			trendUp: false,
-			trendLabel: "vs minggu lalu",
+			catatan: `${data.kpi.insidenSelesaiHariIni} selesai hari ini`,
+			catatanBg: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
 		},
 		{
 			title: "Pelanggaran SLA (>24 Jam)",
-			value: data.kpi.slaMelanggar,
-			subtitle: "Penanganan Belum Selesai",
+			value: slaTersaring,
+			subtitle: "Penanganan melewati batas waktu",
 			icon: ShieldAlertIcon,
-			statusColor: "text-red-600 dark:text-red-400",
-			badgeBg: "bg-red-600/15 border-red-600/30 text-red-700 dark:text-red-400 font-bold",
-			trend: "Eskalasi",
-			trendUp: true,
-			trendLabel: "2 Wilayah Kritis",
+			badgeBg: "bg-red-600/15 border-red-600/30 text-red-700 dark:text-red-400",
+			catatan:
+				kecamatanKritis === 0 ? "Tidak ada kecamatan kritis" : `${kecamatanKritis} kecamatan kritis`,
+			catatanBg:
+				kecamatanKritis === 0
+					? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+					: "bg-red-600/15 text-red-700 dark:text-red-400",
 		},
 	]);
+
+	// --- Tindakan pada tabel insiden ----------------------------------------
+	// Dashboard memakai action milik halaman Insiden lewat path absolut, supaya
+	// tombol "Tugaskan"/"Selesaikan" di sini benar-benar bekerja. Sebelumnya
+	// tabel dirender tanpa satu pun handler: dialognya terbuka, tombolnya bisa
+	// ditekan, dan tidak ada apa pun yang tersimpan.
+	async function kirimAksi(
+		action: string,
+		fields: Record<string, string>,
+		buktiFile: File | null,
+		pesanSukses: string,
+		pesanGagal: string
+	) {
+		const formData = new FormData();
+		for (const [key, value] of Object.entries(fields)) formData.append(key, value);
+		if (buktiFile) formData.append("buktiFoto", buktiFile);
+
+		try {
+			const response = await fetch(`/dashboard/incidents?/${action}`, {
+				method: "POST",
+				body: formData,
+			});
+			if (response.ok) {
+				toast.success(pesanSukses);
+				await invalidateAll();
+			} else {
+				const body = (await response.json().catch(() => null)) as { message?: string } | null;
+				toast.error(body?.message ?? pesanGagal);
+			}
+		} catch {
+			toast.error(pesanGagal);
+		}
+	}
+
+	function handleSelesaikanTugas(insidenId: string, buktiFile: File, catatan: string) {
+		kirimAksi(
+			"selesaikanTugas",
+			{ insidenId, catatan },
+			buktiFile,
+			"Insiden ditandai selesai",
+			"Gagal menandai insiden selesai, coba lagi"
+		);
+	}
+
+	function handleTugaskanPetugas(insidenId: string, petugasId: string) {
+		kirimAksi(
+			"tugaskanPetugas",
+			{ insidenId, petugasId },
+			null,
+			"Petugas berhasil ditugaskan",
+			"Gagal menugaskan petugas, coba lagi"
+		);
+	}
+
+	function handleTandaiPositifPalsu(insidenId: string) {
+		kirimAksi(
+			"tandaiPositifPalsu",
+			{ insidenId },
+			null,
+			"Insiden ditandai positif palsu",
+			"Gagal menandai positif palsu, coba lagi"
+		);
+	}
+
+	// --- Unduh ringkasan ----------------------------------------------------
+	function unduhRingkasan() {
+		if (insidenTersaring.length === 0) {
+			toast.error("Tidak ada insiden pada cakupan wilayah ini untuk diunduh.");
+			return;
+		}
+		const headers = [
+			"Prioritas",
+			"Keparahan",
+			"Lokasi",
+			"Kamera",
+			"Kecamatan",
+			"Kota",
+			"Jenis Sampah",
+			"Kepercayaan (%)",
+			"Durasi (menit)",
+			"Status",
+			"Status SLA",
+			"Petugas",
+			"Pertama Terlihat",
+		];
+		const rows = insidenTersaring.map((i) => [
+			i.skorPrioritas,
+			i.keparahan,
+			i.lokasi,
+			i.namaKamera,
+			i.kecamatan,
+			i.kabupatenKota,
+			i.labelSampah,
+			Math.round(i.tingkatKepercayaan * 100),
+			i.durasiMenit,
+			i.status,
+			i.statusSla,
+			i.petugasDitugaskan ?? "Belum ditugaskan",
+			new Date(i.pertamaDilihat).toLocaleString("id-ID"),
+		]);
+		const cakupan =
+			kabupatenDipilih !== "SEMUA"
+				? kabupatenDipilih
+				: provinsiDipilih !== "SEMUA"
+					? provinsiDipilih
+					: "Nasional";
+		downloadCsvReport(`Ringkasan_Dashboard_${cakupan.replace(/\s+/g, "_")}`, headers, rows);
+		toast.success(`${rows.length} insiden diunduh sebagai CSV`);
+	}
 </script>
 
 <svelte:head>
-	<title>NOVIRA - Dashboard Pemantauan Lingkungan Super Admin</title>
+	<title>Dashboard Pemantauan Sampah - NOVIRA</title>
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- Header Super Admin dengan Pemilih Cakupan Wilayah Nasional / Provinsi / Kota -->
+	<!-- Header dengan pemilih cakupan wilayah -->
 	<div
-		class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-border/60 pb-4"
+		class="border-border/60 flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-center lg:justify-between"
 	>
 		<div>
 			{#if data.demoData}
@@ -121,19 +325,18 @@
 				>
 					<AlertTriangleIcon class="mt-0.5 size-3.5 shrink-0" />
 					<p>
-						Data CCTV, insiden, skor wilayah, petugas, dan tren sampah pada halaman ini adalah
-						<strong>data demo/simulasi</strong>, belum terhubung ke sistem EcoVision yang
-						sebenarnya.
+						Instans ini berjalan dalam <strong>mode demo</strong> — data insiden, petugas, dan skor
+						wilayah adalah data contoh yang direset berkala.
 					</p>
 				</div>
 			{/if}
-			<div class="flex items-center gap-2">
-				<h1 class="text-3xl font-extrabold tracking-tight text-foreground">
+			<div class="flex flex-wrap items-center gap-2">
+				<h1 class="text-foreground text-3xl font-extrabold tracking-tight">
 					{sapaan}, {data.user.name}
 				</h1>
 				<Badge
 					variant="outline"
-					class="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-0.5 text-xs"
+					class="border-emerald-600/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
 				>
 					<ShieldCheckIcon class="mr-1 size-3.5" />
 					{data.user.role === "admin"
@@ -142,26 +345,33 @@
 							? "Akses Operator"
 							: data.user.role === "kepala_seksi"
 								? "Akses Kepala Seksi"
-								: "Akses Pemantau"}
+								: data.user.role === "kepala_dinas"
+									? "Akses Kepala Dinas"
+									: data.user.role === "walikota"
+										? "Akses Wali Kota"
+										: data.user.role === "petugas_lapangan"
+											? "Akses Petugas Lapangan"
+											: "Akses Pemantau"}
 				</Badge>
 			</div>
-			<p class="text-muted-foreground text-sm mt-1">
-				Pusat komando pengawasan sampah nasional, audit sistem, dan penugasan armada kebersihan.
+			<p class="text-muted-foreground mt-1 text-sm">
+				Pemantauan sampah liar lewat CCTV, penugasan armada kebersihan, dan rekam jejak sistem.
 			</p>
 		</div>
 
-		<!-- Selector Wilayah (Tingkat Provinsi & Kabupaten/Kota) -->
+		<!-- Selector wilayah (provinsi & kabupaten/kota) -->
 		<div class="flex flex-wrap items-center gap-2">
 			<div
-				class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs"
+				class="bg-card flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xs"
 			>
 				<GlobeIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
-				<span class="font-semibold text-muted-foreground">Provinsi:</span>
+				<label for="filter-provinsi" class="text-muted-foreground font-semibold">Provinsi:</label>
 				<select
+					id="filter-provinsi"
 					bind:value={provinsiDipilih}
-					class="bg-transparent font-bold text-foreground focus:outline-hidden text-xs"
+					class="text-foreground bg-transparent text-xs font-bold focus:outline-hidden"
 				>
-					<option value="SEMUA">Seluruh Indonesia (Nasional)</option>
+					<option value="SEMUA">Seluruh Indonesia</option>
 					{#each data.provinsiList as prov (prov.id)}
 						<option value={prov.nama}>{prov.nama}</option>
 					{/each}
@@ -169,36 +379,52 @@
 			</div>
 
 			<div
-				class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs"
+				class="bg-card flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xs"
 			>
 				<FilterIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
-				<span class="font-semibold text-muted-foreground">Kabupaten/Kota:</span>
+				<label for="filter-kota" class="text-muted-foreground font-semibold">Kota:</label>
 				<select
+					id="filter-kota"
 					bind:value={kabupatenDipilih}
-					class="bg-transparent font-bold text-foreground focus:outline-hidden text-xs"
+					class="text-foreground bg-transparent text-xs font-bold focus:outline-hidden"
 				>
 					<option value="SEMUA">Semua Kota/Kabupaten</option>
-					{#each data.kabupatenKotaList as kab (kab.id)}
+					{#each kabupatenTersedia as kab (kab.id)}
 						<option value={kab.nama}>{kab.nama}</option>
 					{/each}
 				</select>
 			</div>
 
-			<Button variant="outline" size="sm" class="h-9 text-xs font-semibold">
+			<Button
+				variant="outline"
+				size="sm"
+				class="h-9 text-xs font-semibold"
+				onclick={unduhRingkasan}
+			>
 				<DownloadIcon class="mr-1.5 size-3.5" />
-				Unduh Laporan PDF/CSV
+				Unduh Ringkasan CSV
 			</Button>
 		</div>
 	</div>
 
-	<!-- Baris 1: Kartu Metrik Utama KPI -->
+	{#if adaFilter && kameraTersaring.length === 0}
+		<div
+			class="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-4 py-3 text-sm"
+		>
+			<AlertTriangleIcon class="size-4 shrink-0" />
+			Belum ada kamera CCTV terpasang pada cakupan wilayah ini — cakupan pemantauan saat ini hanya
+			Kota Bandung.
+		</div>
+	{/if}
+
+	<!-- Baris 1: Kartu metrik utama -->
 	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 		{#each stats as stat (stat.title)}
 			<Card.Root
-				class="relative overflow-hidden border-border/80 shadow-sm transition-all hover:shadow-md"
+				class="border-border/80 relative overflow-hidden shadow-sm transition-all hover:shadow-md"
 			>
 				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+					<Card.Title class="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
 						{stat.title}
 					</Card.Title>
 					<div class={`flex size-8 items-center justify-center rounded-lg ${stat.badgeBg}`}>
@@ -213,23 +439,12 @@
 							{stat.value}
 						{/if}
 					</div>
-					<div class="mt-2 flex items-center justify-between">
-						<span class="text-xs text-muted-foreground font-medium">{stat.subtitle}</span>
+					<div class="mt-2 flex flex-wrap items-center justify-between gap-1">
+						<span class="text-muted-foreground text-xs font-medium">{stat.subtitle}</span>
 						<span
-							class={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-								stat.title === "Pelanggaran SLA (>24 Jam)"
-									? "bg-red-600/15 text-red-700 dark:text-red-400"
-									: stat.trendUp
-										? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-										: "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-							}`}
+							class={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${stat.catatanBg}`}
 						>
-							{#if stat.trendUp}
-								<TrendingUpIcon class="size-3" />
-							{:else}
-								<TrendingDownIcon class="size-3" />
-							{/if}
-							{stat.trend}
+							{stat.catatan}
 						</span>
 					</div>
 				</Card.Content>
@@ -237,21 +452,15 @@
 		{/each}
 	</div>
 
-	<!-- Baris 2: Pemantauan Umpan CCTV & Tabel Insiden Peringatan -->
-	<div class="grid gap-6 lg:grid-cols-12">
-		<div class="min-w-0 lg:col-span-6">
-			<CctvPlayer kameraList={data.kameraList} />
+	<!-- Baris 2: Tayangan CCTV langsung + tren deteksi -->
+	<div class="grid items-start gap-6 lg:grid-cols-12">
+		<div class="min-w-0 lg:col-span-5">
+			<CctvPlayer kameraList={kameraTersaring} />
 		</div>
-		<div class="min-w-0 lg:col-span-6">
-			<IncidentTable insidenList={data.insidenList} />
-		</div>
-	</div>
 
-	<!-- Baris 3: Tren Deteksi Sampah LayerChart + Peta Titik Rawan -->
-	<div class="grid gap-6 lg:grid-cols-12">
-		<Card.Root class="min-w-0 lg:col-span-6 border-border/80 shadow-md">
-			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<div>
+		<Card.Root class="border-border/80 min-w-0 shadow-md lg:col-span-7">
+			<Card.Header class="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0 pb-2">
+				<div class="min-w-0">
 					<div class="flex items-center gap-2">
 						<ActivityIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
 						<Card.Title class="text-xl font-bold tracking-tight">
@@ -259,66 +468,105 @@
 						</Card.Title>
 					</div>
 					<Card.Description class="text-xs">
-						Grafik pemantauan 24 jam deteksi sampah liar vs. kecepatan pengangkutan armada.
+						Sebaran per jam insiden yang terdeteksi hari ini dibanding yang sudah terangkut.
 					</Card.Description>
 				</div>
-				<Badge
-					variant="outline"
-					class="text-[10px] border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-				>
-					Telemetri Real-time
-				</Badge>
 			</Card.Header>
 
 			<Card.Content>
-				{#key mode.current}
-					<Chart.Container config={trendChartConfig} class="h-[280px] w-full">
-						<AreaChart
-							data={trendData}
-							x="time"
-							xScale={scaleBand().padding(0.2)}
-							series={[
-								{
-									key: "active",
-									label: trendChartConfig.insidenAktif.label,
-									color: trendChartConfig.insidenAktif.color,
-								},
-								{
-									key: "resolved",
-									label: trendChartConfig.insidenSelesai.label,
-									color: trendChartConfig.insidenSelesai.color,
-								},
-							]}
-							props={{
-								area: { opacity: 0.25 },
-								line: { class: "stroke-2" },
-							}}
-							points
-						>
-							{#snippet tooltip()}
-								<Chart.Tooltip indicator="line" />
-							{/snippet}
-						</AreaChart>
-					</Chart.Container>
-				{/key}
+				<!-- Satu titik data tidak membentuk garis: AreaChart hanya menggambar
+				     satu dot di kanvas kosong, yang terbaca seperti grafik rusak.
+				     Di bawah 2 titik, tampilkan angkanya langsung. -->
+				{#if trendData.length < 2}
+					<div
+						class="flex h-[280px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed"
+					>
+						<ActivityIcon class="text-muted-foreground size-8 stroke-1" />
+						{#if trendData.length === 0}
+							<p class="text-muted-foreground text-sm">Belum ada insiden yang terdeteksi hari ini.</p>
+							<p class="text-muted-foreground max-w-sm text-center text-xs">
+								Grafik ini terisi setelah siklus deteksi CCTV berjalan (otomatis 12:00 &amp; 15:00
+								WIB).
+							</p>
+						{:else}
+							<div class="flex items-center gap-8">
+								<div class="text-center">
+									<p class="text-2xl font-extrabold">{trendData[0].active}</p>
+									<p class="text-muted-foreground text-xs">Insiden aktif</p>
+								</div>
+								<div class="text-center">
+									<p class="text-2xl font-extrabold">{trendData[0].resolved}</p>
+									<p class="text-muted-foreground text-xs">Sudah terangkut</p>
+								</div>
+							</div>
+							<p class="text-muted-foreground text-xs">
+								Seluruh deteksi hari ini jatuh pada satu jam ({trendData[0].time}) — grafik per jam
+								tampil setelah ada minimal dua jam berbeda.
+							</p>
+						{/if}
+					</div>
+				{:else}
+					{#key mode.current}
+						<Chart.Container config={trendChartConfig} class="h-[280px] w-full">
+							<AreaChart
+								data={trendData}
+								x="time"
+								xScale={scaleBand().padding(0.2)}
+								series={[
+									{
+										key: "active",
+										label: trendChartConfig.insidenAktif.label,
+										color: trendChartConfig.insidenAktif.color,
+									},
+									{
+										key: "resolved",
+										label: trendChartConfig.insidenSelesai.label,
+										color: trendChartConfig.insidenSelesai.color,
+									},
+								]}
+								props={{
+									area: { opacity: 0.25 },
+									line: { class: "stroke-2" },
+								}}
+								points
+							>
+								{#snippet tooltip()}
+									<Chart.Tooltip indicator="line" />
+								{/snippet}
+							</AreaChart>
+						</Chart.Container>
+					{/key}
+				{/if}
 			</Card.Content>
 		</Card.Root>
-
-		<div class="min-w-0 lg:col-span-6">
-			<HotspotMap kameraList={data.kameraList} insidenList={data.insidenList} />
-		</div>
 	</div>
 
-	<!-- Baris 4: Klasemen Kebersihan Wilayah -->
-	<div class="grid gap-6">
-		<AreaSummary skorWilayahList={data.skorWilayahList} />
-	</div>
+	<!-- Baris 3: Peta titik rawan (butuh lebar penuh agar sebaran terbaca) -->
+	<HotspotMap kameraList={kameraTersaring} insidenList={insidenTersaring} />
 
-	<!-- Baris 5: Log Audit & Rekam Jejak Sistem Super Admin -->
+	<!-- Baris 4: Daftar peringatan insiden — dibatasi, daftar penuh di /incidents -->
+	<IncidentTable
+		insidenList={insidenTersaring}
+		petugasList={data.petugasList}
+		batasBaris={BATAS_INSIDEN}
+		hrefSemua="/dashboard/incidents"
+		onSelesaikanTugas={handleSelesaikanTugas}
+		onTugaskanPetugas={handleTugaskanPetugas}
+		onTandaiPositifPalsu={handleTandaiPositifPalsu}
+	/>
+
+	<!-- Baris 5: Klasemen kebersihan wilayah -->
+	<AreaSummary
+		skorWilayahList={skorWilayahTersaring}
+		batasBaris={10}
+		hrefSemua="/dashboard/area-ranking"
+	/>
+
+	<!-- Baris 6: Log audit & rekam jejak sistem (khusus admin) -->
 	{#if data.user.role === "admin"}
 		<Card.Root class="border-border/80 shadow-md">
-			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
-				<div>
+			<Card.Header class="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0 pb-3">
+				<div class="min-w-0">
 					<div class="flex items-center gap-2">
 						<ShieldCheckIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
 						<Card.Title class="text-xl font-bold tracking-tight">
@@ -326,40 +574,48 @@
 						</Card.Title>
 					</div>
 					<Card.Description class="text-xs">
-						Catatan audit terenkripsi seluruh tindakan deteksi AI, penugasan petugas, dan keputusan
-						Super Admin.
+						{BATAS_AUDIT} aktivitas terbaru — deteksi AI, penugasan petugas, dan keputusan operator.
 					</Card.Description>
 				</div>
 				<a
 					href="/dashboard/audit"
 					class="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
 				>
-					Lihat Seluruh Log Audit &rarr;
+					Lihat seluruh log audit &rarr;
 				</a>
 			</Card.Header>
 			<Card.Content>
-				<div class="space-y-3">
-					{#each data.auditLogList as log (log.id)}
+				<div class="space-y-2.5">
+					{#each data.auditLogList.slice(0, BATAS_AUDIT) as log (log.id)}
 						<div
-							class="flex items-start justify-between rounded-lg border bg-card p-3 text-xs shadow-xs"
+							class="bg-card flex flex-wrap items-start justify-between gap-2 rounded-lg border p-3 text-xs shadow-xs"
 						>
-							<div class="flex flex-col gap-0.5">
-								<div class="flex items-center gap-2">
-									<span class="font-bold text-foreground">{log.tindakan}</span>
-									<Badge variant="outline" class="text-[9px] font-mono">{log.tipe}</Badge>
+							<div class="flex min-w-0 flex-col gap-0.5">
+								<div class="flex flex-wrap items-center gap-2">
+									<span class="text-foreground font-bold">{log.tindakan}</span>
+									<Badge variant="outline" class="font-mono text-[9px]">{log.tipe}</Badge>
 								</div>
 								<p class="text-muted-foreground">{log.rincian}</p>
-								<span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold"
-									>{log.wilayah}</span
-								>
+								<span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+									{log.wilayah}
+								</span>
 							</div>
-							<div class="text-right">
+							<div class="shrink-0 text-right">
 								<span class="font-bold text-slate-700 dark:text-slate-300">{log.pengguna}</span>
-								<p class="text-[10px] text-muted-foreground">
-									{new Date(log.waktu).toLocaleTimeString()}
+								<p class="text-muted-foreground text-[10px]">
+									{new Date(log.waktu).toLocaleString("id-ID", {
+										day: "2-digit",
+										month: "short",
+										hour: "2-digit",
+										minute: "2-digit",
+									})}
 								</p>
 							</div>
 						</div>
+					{:else}
+						<p class="text-muted-foreground py-6 text-center text-xs">
+							Belum ada aktivitas tercatat.
+						</p>
 					{/each}
 				</div>
 			</Card.Content>

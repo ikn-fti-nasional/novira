@@ -62,7 +62,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user: locals.user,
-		demoData: true,
+		// Banner "data demo" hanya benar saat instans ini memang berjalan dalam
+		// mode demo. Di deployment biasa, kamera dan insiden di halaman ini
+		// datang dari registri ATCS Bandung dan siklus deteksi pLitter yang
+		// nyata — memberi label "simulasi" pada data nyata sama menyesatkannya
+		// dengan sebaliknya.
+		demoData: process.env.DEMO_MODE === "true",
 		kpi: {
 			...domainKpi,
 			totalPengguna: userCount.count,

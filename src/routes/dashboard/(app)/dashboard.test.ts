@@ -34,7 +34,9 @@ describe("Dashboard page", () => {
 		expect(result.kpi).toHaveProperty("cctvOnline");
 		expect(result.kpi).toHaveProperty("totalCctv");
 		expect(result.kpi).toHaveProperty("persentaseUptimeCctv");
-		expect(result.kpi).toHaveProperty("volumeSampahHariIniKg");
+		expect(result.kpi).toHaveProperty("insidenBaruHariIni");
+		expect(result.kpi).toHaveProperty("insidenSelesaiHariIni");
+		expect(result.kpi).toHaveProperty("titikPantauTerdampak");
 		expect(result.kpi).toHaveProperty("slaMelanggar");
 		expect(result.kpi).toHaveProperty("totalPengguna");
 		expect(result.kpi).toHaveProperty("notifikasiBelumDibaca");

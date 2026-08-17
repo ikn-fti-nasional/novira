@@ -107,7 +107,10 @@
 			await import("leaflet.markercluster/dist/MarkerCluster.Default.css");
 			if (dibatalkan || !wadah) return;
 
-			const m = L.map(wadah, { scrollWheelZoom: false, attributionControl: true });
+			// scrollWheelZoom aktif: peta ini alat kerja utama halaman, dan operator
+			// mengharapkan gulir = zoom seperti peta lain. Halaman induk tetap bisa
+			// digulir karena kartu peta tidak setinggi viewport penuh.
+			const m = L.map(wadah, { scrollWheelZoom: true, attributionControl: true });
 			peta = m;
 
 			// Pane khusus insiden di atas pane penanda. Tanpa ini, cluster kamera

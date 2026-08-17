@@ -11,7 +11,7 @@ import {
 } from "$lib/server/novira/deteksi.js";
 import { periksaKesehatanKamera } from "$lib/server/novira/kesehatanKamera.js";
 import { hashPassword, verifyPassword } from "$lib/server/password.js";
-import { requireRoleOrFail, isRole } from "$lib/authorize.js";
+import { requireRoleOrFail } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
 import { eq, and, ne } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
@@ -26,10 +26,12 @@ function isProtectedDemoUser(username: string | undefined): boolean {
 	return DEMO_MODE && username === "demo";
 }
 
+// Hanya `maintenanceMode` yang benar-benar dibaca aplikasi (guard di
+// `(app)/+layout.server.ts`). Kunci lama siteName/timezone/defaultRole sudah
+// dihapus dari UI: tidak ada satu pun kode yang membacanya — nama situs
+// dipatok di layout root dan seluruh jadwal cron memakai Asia/Jakarta (WIB)
+// secara tetap, jadi menampilkannya sebagai pengaturan hanya menyesatkan.
 const defaultSettings: Record<string, string> = {
-	siteName: "Novira",
-	timezone: "UTC",
-	defaultRole: "operator",
 	maintenanceMode: "false",
 };
 
@@ -192,32 +194,16 @@ export const actions: Actions = {
 		if (denied) return denied;
 
 		const formData = await request.formData();
-		const siteName = formData.get("siteName");
-		const timezone = formData.get("timezone");
-		const defaultRole = formData.get("defaultRole");
 		const maintenanceMode = formData.get("maintenanceMode");
+		const value = maintenanceMode === "on" ? "true" : "false";
 
-		const entries: [string, string][] = [
-			["siteName", typeof siteName === "string" ? siteName : "Novira"],
-			["timezone", typeof timezone === "string" ? timezone : "UTC"],
-			// Accept only values from the authoritative role list; anything else
-			// (including legacy viewer/editor or garbage) falls back to operator.
-			[
-				"defaultRole",
-				typeof defaultRole === "string" && isRole(defaultRole) ? defaultRole : "operator",
-			],
-			["maintenanceMode", maintenanceMode === "on" ? "true" : "false"],
-		];
-
-		for (const [key, value] of entries) {
-			await db
-				.insert(appSettings)
-				.values({ key, value, updatedAt: new Date() })
-				.onConflictDoUpdate({
-					target: appSettings.key,
-					set: { value, updatedAt: new Date() },
-				});
-		}
+		await db
+			.insert(appSettings)
+			.values({ key: "maintenanceMode", value, updatedAt: new Date() })
+			.onConflictDoUpdate({
+				target: appSettings.key,
+				set: { value, updatedAt: new Date() },
+			});
 
 		return { success: true, action: "settings" };
 	},

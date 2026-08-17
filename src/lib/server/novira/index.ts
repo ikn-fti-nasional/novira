@@ -53,6 +53,9 @@ export async function listKabupatenKota() {
 		.map((kota) => ({
 			id: `KAB-${kota}`,
 			provinsiId: `PROV-${kotaKeProvinsi(kota)}`,
+			// Nama provinsi (bukan hanya id-nya) supaya filter di dashboard bisa
+			// menyempitkan daftar kota tanpa perlu memetakan id dua kali.
+			provinsi: kotaKeProvinsi(kota),
 			nama: kota,
 		}))
 		.sort((a, b) => a.nama.localeCompare(b.nama));
@@ -232,6 +235,29 @@ async function ambilKamera(cameraId: string | null) {
 	return camera ?? null;
 }
 
+/**
+ * Label lokasi untuk baris audit.
+ *
+ * Insiden hasil laporan warga tidak punya kamera (`cameraId` null), jadi
+ * `camera?.nama ?? incident.cameraId` menghasilkan literal "null" di jejak
+ * audit — baris yang tidak bisa dipakai menelusuri lokasi apa pun. Untuk
+ * insiden seperti itu lokasinya ada di `lokasiTeks`.
+ */
+function labelLokasiAudit(
+	incident: typeof incidents.$inferSelect,
+	camera: typeof cameras.$inferSelect | null
+): string {
+	return camera?.nama ?? incident.lokasiTeks ?? "lokasi laporan warga";
+}
+
+/** Wilayah untuk baris audit — kota kamera, atau lokasi teks laporan warga. */
+function wilayahAudit(
+	incident: typeof incidents.$inferSelect,
+	camera: typeof cameras.$inferSelect | null
+): string {
+	return camera?.kota ?? incident.lokasiTeks ?? "Tidak diketahui";
+}
+
 async function namaPetugas(petugasId: string | null): Promise<string | undefined> {
 	if (!petugasId) return undefined;
 	const [petugas] = await db
@@ -283,9 +309,9 @@ export async function selesaikanInsiden(
 		peran: actor?.peran ?? "petugas_lapangan",
 		tindakan: "Insiden diselesaikan",
 		rincian: catatan?.trim()
-			? `Insiden ${insidenId} (${existing.labelSampah}) di ${camera?.nama ?? existing.cameraId} ditandai selesai. Catatan petugas: ${catatan.trim()}`
-			: `Insiden ${insidenId} (${existing.labelSampah}) di ${camera?.nama ?? existing.cameraId} ditandai selesai`,
-		wilayah: camera?.kota ?? "",
+			? `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai selesai. Catatan petugas: ${catatan.trim()}`
+			: `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai selesai`,
+		wilayah: wilayahAudit(existing, camera),
 		tipe: "TUGAS_PETUGAS",
 		incidentId: insidenId,
 	});
@@ -319,8 +345,8 @@ export async function tandaiPositifPalsu(
 		pengguna: actor?.nama ?? "operator",
 		peran: actor?.peran ?? "operator",
 		tindakan: "Insiden ditandai positif palsu",
-		rincian: `Insiden ${insidenId} (${existing.labelSampah}) di ${camera?.nama ?? existing.cameraId} ditandai sebagai deteksi AI yang keliru`,
-		wilayah: camera?.kota ?? "",
+		rincian: `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai sebagai deteksi AI yang keliru`,
+		wilayah: wilayahAudit(existing, camera),
 		tipe: "UBAH_STATUS",
 		incidentId: insidenId,
 	});
@@ -361,8 +387,8 @@ export async function tugaskanPetugas(
 		pengguna: actor?.nama ?? "operator",
 		peran: actor?.peran ?? "operator",
 		tindakan: "Petugas ditugaskan",
-		rincian: `${petugas.nama} ditugaskan ke insiden ${insidenId} (${existing.labelSampah}) di ${camera?.nama ?? existing.cameraId}`,
-		wilayah: camera?.kota ?? "",
+		rincian: `${petugas.nama} ditugaskan ke insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)}`,
+		wilayah: wilayahAudit(existing, camera),
 		tipe: "TUGAS_PETUGAS",
 		incidentId: insidenId,
 	});
@@ -728,13 +754,34 @@ export async function ringkasanKpi() {
 		.from(incidents)
 		.where(eq(incidents.statusSla, "MELANGGAR_SLA"));
 
+	const awalHari = new Date();
+	awalHari.setHours(0, 0, 0, 0);
+	// Dua angka harian yang benar-benar bisa dihitung dari pipeline vision-only:
+	// jumlah insiden yang PERTAMA terdeteksi hari ini, dan berapa yang sudah
+	// ditutup hari ini. Estimasi berat (kg) sengaja tidak ada — model hanya
+	// menghasilkan bounding box, jadi angka kilogram apa pun akan karangan.
+	const [barusanRow] = await db
+		.select({ jumlah: countAll })
+		.from(incidents)
+		.where(gte(incidents.pertamaDilihat, awalHari));
+	const [selesaiRow] = await db
+		.select({ jumlah: countAll })
+		.from(incidents)
+		.where(and(eq(incidents.status, "SELESAI"), gte(incidents.terakhirDilihat, awalHari)));
+
+	const [titikRow] = await db
+		.select({ jumlah: sql<number>`count(distinct ${incidents.cameraId})::int` })
+		.from(incidents)
+		.where(inArray(incidents.status, ["AKTIF", "PERINGATAN"]));
+
 	return {
 		insidenAktif: insidenAktifRow.jumlah,
 		cctvOnline,
 		totalCctv,
 		persentaseUptimeCctv: totalCctv === 0 ? 0 : Math.round((cctvOnline / totalCctv) * 100),
-		// Pipeline vision-only (bounding box), belum ada estimasi berat.
-		volumeSampahHariIniKg: 0,
+		insidenBaruHariIni: barusanRow.jumlah,
+		insidenSelesaiHariIni: selesaiRow.jumlah,
+		titikPantauTerdampak: titikRow.jumlah,
 		slaMelanggar: slaRow.jumlah,
 	};
 }

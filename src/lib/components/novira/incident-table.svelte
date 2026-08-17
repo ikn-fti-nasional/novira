@@ -20,6 +20,15 @@
 	type Props = {
 		insidenList: Insiden[];
 		petugasList?: PetugasLapangan[];
+		/**
+		 * Jumlah baris maksimum yang digambar. Dipakai di dashboard supaya kartu
+		 * ini tidak tumbuh sepanjang seluruh daftar insiden (79 baris membuat
+		 * halaman harus digulir jauh sebelum sampai ke kartu berikutnya).
+		 * Tanpa nilai = tampilkan semua (perilaku halaman Insiden).
+		 */
+		batasBaris?: number;
+		/** Tautan "lihat semua" yang muncul saat daftar terpotong oleh `batasBaris`. */
+		hrefSemua?: string;
 		onSelesaikanTugas?: (insidenId: string, buktiFile: File, catatan: string) => void;
 		onTugaskanPetugas?: (insidenId: string, petugasId: string) => void;
 		onTandaiPositifPalsu?: (insidenId: string) => void;
@@ -28,6 +37,8 @@
 	let {
 		insidenList,
 		petugasList = [],
+		batasBaris,
+		hrefSemua,
 		onSelesaikanTugas,
 		onTugaskanPetugas,
 		onTandaiPositifPalsu,
@@ -80,6 +91,14 @@
 						(filterStatus === "MELANGGAR_SLA" && i.statusSla === "MELANGGAR_SLA")
 				)
 	);
+
+	// Pemotongan terjadi SETELAH penyaringan, supaya tombol filter tetap
+	// bermakna di dashboard: "Melanggar SLA" menampilkan 8 pelanggaran teratas,
+	// bukan pelanggaran yang kebetulan ada di 8 baris pertama daftar penuh.
+	let insidenTampil = $derived(
+		batasBaris === undefined ? insidenTersaring : insidenTersaring.slice(0, batasBaris)
+	);
+	let jumlahDisembunyikan = $derived(insidenTersaring.length - insidenTampil.length);
 
 	function bukaDialogSelesai(insiden: Insiden) {
 		insidenDipilih = insiden;
@@ -193,7 +212,7 @@
 				class="h-7 px-2.5 text-xs text-red-600 dark:text-red-400 font-semibold"
 				onclick={() => (filterStatus = "AKTIF")}
 			>
-				Aktif
+				Aktif ({insidenList.filter((i) => i.status === "AKTIF").length})
 			</Button>
 			<Button
 				variant={filterStatus === "MELANGGAR_SLA" ? "secondary" : "ghost"}
@@ -201,7 +220,7 @@
 				class="h-7 px-2.5 text-xs text-amber-600 dark:text-amber-400 font-semibold"
 				onclick={() => (filterStatus = "MELANGGAR_SLA")}
 			>
-				Melanggar SLA
+				Melanggar SLA ({insidenList.filter((i) => i.statusSla === "MELANGGAR_SLA").length})
 			</Button>
 			<Button
 				variant={filterStatus === "SELESAI" ? "secondary" : "ghost"}
@@ -215,22 +234,26 @@
 	</Card.Header>
 
 	<Card.Content class="p-0">
-		<Table.Root>
+		<!-- Judul kolom dipendekkan dan min-w diturunkan supaya 9 kolom muat di
+		     lebar layar biasa (~1150px area konten) tanpa memotong tombol
+		     tindakan; di layar lebih sempit pembungkus Table.Root sudah
+		     overflow-x-auto sehingga tabel menggulir, bukan terpotong. -->
+		<Table.Root class="min-w-[1040px]">
 			<Table.Header>
 				<Table.Row class="bg-muted/50 text-xs">
-					<Table.Head class="w-[92px]">Prioritas</Table.Head>
-					<Table.Head class="w-[110px]">Tingkat Keparahan</Table.Head>
-					<Table.Head>Lokasi &amp; Kamera</Table.Head>
-					<Table.Head>Jenis Sampah</Table.Head>
-					<Table.Head class="w-[80px]">Kepercayaan</Table.Head>
-					<Table.Head class="w-[100px]">Durasi Dibiarkan</Table.Head>
-					<Table.Head class="w-[110px]">Status Insiden</Table.Head>
-					<Table.Head>Petugas Lapangan</Table.Head>
-					<Table.Head class="text-right">Tindakan Super Admin</Table.Head>
+					<Table.Head class="w-[80px]">Prioritas</Table.Head>
+					<Table.Head class="w-[100px]">Keparahan</Table.Head>
+					<Table.Head class="min-w-[190px]">Lokasi &amp; Kamera</Table.Head>
+					<Table.Head class="w-[120px]">Jenis Sampah</Table.Head>
+					<Table.Head class="w-[70px]">Yakin</Table.Head>
+					<Table.Head class="w-[80px]">Durasi</Table.Head>
+					<Table.Head class="w-[100px]">Status</Table.Head>
+					<Table.Head class="w-[130px]">Petugas</Table.Head>
+					<Table.Head class="w-[190px] text-right">Tindakan</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each insidenTersaring as insiden (insiden.id)}
+				{#each insidenTampil as insiden (insiden.id)}
 					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
 						<!--
 							Skor prioritas + penjelasannya. Angka tanpa alasan tidak
@@ -415,10 +438,35 @@
 							</div>
 						</Table.Cell>
 					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={9} class="text-muted-foreground py-10 text-center text-xs">
+							{#if insidenList.length === 0}
+								Belum ada insiden sampah tercatat. Jalankan siklus deteksi CCTV untuk mulai mengisi
+								daftar ini.
+							{:else}
+								Tidak ada insiden yang cocok dengan filter ini.
+							{/if}
+						</Table.Cell>
+					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>
 	</Card.Content>
+
+	{#if jumlahDisembunyikan > 0}
+		<Card.Footer class="bg-muted/30 flex items-center justify-between border-t px-4 py-2.5">
+			<span class="text-muted-foreground text-xs">
+				Menampilkan {insidenTampil.length} insiden prioritas tertinggi &middot; {jumlahDisembunyikan}
+				lainnya tidak ditampilkan
+			</span>
+			{#if hrefSemua}
+				<Button variant="outline" size="sm" class="h-7 text-xs font-semibold" href={hrefSemua}>
+					Lihat semua insiden
+				</Button>
+			{/if}
+		</Card.Footer>
+	{/if}
 </Card.Root>
 
 <Dialog.Root bind:open={dialogTerbuka}>

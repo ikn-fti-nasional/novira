@@ -2,17 +2,26 @@
 	import * as Card from "$lib/components/ui/card/index.js";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
+	import { Button } from "$lib/components/ui/button/index.js";
 	import TrophyIcon from "@lucide/svelte/icons/trophy";
 	import TrendingUpIcon from "@lucide/svelte/icons/trending-up";
 	import TrendingDownIcon from "@lucide/svelte/icons/trending-down";
-	import MinusIcon from "@lucide/svelte/icons/minus";
 	import type { SkorKebersihanWilayah } from "$lib/types/novira.js";
 
 	type Props = {
 		skorWilayahList: SkorKebersihanWilayah[];
+		/** Batas baris; tanpa nilai = tampilkan seluruh klasemen. */
+		batasBaris?: number;
+		/** Tautan "lihat semua" saat klasemen terpotong. */
+		hrefSemua?: string;
 	};
 
-	let { skorWilayahList }: Props = $props();
+	let { skorWilayahList, batasBaris, hrefSemua }: Props = $props();
+
+	const wilayahTampil = $derived(
+		batasBaris === undefined ? skorWilayahList : skorWilayahList.slice(0, batasBaris)
+	);
+	const jumlahDisembunyikan = $derived(skorWilayahList.length - wilayahTampil.length);
 
 	function getBadgeSkorClass(skor: number) {
 		if (skor >= 85)
@@ -29,20 +38,20 @@
 			<div class="flex items-center gap-2">
 				<TrophyIcon class="size-5 text-amber-500" />
 				<Card.Title class="text-xl font-bold tracking-tight">
-					Peringkat Kebersihan Wilayah (Kelurahan)
+					Peringkat Kebersihan Kecamatan
 				</Card.Title>
 			</div>
 			<Card.Description class="text-xs">
-				Skor Adipura real-time yang dihitung dari jumlah insiden &amp; kecepatan pengangkutan sampah
-				SLA.
+				Skor kebersihan dihitung dari jumlah insiden sampah &amp; rata-rata lama sampah dibiarkan di
+				setiap kecamatan yang terpantau CCTV.
 			</Card.Description>
 		</div>
 
 		<Badge
 			variant="outline"
-			class="border-amber-500/40 text-amber-700 dark:text-amber-400 text-[10px]"
+			class="border-amber-500/40 text-[10px] text-amber-700 dark:text-amber-400"
 		>
-			Klasemen Mingguan
+			{skorWilayahList.length} kecamatan terpantau
 		</Badge>
 	</Card.Header>
 
@@ -51,15 +60,15 @@
 			<Table.Header>
 				<Table.Row class="bg-muted/50 text-xs">
 					<Table.Head class="w-[70px] text-center">Peringkat</Table.Head>
-					<Table.Head>Kelurahan (Kecamatan)</Table.Head>
+					<Table.Head>Kecamatan</Table.Head>
 					<Table.Head class="text-center">Skor Kebersihan</Table.Head>
-					<Table.Head class="text-center">Insiden Aktif</Table.Head>
-					<Table.Head class="text-center">Rata-rata Durasi SLA</Table.Head>
-					<Table.Head class="text-right">Tren Mingguan</Table.Head>
+					<Table.Head class="text-center">Insiden Tercatat</Table.Head>
+					<Table.Head class="text-center">Rata-rata Sampah Dibiarkan</Table.Head>
+					<Table.Head class="text-right">Tren</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each skorWilayahList as area (area.kecamatan + "|" + area.kabupatenKota)}
+				{#each wilayahTampil as area (area.kecamatan + "|" + area.kabupatenKota)}
 					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
 						<Table.Cell class="text-center font-bold">
 							<span
@@ -77,12 +86,13 @@
 							</span>
 						</Table.Cell>
 
+						<!-- Skor dihitung per KECAMATAN (lihat `hitungSkorWilayah`), jadi
+						     `kelurahan` selalu string kosong. Menampilkannya sebagai baris
+						     utama membuat kolom ini terlihat kosong di setiap baris. -->
 						<Table.Cell>
 							<div class="flex flex-col">
-								<span class="font-bold text-foreground text-sm">{area.kelurahan}</span>
-								<span class="text-[11px] text-muted-foreground"
-									>{area.kecamatan}, {area.kabupatenKota}</span
-								>
+								<span class="text-foreground text-sm font-bold">{area.kecamatan}</span>
+								<span class="text-muted-foreground text-[11px]">{area.kabupatenKota}</span>
 							</div>
 						</Table.Cell>
 
@@ -96,7 +106,7 @@
 						</Table.Cell>
 
 						<Table.Cell class="text-center font-semibold">
-							{area.jumlahInsiden} Insiden
+							{area.jumlahInsiden}
 						</Table.Cell>
 
 						<Table.Cell class="text-center font-mono text-xs">
@@ -119,17 +129,35 @@
 									{area.persentaseTren}%
 								</span>
 							{:else}
-								<span
-									class="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground"
-								>
-									<MinusIcon class="size-3.5" />
-									Stabil
-								</span>
+								<!-- Tren butuh arsip `areaSnapshots`; selama arsipnya kosong,
+								     katakan apa adanya daripada menampilkan "Stabil" yang
+								     terbaca seperti hasil pengukuran. -->
+								<span class="text-muted-foreground text-xs font-medium">Belum ada data</span>
 							{/if}
+						</Table.Cell>
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={6} class="text-muted-foreground py-10 text-center text-xs">
+							Belum ada kecamatan dengan kamera CCTV terpasang pada cakupan ini.
 						</Table.Cell>
 					</Table.Row>
 				{/each}
 			</Table.Body>
 		</Table.Root>
 	</Card.Content>
+
+	{#if jumlahDisembunyikan > 0}
+		<Card.Footer class="bg-muted/30 flex items-center justify-between border-t px-4 py-2.5">
+			<span class="text-muted-foreground text-xs">
+				Menampilkan {wilayahTampil.length} kecamatan terbersih &middot; {jumlahDisembunyikan} lainnya
+				tidak ditampilkan
+			</span>
+			{#if hrefSemua}
+				<Button variant="outline" size="sm" class="h-7 text-xs font-semibold" href={hrefSemua}>
+					Lihat klasemen lengkap
+				</Button>
+			{/if}
+		</Card.Footer>
+	{/if}
 </Card.Root>

@@ -478,6 +478,9 @@ export async function seedDemo() {
 
 	const userIds: string[] = [];
 	const editorIds: string[] = [];
+	// Dipakai seed laporan warga untuk mengisi `diprosesOleh` tanpa menebak
+	// posisi di `userIds` (urutan array di atas sering berubah).
+	const userIdByUsername = new Map<string, string>();
 
 	for (const u of userData) {
 		const userPasswordHash =
@@ -492,6 +495,7 @@ export async function seedDemo() {
 			updatedAt: daysAgo(u.daysAgo),
 		});
 		userIds.push(id);
+		userIdByUsername.set(u.username, id);
 		if (u.role === "operator" || u.role === "admin") {
 			editorIds.push(id);
 		}
@@ -1315,12 +1319,10 @@ export async function seedDemo() {
 
 	// --- APP SETTINGS ---
 	console.log("Creating app settings...");
-	const settingsData = [
-		{ key: "siteName", value: "Novira" },
-		{ key: "timezone", value: "Asia/Jakarta" },
-		{ key: "defaultRole", value: "operator" },
-		{ key: "maintenanceMode", value: "false" },
-	];
+	// Satu-satunya pengaturan global yang benar-benar dipakai kode: guard
+	// mode pemeliharaan di `(app)/+layout.server.ts`. Zona waktu tidak diseed —
+	// seluruh jadwal cron memakai Asia/Jakarta (WIB) secara tetap.
+	const settingsData = [{ key: "maintenanceMode", value: "false" }];
 
 	for (const s of settingsData) {
 		await db.insert(appSettings).values({
@@ -1417,7 +1419,34 @@ export async function seedDemo() {
 	// termasuk sepasang laporan yang sengaja berdekatan (±40 m) supaya deteksi
 	// duplikat benar-benar terlihat bekerja.
 	console.log("Creating public reports...");
-	const laporanData = [
+	type LaporanSeed = {
+		pelaporNama: string | null;
+		pelaporTelepon: string | null;
+		deskripsi: string | null;
+		jenisSampah: string | null;
+		latitude: string | null;
+		longitude: string | null;
+		kecamatan: string;
+		status: "MENUNGGU" | "DIPROSES" | "SELESAI" | "DITOLAK" | "DUPLIKAT";
+		catatanPetugas?: string;
+		aiSkor: string | null;
+		aiLabel: string | null;
+		aiJumlahDeteksi: number | null;
+		aiRekomendasi:
+			| "SANGAT_MUNGKIN_VALID"
+			| "PERLU_TINJAUAN"
+			| "KEMUNGKINAN_SPAM"
+			| "GAGAL_PINDAI"
+			| null;
+		/** Faktor rekomendasi AI — diserialisasi ke `aiRincian` supaya tabel triase punya baris alasan. */
+		faktorAi?: { label: string; poin: number; keterangan: string }[];
+		/** Username petugas/operator yang menangani (untuk status selain MENUNGGU). */
+		ditanganiOleh?: string;
+		/** Index laporan induk di array ini — dipetakan ke `duplikatDariId` setelah id digenerate. */
+		duplikatDariIndex?: number;
+		hariLalu: number;
+	};
+	const laporanData: LaporanSeed[] = [
 		{
 			pelaporNama: "Rina Wijaya",
 			pelaporTelepon: "081234500001",
@@ -1493,13 +1522,214 @@ export async function seedDemo() {
 			aiLabel: null,
 			aiJumlahDeteksi: 0,
 			aiRekomendasi: "KEMUNGKINAN_SPAM" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 0, keterangan: "0.03 — tidak ada objek sampah terdeteksi" },
+				{ label: "Lokasi", poin: 0, keterangan: "Tanpa koordinat GPS" },
+				{ label: "Reputasi pelapor", poin: -10, keterangan: "5 laporan sebelumnya ditolak" },
+			],
+			ditanganiOleh: "operator",
 			hariLalu: 5,
+		},
+		{
+			// Laporan ketiga di titik yang sama, sudah diputuskan sebagai duplikat
+			// dari laporan Rina (index 0) — memberi contoh baris berstatus DUPLIKAT.
+			pelaporNama: "Yusuf Maulana",
+			pelaporTelepon: "081234500005",
+			deskripsi: "Sampah depan sekolah masih belum diangkut.",
+			jenisSampah: "tumpukan_sampah",
+			latitude: "-6.92196",
+			longitude: "107.60712",
+			kecamatan: "Regol",
+			status: "DUPLIKAT" as const,
+			catatanPetugas: "Titik sama dengan laporan yang sudah masuk lebih dulu.",
+			aiSkor: "0.66",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 3,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 30, keterangan: "0.66 — tumpukan terdeteksi" },
+				{ label: "Duplikat", poin: -25, keterangan: "±18 m dari laporan LPR sebelumnya" },
+			],
+			ditanganiOleh: "operator",
+			duplikatDariIndex: 0,
+			hariLalu: 0,
+		},
+		{
+			// Sudah diverifikasi operator → naik jadi insiden dan sedang dikerjakan.
+			pelaporNama: "Nurul Hidayah",
+			pelaporTelepon: "081234500006",
+			deskripsi: "Sampah rumah tangga dibuang di lahan kosong dekat pasar, tiap pagi bertambah.",
+			jenisSampah: "pembuangan_liar_besar",
+			latitude: "-6.90340",
+			longitude: "107.59480",
+			kecamatan: "Andir",
+			status: "DIPROSES" as const,
+			catatanPetugas: "Diverifikasi, dijadwalkan pengangkutan oleh regu Andir.",
+			aiSkor: "0.84",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 7,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 40, keterangan: "0.84 — 7 objek terdeteksi" },
+				{ label: "Kelengkapan", poin: 15, keterangan: "Foto + GPS + deskripsi lengkap" },
+				{ label: "Reputasi pelapor", poin: 10, keterangan: "Riwayat laporan valid" },
+			],
+			ditanganiOleh: "operator",
+			hariLalu: 1,
+		},
+		{
+			pelaporNama: "Komunitas Peduli Cikapundung",
+			pelaporTelepon: "081234500007",
+			deskripsi: "Sampah plastik menyangkut di jembatan, berpotensi menyumbat aliran air.",
+			jenisSampah: "kantong_plastik",
+			latitude: "-6.89620",
+			longitude: "107.60890",
+			kecamatan: "Cicendo",
+			status: "DIPROSES" as const,
+			catatanPetugas: "Perlu alat berat ringan, koordinasi dengan UPT kebersihan.",
+			aiSkor: "0.77",
+			aiLabel: "Litter",
+			aiJumlahDeteksi: 12,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 35, keterangan: "0.77 — sebaran sampah luas" },
+				{ label: "Risiko", poin: 20, keterangan: "Berpotensi menyumbat aliran sungai" },
+			],
+			ditanganiOleh: "kepala_seksi",
+			hariLalu: 2,
+		},
+		{
+			pelaporNama: "Hendra Gunawan",
+			pelaporTelepon: "081234500008",
+			deskripsi: "Tumpukan kardus dan sisa dagangan di bahu jalan setelah pasar tutup.",
+			jenisSampah: "tumpukan_sampah",
+			latitude: "-6.93110",
+			longitude: "107.62480",
+			kecamatan: "Batununggal",
+			status: "SELESAI" as const,
+			catatanPetugas: "Sudah diangkut pukul 06.10, lokasi bersih.",
+			aiSkor: "0.69",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 4,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 30, keterangan: "0.69 — tumpukan terdeteksi" },
+				{ label: "Kelengkapan", poin: 15, keterangan: "Foto + GPS + deskripsi lengkap" },
+			],
+			ditanganiOleh: "petugas",
+			hariLalu: 4,
+		},
+		{
+			pelaporNama: "Anonim",
+			pelaporTelepon: null,
+			deskripsi: "Sampah di gang sempit, mobil pengangkut tidak masuk.",
+			jenisSampah: "tumpukan_sampah",
+			latitude: "-6.94020",
+			longitude: "107.63310",
+			kecamatan: "Kiaracondong",
+			status: "SELESAI" as const,
+			catatanPetugas: "Diangkut manual dengan gerobak motor.",
+			aiSkor: "0.58",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 2,
+			aiRekomendasi: "PERLU_TINJAUAN" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 20, keterangan: "0.58 — tumpukan kecil" },
+				{ label: "Pelapor anonim", poin: -5, keterangan: "Tidak ada nomor untuk verifikasi" },
+			],
+			ditanganiOleh: "petugas",
+			hariLalu: 7,
+		},
+		{
+			// Pindai AI gagal (layanan pLitter sempat mati) — memberi contoh baris
+			// yang perlu tombol "Pindai ulang" di antrian triase.
+			pelaporNama: "Wati Suryani",
+			pelaporTelepon: "081234500009",
+			deskripsi: "Sampah menumpuk di depan halte, tolong dicek.",
+			jenisSampah: "tumpukan_sampah",
+			latitude: "-6.91780",
+			longitude: "107.61940",
+			kecamatan: "Sumur Bandung",
+			status: "MENUNGGU" as const,
+			aiSkor: null,
+			aiLabel: null,
+			aiJumlahDeteksi: null,
+			aiRekomendasi: "GAGAL_PINDAI" as const,
+			faktorAi: [
+				{ label: "Pindai AI", poin: 0, keterangan: "Layanan deteksi tidak merespons" },
+			],
+			hariLalu: 0,
+		},
+		{
+			pelaporNama: "Asep Ridwan",
+			pelaporTelepon: "081234500010",
+			deskripsi:
+				"Titik langganan pembuangan liar di bawah jembatan layang, tiap minggu muncul lagi.",
+			jenisSampah: "pembuangan_liar_besar",
+			latitude: "-6.94810",
+			longitude: "107.63980",
+			kecamatan: "Bandung Kidul",
+			status: "MENUNGGU" as const,
+			aiSkor: "0.91",
+			aiLabel: "Pile",
+			aiJumlahDeteksi: 9,
+			aiRekomendasi: "SANGAT_MUNGKIN_VALID" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 45, keterangan: "0.91 — 9 objek terdeteksi" },
+				{ label: "Titik kronis", poin: 20, keterangan: "4 laporan di radius 50 m bulan ini" },
+				{ label: "Reputasi pelapor", poin: 10, keterangan: "Riwayat laporan valid" },
+			],
+			hariLalu: 0,
+		},
+		{
+			pelaporNama: "Tini Marlina",
+			pelaporTelepon: "081234500011",
+			deskripsi: "Ada beberapa botol dan gelas plastik di taman, tidak banyak tapi mengganggu.",
+			jenisSampah: "botol_minuman",
+			latitude: "-6.90050",
+			longitude: "107.61510",
+			kecamatan: "Coblong",
+			status: "MENUNGGU" as const,
+			aiSkor: "0.34",
+			aiLabel: "Litter",
+			aiJumlahDeteksi: 2,
+			aiRekomendasi: "PERLU_TINJAUAN" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 10, keterangan: "0.34 — sampah tersebar sedikit" },
+				{ label: "Kelengkapan", poin: 15, keterangan: "Foto + GPS + deskripsi lengkap" },
+			],
+			hariLalu: 1,
+		},
+		{
+			pelaporNama: "Tes Tes",
+			pelaporTelepon: "081234500012",
+			deskripsi: "asdf asdf",
+			jenisSampah: null,
+			latitude: null,
+			longitude: null,
+			kecamatan: "Astanaanyar",
+			status: "DITOLAK" as const,
+			catatanPetugas: "Laporan uji coba, tidak ada objek sampah pada foto.",
+			aiSkor: "0.01",
+			aiLabel: null,
+			aiJumlahDeteksi: 0,
+			aiRekomendasi: "KEMUNGKINAN_SPAM" as const,
+			faktorAi: [
+				{ label: "Skor AI", poin: 0, keterangan: "0.01 — tidak ada objek sampah terdeteksi" },
+				{ label: "Deskripsi", poin: -10, keterangan: "Isi deskripsi tidak bermakna" },
+			],
+			ditanganiOleh: "operator",
+			hariLalu: 9,
 		},
 	];
 
+	// Id digenerate lebih dulu supaya laporan duplikat bisa menunjuk induknya
+	// lewat `duplikatDariIndex` tanpa query balik setelah insert.
+	const laporanIds = laporanData.map(() => generateId(16));
+
 	await db.insert(publicReports).values(
-		laporanData.map(({ hariLalu, ...l }) => ({
-			id: generateId(16),
+		laporanData.map(({ hariLalu, faktorAi, ditanganiOleh, duplikatDariIndex, ...l }, i) => ({
+			id: laporanIds[i],
 			// Kode deterministik dari nomor urut supaya tidak bentrok antar-reset
 			// demo, tapi tetap berbentuk seperti kode asli.
 			kodeTracking: `LPR-${generateId(6)
@@ -1508,7 +1738,11 @@ export async function seedDemo() {
 			urlFoto: "/uploads/contoh-laporan.jpg",
 			kota: "Kota Bandung",
 			...l,
-			aiDipindaiPada: daysAgo(hariLalu),
+			aiRincian: faktorAi ? JSON.stringify(faktorAi) : null,
+			diprosesOleh: ditanganiOleh ? (userIdByUsername.get(ditanganiOleh) ?? null) : null,
+			duplikatDariId: duplikatDariIndex === undefined ? null : laporanIds[duplikatDariIndex],
+			// Pindai gagal tidak punya waktu pindai yang berarti.
+			aiDipindaiPada: l.aiRekomendasi === "GAGAL_PINDAI" ? null : daysAgo(hariLalu),
 			createdAt: daysAgo(hariLalu),
 			updatedAt: daysAgo(hariLalu),
 		}))
@@ -1519,7 +1753,17 @@ export async function seedDemo() {
 	// "reputasi pelapor" di antrian triase tidak kosong saat demo.
 	await db.insert(reporterTrust).values([
 		{ telepon: "6281234500001", laporanTotal: 6, laporanValid: 5, laporanDitolak: 1, skor: 75 },
+		{ telepon: "6281234500002", laporanTotal: 2, laporanValid: 1, laporanDitolak: 0, skor: 55 },
 		{ telepon: "6281234500004", laporanTotal: 5, laporanValid: 0, laporanDitolak: 5, skor: 14 },
+		{ telepon: "6281234500005", laporanTotal: 3, laporanValid: 1, laporanDitolak: 0, skor: 48 },
+		{ telepon: "6281234500006", laporanTotal: 9, laporanValid: 8, laporanDitolak: 1, skor: 82 },
+		// Komunitas warga — pelapor paling produktif dan hampir selalu valid.
+		{ telepon: "6281234500007", laporanTotal: 24, laporanValid: 22, laporanDitolak: 1, skor: 91 },
+		{ telepon: "6281234500008", laporanTotal: 4, laporanValid: 3, laporanDitolak: 1, skor: 62 },
+		{ telepon: "6281234500009", laporanTotal: 1, laporanValid: 0, laporanDitolak: 0, skor: 50 },
+		{ telepon: "6281234500010", laporanTotal: 11, laporanValid: 10, laporanDitolak: 1, skor: 86 },
+		{ telepon: "6281234500011", laporanTotal: 2, laporanValid: 1, laporanDitolak: 1, skor: 45 },
+		{ telepon: "6281234500012", laporanTotal: 3, laporanValid: 0, laporanDitolak: 3, skor: 12 },
 	]);
 
 	console.log(`  Created ${settingsData.length} app settings`);

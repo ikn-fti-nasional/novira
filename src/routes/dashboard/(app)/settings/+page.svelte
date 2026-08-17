@@ -122,7 +122,7 @@
 			<Tabs.Trigger value="sessions">Sesi</Tabs.Trigger>
 			<Tabs.Trigger value="notifications">Notifikasi</Tabs.Trigger>
 			{#if data.isAdmin}
-				<Tabs.Trigger value="application">Aplikasi</Tabs.Trigger>
+				<Tabs.Trigger value="application">Sistem &amp; Deteksi</Tabs.Trigger>
 			{/if}
 			{#if data.isAdmin && data.isDemoMode}
 				<Tabs.Trigger value="demo">Demo</Tabs.Trigger>
@@ -277,68 +277,26 @@
 			<Tabs.Content value="application" class="space-y-6 pt-4">
 				<Card.Root>
 					<Card.Header>
-						<Card.Title>Pengaturan Aplikasi</Card.Title>
-						<Card.Description
-							>Konfigurasi pengaturan aplikasi secara global. Khusus admin.</Card.Description
-						>
+						<Card.Title>Mode Pemeliharaan</Card.Title>
+						<Card.Description>
+							Selama mode pemeliharaan aktif, hanya admin yang bisa membuka dashboard. Peran lain
+							(operator, kepala seksi, petugas lapangan) melihat halaman pemeliharaan.
+						</Card.Description>
 					</Card.Header>
 					<Card.Content>
-						<form method="POST" action="?/updateSettings" use:enhance class="space-y-6">
-							<div class="grid gap-2">
-								<Label for="siteName">Nama Situs</Label>
-								<Input id="siteName" name="siteName" value={data.settings.siteName} />
-							</div>
-
-							<div class="grid gap-2">
-								<Label>Zona Waktu</Label>
-								<Select.Root name="timezone" type="single" value={data.settings.timezone}>
-									<Select.Trigger>
-										<span>{data.settings.timezone}</span>
-									</Select.Trigger>
-									<Select.Content>
-										<Select.Item value="UTC">UTC</Select.Item>
-										<Select.Item value="America/New_York">America/New_York</Select.Item>
-										<Select.Item value="America/Chicago">America/Chicago</Select.Item>
-										<Select.Item value="America/Denver">America/Denver</Select.Item>
-										<Select.Item value="America/Los_Angeles">America/Los_Angeles</Select.Item>
-										<Select.Item value="Europe/London">Europe/London</Select.Item>
-										<Select.Item value="Europe/Berlin">Europe/Berlin</Select.Item>
-										<Select.Item value="Asia/Tokyo">Asia/Tokyo</Select.Item>
-									</Select.Content>
-								</Select.Root>
-							</div>
-
-							<div class="grid gap-2">
-								<Label>Peran Pengguna Default</Label>
-								<Select.Root name="defaultRole" type="single" value={data.settings.defaultRole}>
-									<Select.Trigger>
-										<span class="capitalize">{data.settings.defaultRole}</span>
-									</Select.Trigger>
-									<Select.Content>
-										<Select.Item value="admin">Admin (IT Sistem)</Select.Item>
-										<Select.Item value="operator">Operator DLH</Select.Item>
-										<Select.Item value="kepala_seksi">Kepala Seksi</Select.Item>
-										<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
-										<Select.Item value="walikota">Wali Kota</Select.Item>
-										<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
-									</Select.Content>
-								</Select.Root>
-								<p class="text-muted-foreground text-xs">
-									Peran yang diberikan secara default untuk pengguna baru.
-								</p>
-							</div>
-
+						<form method="POST" action="?/updateSettings" use:enhance class="space-y-4">
 							<div class="flex items-center justify-between rounded-lg border p-4">
 								<div class="space-y-0.5">
-									<Label>Mode Pemeliharaan</Label>
+									<Label>Aktifkan mode pemeliharaan</Label>
 									<p class="text-muted-foreground text-xs">
-										Jika diaktifkan, pengguna non-admin akan melihat halaman pemeliharaan.
+										{data.settings.maintenanceMode === "true"
+											? "Sedang aktif — pengguna non-admin tidak bisa mengakses dashboard."
+											: "Tidak aktif — semua pengguna dapat mengakses dashboard secara normal."}
 									</p>
 								</div>
 								<Switch name="maintenanceMode" checked={data.settings.maintenanceMode === "true"} />
 							</div>
-
-							<Button type="submit">Simpan Pengaturan</Button>
+							<Button type="submit">Simpan</Button>
 						</form>
 					</Card.Content>
 				</Card.Root>
