@@ -1,5 +1,7 @@
 <script lang="ts">
 	import ThemeToggle from "$lib/components/theme-toggle.svelte";
+	import { Button } from "$lib/components/ui/button/index.js";
+	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
 
 	let { children } = $props();
 </script>
@@ -42,6 +44,10 @@
 				<span class="hidden text-xs text-muted-foreground sm:inline sm:text-sm">
 					Sistem Pemantauan Kebersihan Kota
 				</span>
+				<Button href="/login" variant="outline" size="sm" class="gap-1.5">
+					<LayoutDashboardIcon class="size-4" />
+					<span class="hidden sm:inline">Dashboard</span>
+				</Button>
 				<ThemeToggle />
 			</div>
 		</div>

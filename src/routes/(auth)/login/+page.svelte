@@ -4,6 +4,9 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
+	import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
+
+	let masuk = $state(false);
 
 	let { form, data } = $props();
 
@@ -86,7 +89,17 @@
 				</div>
 			{/if}
 
-			<form method="POST" use:enhance class="space-y-4">
+			<form
+				method="POST"
+				use:enhance={() => {
+					masuk = true;
+					return async ({ update }) => {
+						await update();
+						masuk = false;
+					};
+				}}
+				class="space-y-4"
+			>
 				<div class="space-y-2">
 					<Label for="username" class="text-xs font-bold">Nama Pengguna (Username)</Label>
 					<Input
@@ -113,9 +126,15 @@
 				</div>
 				<Button
 					type="submit"
-					class="w-full bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+					disabled={masuk}
+					class="w-full gap-2 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
 				>
-					Masuk Sekarang
+					{#if masuk}
+						<LoaderCircleIcon class="size-4 animate-spin" />
+						Memproses…
+					{:else}
+						Masuk Sekarang
+					{/if}
 				</Button>
 			</form>
 

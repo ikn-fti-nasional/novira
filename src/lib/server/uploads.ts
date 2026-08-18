@@ -1,8 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { put } from "@vercel/blob";
 
+// Foto dikompres otomatis di browser sebelum diunggah (lihat `kompresFoto` di
+// halaman /lapor), jadi ini bukan batas yang dilihat pengguna -- hanya jaring
+// pengaman untuk unggahan mentah kalau kompresi klien gagal/dilewati.
 const MAX_SIZE = {
-	foto: 5 * 1024 * 1024,
+	foto: 25 * 1024 * 1024,
 	video: 20 * 1024 * 1024,
 } as const;
 

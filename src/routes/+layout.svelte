@@ -3,6 +3,7 @@
 	import { ModeWatcher } from "mode-watcher";
 	import { MetaTags } from "svelte-meta-tags";
 	import { onNavigate } from "$app/navigation";
+	import { navigating } from "$app/state";
 	import "../app.css";
 
 	let { children } = $props();
@@ -51,4 +52,24 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+{#if navigating.to}
+	<div class="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-emerald-500/20">
+		<div class="h-full w-1/3 animate-[nav-progress_1.1s_ease-in-out_infinite] bg-emerald-500"></div>
+	</div>
+{/if}
+
 {@render children()}
+
+<style>
+	@keyframes nav-progress {
+		0% {
+			transform: translateX(-100%);
+		}
+		50% {
+			transform: translateX(150%);
+		}
+		100% {
+			transform: translateX(150%);
+		}
+	}
+</style>

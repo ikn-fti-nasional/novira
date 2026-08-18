@@ -7,18 +7,27 @@
 	import { Textarea } from "$lib/components/ui/textarea/index.js";
 	import { enhance } from "$app/forms";
 	import CameraIcon from "@lucide/svelte/icons/camera";
-	import VideoIcon from "@lucide/svelte/icons/video";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
 	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
 	import SendIcon from "@lucide/svelte/icons/send";
 	import LeafIcon from "@lucide/svelte/icons/leaf";
+	import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
+	import type { Map as LeafletMap, Marker } from "leaflet";
 
 	let { form } = $props();
+
+	const DEFAULT_CENTER: [number, number] = [-6.9175, 107.6191]; // Bandung — dipakai saat GPS ditolak/gagal
 
 	let latitude = $state("");
 	let longitude = $state("");
 	let lokasiTerkunci = $state(false);
 	let gpsError = $state("");
+	let mencariLokasi = $state(true);
+
+	let fotoInput = $state<HTMLInputElement | null>(null);
+	let mengompres = $state(false);
+	let ukuranFotoKb = $state<number | null>(null);
+	let mengirim = $state(false);
 
 	const jenisSampahOptions = [
 		{ value: "tumpukan_sampah", label: "Tumpukan sampah" },
@@ -29,31 +38,145 @@
 		{ value: "puing_bangunan", label: "Puing bangunan" },
 	];
 
-	function ambilLokasi() {
-		if (!navigator.geolocation) {
-			gpsError = "Browser tidak mendukung GPS — pilih kota secara manual.";
+	/**
+	 * Foto dari kamera ponsel bisa 8-12 MB. Server tidak lagi memaksa batas
+	 * ukuran ke pengguna -- alih-alih, setiap foto dikompres di browser jadi
+	 * JPEG beresolusi wajar sebelum dikirim, supaya unggahan tetap ringan
+	 * tanpa pengguna perlu tahu soal batas apa pun.
+	 */
+	async function kompresFoto(file: File): Promise<File> {
+		if (!file.type.startsWith("image/")) return file;
+
+		const bitmap = await createImageBitmap(file);
+		const MAKS_DIMENSI = 1920;
+		const skala = Math.min(1, MAKS_DIMENSI / Math.max(bitmap.width, bitmap.height));
+		const lebar = Math.round(bitmap.width * skala);
+		const tinggi = Math.round(bitmap.height * skala);
+
+		const canvas = document.createElement("canvas");
+		canvas.width = lebar;
+		canvas.height = tinggi;
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return file;
+		ctx.drawImage(bitmap, 0, 0, lebar, tinggi);
+
+		const blob: Blob | null = await new Promise((resolve) =>
+			canvas.toBlob(resolve, "image/jpeg", 0.8)
+		);
+		if (!blob) return file;
+
+		const namaBaru = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+		return new File([blob], namaBaru, { type: "image/jpeg" });
+	}
+
+	async function tanganiPilihFoto(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) {
+			ukuranFotoKb = null;
 			return;
 		}
+
+		mengompres = true;
+		try {
+			const dikompres = await kompresFoto(file);
+			const dt = new DataTransfer();
+			dt.items.add(dikompres);
+			input.files = dt.files;
+			ukuranFotoKb = Math.round(dikompres.size / 1024);
+		} catch {
+			// Kompresi gagal (mis. format tidak didukung createImageBitmap) --
+			// kirim berkas asli apa adanya daripada memblokir laporan warga.
+			ukuranFotoKb = Math.round(file.size / 1024);
+		} finally {
+			mengompres = false;
+		}
+	}
+
+	function ambilLokasi() {
+		if (!navigator.geolocation) {
+			gpsError = "Browser tidak mendukung GPS — geser pin pada peta secara manual.";
+			mencariLokasi = false;
+			return;
+		}
+		mencariLokasi = true;
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
-				latitude = pos.coords.latitude.toFixed(6);
-				longitude = pos.coords.longitude.toFixed(6);
-				lokasiTerkunci = true;
-				gpsError = "";
+				setLokasi(pos.coords.latitude, pos.coords.longitude);
+				mencariLokasi = false;
 			},
 			() => {
-				gpsError = "Gagal mendapat GPS — pilih kota secara manual.";
+				gpsError = "Gagal mendapat GPS — geser pin pada peta ke lokasi sampah.";
+				mencariLokasi = false;
 			},
 			{ enableHighAccuracy: true, timeout: 10000 }
 		);
 	}
+
+	function setLokasi(lat: number, lon: number) {
+		latitude = lat.toFixed(6);
+		longitude = lon.toFixed(6);
+		lokasiTerkunci = true;
+		gpsError = "";
+		if (peta && penanda) {
+			penanda.setLatLng([lat, lon]);
+			peta.setView([lat, lon], Math.max(peta.getZoom(), 16));
+		}
+	}
+
+	let petaWadah = $state<HTMLDivElement | null>(null);
+	let peta: LeafletMap | null = null;
+	let penanda: Marker | null = null;
+
+	// Peta pemilih lokasi -- default ke GPS pengguna kalau diizinkan, jatuh ke
+	// pusat kota kalau tidak. Leaflet menyentuh `window` saat diimpor, jadi
+	// wajib dimuat dinamis di klien (lihat pola sama di hotspot-map.svelte).
+	$effect(() => {
+		if (!petaWadah) return;
+		let dibatalkan = false;
+
+		(async () => {
+			const L = (await import("leaflet")).default;
+			await import("leaflet/dist/leaflet.css");
+			if (dibatalkan || !petaWadah) return;
+
+			const m = L.map(petaWadah, { scrollWheelZoom: false }).setView(DEFAULT_CENTER, 13);
+			peta = m;
+			L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+				attribution:
+					'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &middot; ubin <a href="https://carto.com/attributions">CARTO</a>',
+				maxZoom: 19,
+			}).addTo(m);
+
+			const p = L.marker(DEFAULT_CENTER, { draggable: true }).addTo(m);
+			penanda = p;
+			p.on("dragend", () => {
+				const { lat, lng } = p.getLatLng();
+				setLokasi(lat, lng);
+			});
+			m.on("click", (ev: any) => {
+				setLokasi(ev.latlng.lat, ev.latlng.lng);
+			});
+
+			// Coba GPS begitu peta siap -- ini yang membuat peta "default ke GPS"
+			// alih-alih pusat kota generik.
+			ambilLokasi();
+		})();
+
+		return () => {
+			dibatalkan = true;
+			peta?.remove();
+			peta = null;
+			penanda = null;
+		};
+	});
 </script>
 
 <svelte:head>
 	<title>Lapor Sampah - Novira</title>
 	<meta
 		name="description"
-		content="Formulir pelaporan sampah liar. Upload foto/video, kirim lokasi GPS, dan laporan akan diproses tim kebersihan kota."
+		content="Formulir pelaporan sampah liar. Upload foto, kirim lokasi GPS, dan laporan akan diproses tim kebersihan kota."
 	/>
 </svelte:head>
 
@@ -68,14 +191,14 @@
 		</div>
 		<h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Lapor Sampah Jalanan</h1>
 		<p class="mx-auto mt-3 max-w-md text-muted-foreground">
-			Foto atau video penumpukan sampah liar, sertakan lokasi, dan kirim. Tim kebersihan kota akan
+			Foto penumpukan sampah liar, sertakan lokasi, dan kirim. Tim kebersihan kota akan
 			menindaklanjutinya.
 		</p>
 	</div>
 
 	<!-- Panduan singkat -->
 	<div class="mb-8 grid grid-cols-3 gap-3">
-		{#each [{ icon: CameraIcon, label: "Upload bukti foto/video" }, { icon: MapPinIcon, label: "Tambahkan lokasi" }, { icon: SendIcon, label: "Kirim laporan" }] as tip}
+		{#each [{ icon: CameraIcon, label: "Upload bukti foto" }, { icon: MapPinIcon, label: "Tandai lokasi" }, { icon: SendIcon, label: "Kirim laporan" }] as tip}
 			{@const TipIcon = tip.icon}
 			<div
 				class="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center"
@@ -91,70 +214,67 @@
 		class="rounded-2xl border-border/60 bg-card/80 shadow-xl shadow-emerald-500/5 backdrop-blur-sm"
 	>
 		<Card.Content class="p-6 md:p-8">
-			<form method="POST" enctype="multipart/form-data" use:enhance class="space-y-6">
+			<form
+				method="POST"
+				enctype="multipart/form-data"
+				use:enhance={() => {
+					mengirim = true;
+					return async ({ update }) => {
+						await update();
+						mengirim = false;
+					};
+				}}
+				class="space-y-6"
+			>
 				<input type="hidden" name="latitude" value={latitude} />
 				<input type="hidden" name="longitude" value={longitude} />
 				<input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" />
 
-				<!-- Upload media -->
+				<!-- Upload foto -->
 				<div class="space-y-3">
 					<Label.Root class="text-sm font-semibold">
-						Lampiran
-						<span class="ml-1 font-normal text-muted-foreground"
-							>(foto atau video — minimal satu)</span
-						>
+						Foto bukti
+						<span class="ml-1 font-normal text-muted-foreground">(wajib)</span>
 					</Label.Root>
-					<div class="grid gap-3 sm:grid-cols-2">
-						<div
-							class="group rounded-xl border border-dashed border-border/80 bg-muted/30 p-5 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
+					<div
+						class="group rounded-xl border border-dashed border-border/80 bg-muted/30 p-5 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
+					>
+						<Label.Root
+							for="foto"
+							class="flex cursor-pointer flex-col items-center gap-2 text-center"
 						>
-							<Label.Root
-								for="foto"
-								class="flex cursor-pointer flex-col items-center gap-2 text-center"
+							<div
+								class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
 							>
-								<div
-									class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
-								>
+								{#if mengompres}
+									<LoaderCircleIcon class="size-5 animate-spin text-emerald-600 dark:text-emerald-400" />
+								{:else}
 									<CameraIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
-								</div>
-								<div>
-									<span class="block text-sm font-semibold">Unggah Foto</span>
-									<span class="text-xs text-muted-foreground">JPG / PNG / WEBP · maks 5 MB</span>
-								</div>
-							</Label.Root>
-							<input
-								id="foto"
-								name="foto"
-								type="file"
-								accept="image/jpeg,image/png,image/webp"
-								class="mt-3 w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700 dark:file:text-emerald-400"
-							/>
-						</div>
-						<div
-							class="group rounded-xl border border-dashed border-border/80 bg-muted/30 p-5 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
-						>
-							<Label.Root
-								for="video"
-								class="flex cursor-pointer flex-col items-center gap-2 text-center"
-							>
-								<div
-									class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
-								>
-									<VideoIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
-								</div>
-								<div>
-									<span class="block text-sm font-semibold">Unggah Video</span>
-									<span class="text-xs text-muted-foreground">MP4 / WEBM / MOV · maks 20 MB</span>
-								</div>
-							</Label.Root>
-							<input
-								id="video"
-								name="video"
-								type="file"
-								accept="video/mp4,video/webm,video/quicktime"
-								class="mt-3 w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700 dark:file:text-emerald-400"
-							/>
-						</div>
+								{/if}
+							</div>
+							<div>
+								<span class="block text-sm font-semibold">Unggah Foto</span>
+								<span class="text-xs text-muted-foreground">
+									{#if mengompres}
+										Mengompres foto…
+									{:else if ukuranFotoKb !== null}
+										Terkompresi otomatis · {ukuranFotoKb} KB
+									{:else}
+										JPG / PNG / WEBP — dikompresi otomatis, ambil dari kamera langsung
+									{/if}
+								</span>
+							</div>
+						</Label.Root>
+						<input
+							bind:this={fotoInput}
+							id="foto"
+							name="foto"
+							type="file"
+							accept="image/jpeg,image/png,image/webp"
+							capture="environment"
+							onchange={tanganiPilihFoto}
+							class="mt-3 w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-emerald-700 dark:file:text-emerald-400"
+						/>
 					</div>
 				</div>
 
@@ -163,8 +283,8 @@
 
 				<!-- Lokasi -->
 				<div class="space-y-3">
-					<Label.Root class="text-sm font-semibold">Lokasi</Label.Root>
-					<div class="flex items-center gap-2">
+					<div class="flex items-center justify-between gap-2">
+						<Label.Root class="text-sm font-semibold">Lokasi</Label.Root>
 						<Button
 							type="button"
 							variant="outline"
@@ -174,18 +294,36 @@
 								? 'text-emerald-700 dark:text-emerald-400'
 								: ''}"
 						>
-							{#if lokasiTerkunci}
+							{#if mencariLokasi}
+								<LoaderCircleIcon class="size-4 animate-spin" />
+								Mencari GPS…
+							{:else if lokasiTerkunci}
 								<CheckCircle2Icon class="size-4 text-emerald-600" />
-								GPS: {latitude}, {longitude}
+								Pakai GPS Saya
 							{:else}
 								<MapPinIcon class="size-4" />
-								Deteksi GPS Saya
+								Pakai GPS Saya
 							{/if}
 						</Button>
-						{#if gpsError}
-							<span class="text-xs text-amber-600 dark:text-amber-400">{gpsError}</span>
-						{/if}
 					</div>
+					<p class="text-xs text-muted-foreground">
+						Peta otomatis mengarah ke lokasi GPS Anda. Geser pin atau ketuk peta untuk mengoreksi
+						titik sampah.
+					</p>
+					<div
+						bind:this={petaWadah}
+						class="h-64 w-full rounded-xl border border-border/60 bg-muted"
+						role="application"
+						aria-label="Peta pemilih lokasi laporan"
+					></div>
+					{#if lokasiTerkunci}
+						<p class="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+							<CheckCircle2Icon class="size-3.5" />
+							Lokasi: {latitude}, {longitude}
+						</p>
+					{:else if gpsError}
+						<p class="text-xs text-amber-600 dark:text-amber-400">{gpsError}</p>
+					{/if}
 					<div class="grid gap-3 sm:grid-cols-2">
 						<div class="space-y-1.5">
 							<Label.Root for="kota" class="text-xs font-medium">Kota</Label.Root>
@@ -271,11 +409,17 @@
 					type="submit"
 					size="lg"
 					id="btn-kirim-laporan"
+					disabled={mengompres || mengirim}
 					class="w-full gap-2 rounded-xl py-6 text-base font-semibold shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.01] hover:shadow-emerald-500/40"
 					style="background: linear-gradient(135deg, oklch(0.50 0.18 145), oklch(0.60 0.17 160)); color: white;"
 				>
-					<SendIcon class="size-5" />
-					Kirim Laporan
+					{#if mengirim}
+						<LoaderCircleIcon class="size-5 animate-spin" />
+						Mengirim Laporan…
+					{:else}
+						<SendIcon class="size-5" />
+						Kirim Laporan
+					{/if}
 				</Button>
 			</form>
 		</Card.Content>
