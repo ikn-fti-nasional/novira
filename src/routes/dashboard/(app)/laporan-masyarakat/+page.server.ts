@@ -11,6 +11,7 @@ import {
 	verifikasiLaporan,
 	type AktorTriase,
 } from "$lib/server/novira/laporan.js";
+import { MODEL_TYPES_TERSEDIA, type ModelTypeDeteksi } from "$lib/server/novira/deteksi.js";
 import { ringkasanTriase } from "$lib/server/novira/analitik.js";
 import { parseRincian } from "$lib/server/novira/prioritas.js";
 import type { Actions, PageServerLoad } from "./$types.js";
@@ -118,10 +119,17 @@ export const actions: Actions = {
 		const id = String(form.get("id") ?? "");
 		if (!id) return fail(400, { message: "Laporan tidak valid" });
 
+		const modelTypeRaw = String(form.get("modelType") ?? "");
+		const modelType: ModelTypeDeteksi = (
+			MODEL_TYPES_TERSEDIA as readonly string[]
+		).includes(modelTypeRaw)
+			? (modelTypeRaw as ModelTypeDeteksi)
+			: "street";
+
 		// Berbeda dari jalur publik, di sini pemindaian DITUNGGU: operator
 		// menekan tombolnya secara sadar dan mengharapkan hasilnya langsung
 		// terlihat saat halaman dimuat ulang.
-		await pindaiLaporan(id);
+		await pindaiLaporan(id, { modelType });
 		return { success: true, message: "Pemindaian ulang selesai" };
 	},
 

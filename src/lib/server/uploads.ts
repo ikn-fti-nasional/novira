@@ -47,3 +47,14 @@ export async function storeUpload(file: File, kind: "foto" | "video"): Promise<s
 	const blob = await put(name, file, { access: "public", contentType: file.type });
 	return blob.url;
 }
+
+/**
+ * Simpan foto beranotasi (kotak deteksi) yang dihasilkan pLitter -- ini
+ * gambar yang sudah digenerate model, bukan unggahan mentah pengguna, jadi
+ * tidak lewat `validateUpload`.
+ */
+export async function storeAnnotatedImage(file: File): Promise<string> {
+	const name = `foto-analisa/${Date.now()}-${randomBytes(6).toString("hex")}.jpg`;
+	const blob = await put(name, file, { access: "public", contentType: "image/jpeg" });
+	return blob.url;
+}

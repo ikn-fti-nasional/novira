@@ -111,6 +111,8 @@ CREATE TABLE IF NOT EXISTS public_reports (
 	ai_rekomendasi text,
 	ai_rincian text,
 	ai_dipindai_pada timestamp,
+	ai_model_type text,
+	ai_annotated_url text,
 	-- insiden_id sengaja tanpa REFERENCES di sini: public_reports dibuat
 	-- sebelum incidents, dan keduanya saling menunjuk. Di Postgres asli
 	-- Drizzle menambahkan constraint-nya lewat ALTER TABLE terpisah.

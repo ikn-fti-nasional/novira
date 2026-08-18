@@ -43,6 +43,13 @@
       "when": 1786891167523,
       "tag": "0005_sleepy_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787050110075,
+      "tag": "0006_stale_vector",
+      "breakpoints": true
     }
   ]
 }

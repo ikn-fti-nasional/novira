@@ -218,6 +218,10 @@ export const publicReports = pgTable(
 		/** Alasan rekomendasi dalam JSON (array faktor) supaya bisa ditampilkan per baris. */
 		aiRincian: text("ai_rincian"),
 		aiDipindaiPada: timestamp("ai_dipindai_pada", { mode: "date" }),
+		/** Model pLitter yang dipakai pemindaian terakhir (bisa beda dari default kalau operator memilih model lain saat pindai ulang). */
+		aiModelType: text("ai_model_type", { enum: ["street", "cctv", "taco"] }),
+		/** URL Vercel Blob foto beranotasi (kotak deteksi) dari pemindaian terakhir yang berhasil. */
+		aiAnnotatedUrl: text("ai_annotated_url"),
 
 		/** Terisi setelah operator memverifikasi dan laporan naik jadi insiden. */
 		insidenId: text("insiden_id").references((): AnyPgColumn => incidents.id, {

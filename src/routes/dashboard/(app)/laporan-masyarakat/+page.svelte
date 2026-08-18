@@ -47,9 +47,16 @@
 			class: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
 		},
 		GAGAL_PINDAI: {
-			label: "Belum terpindai",
+			label: "Gagal dianalisis",
 			class: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
 		},
+	};
+
+	const MODEL_TYPES = ["street", "cctv", "taco"] as const;
+	const modelLabel: Record<string, string> = {
+		street: "Street (default)",
+		cctv: "CCTV/kanal",
+		taco: "TACO",
 	};
 
 	const jenisSampahOptions = [
@@ -139,6 +146,14 @@
 									<SparklesIcon class="mr-1 size-3" />
 									{rekomendasiBadge[rep.aiRekomendasi].label}
 								</Badge>
+							{:else if !rep.aiDipindaiPada}
+								<Badge
+									variant="outline"
+									class="text-slate-500 dark:text-slate-400"
+								>
+									<SparklesIcon class="mr-1 size-3" />
+									Belum dipindai
+								</Badge>
 							{/if}
 							{#if rep.reputasiPelapor !== null}
 								<Badge variant="outline" class="gap-1">
@@ -163,28 +178,57 @@
 					<p class="text-sm">{rep.deskripsi}</p>
 				{/if}
 
-				<div class="flex flex-wrap gap-3">
-					{#if rep.urlFoto}
-						<a
-							href={rep.urlFoto}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="flex items-center gap-1 text-xs text-emerald-600 hover:underline"
-						>
-							<CameraIcon class="size-3.5" /> Lihat foto <ExternalLinkIcon class="size-3" />
-						</a>
-					{/if}
-					{#if rep.urlVideo}
-						<a
-							href={rep.urlVideo}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="flex items-center gap-1 text-xs text-emerald-600 hover:underline"
-						>
-							<VideoIcon class="size-3.5" /> Lihat video <ExternalLinkIcon class="size-3" />
-						</a>
-					{/if}
-				</div>
+				{#if rep.urlFoto || rep.aiAnnotatedUrl}
+					<div class="grid gap-3 sm:grid-cols-2">
+						{#if rep.urlFoto}
+							<a
+								href={rep.urlFoto}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="group overflow-hidden rounded-lg border border-border/60"
+							>
+								<img src={rep.urlFoto} alt="Foto asli laporan" class="aspect-video w-full object-cover" />
+								<span
+									class="flex items-center gap-1 border-t border-border/60 bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground group-hover:text-emerald-600"
+								>
+									<CameraIcon class="size-3" /> Foto asli <ExternalLinkIcon class="size-2.5" />
+								</span>
+							</a>
+						{/if}
+						{#if rep.aiAnnotatedUrl}
+							<a
+								href={rep.aiAnnotatedUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="group overflow-hidden rounded-lg border border-border/60"
+							>
+								<img
+									src={rep.aiAnnotatedUrl}
+									alt="Foto hasil analisa AI"
+									class="aspect-video w-full object-cover"
+								/>
+								<span
+									class="flex items-center gap-1 border-t border-border/60 bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground group-hover:text-emerald-600"
+								>
+									<SparklesIcon class="size-3" /> Hasil analisa AI · model {modelLabel[
+										rep.aiModelType ?? "street"
+									] ?? rep.aiModelType}
+									<ExternalLinkIcon class="size-2.5" />
+								</span>
+							</a>
+						{/if}
+					</div>
+				{/if}
+				{#if rep.urlVideo}
+					<a
+						href={rep.urlVideo}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-1 text-xs text-emerald-600 hover:underline"
+					>
+						<VideoIcon class="size-3.5" /> Lihat video <ExternalLinkIcon class="size-3" />
+					</a>
+				{/if}
 
 				<!-- Penjelasan rekomendasi AI, faktor per faktor -->
 				{#if rep.faktorAi.length > 0}
@@ -286,7 +330,7 @@
 									placeholder="Mis. konfirmasi lokasi dengan pelapor…"
 								/>
 							</div>
-							<div class="flex flex-wrap gap-2">
+							<div class="flex flex-wrap items-center gap-2">
 								<Button
 									type="submit"
 									size="sm"
@@ -294,12 +338,22 @@
 								>
 									Verifikasi → jadikan insiden
 								</Button>
+								<Select.Root type="single" name="modelType" value={rep.aiModelType ?? "street"}>
+									<Select.Trigger class="h-8 w-[9.5rem] text-xs">
+										<span>{modelLabel[rep.aiModelType ?? "street"] ?? rep.aiModelType}</span>
+									</Select.Trigger>
+									<Select.Content>
+										{#each MODEL_TYPES as m (m)}
+											<Select.Item value={m} label={modelLabel[m]}>{modelLabel[m]}</Select.Item>
+										{/each}
+									</Select.Content>
+								</Select.Root>
 								<Button
 									type="submit"
 									size="sm"
 									variant="outline"
 									formaction="?/pindaiUlang"
-									title="Pindai ulang foto dengan AI"
+									title="Pindai ulang foto dengan model yang dipilih"
 								>
 									<RefreshCwIcon class="size-3.5" />
 									Pindai ulang

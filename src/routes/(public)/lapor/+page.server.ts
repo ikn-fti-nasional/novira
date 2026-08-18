@@ -1,7 +1,7 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { publicReports } from "$lib/server/db/schema.js";
-import { storeUpload, validateUpload } from "$lib/server/uploads.js";
+import { storeAnnotatedImage, storeUpload, validateUpload } from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
 import { buatKodeTracking, simpanHasilPindaiKlien } from "$lib/server/novira/laporan.js";
 import type { DeteksiKlien } from "$lib/server/novira/laporan.js";
@@ -113,9 +113,20 @@ export const actions: Actions = {
 			if (punyaFoto) {
 				const aiDeteksiRaw = String(form.get("aiDeteksi") ?? "");
 				const deteksi = parseAiDeteksi(aiDeteksiRaw);
-				await simpanHasilPindaiKlien(laporanId, deteksi);
+				const aiFotoAnalisa = form.get("aiFotoAnalisa");
+				const annotatedUrl =
+					aiFotoAnalisa instanceof File && aiFotoAnalisa.size > 0
+						? await storeAnnotatedImage(aiFotoAnalisa).catch((err) => {
+								console.error("[novira] Gagal menyimpan foto beranotasi:", err);
+								return null;
+							})
+						: null;
+				await simpanHasilPindaiKlien(laporanId, deteksi, { modelType: "street", annotatedUrl });
 			} else {
-				await simpanHasilPindaiKlien(laporanId, null, "laporan tidak menyertakan foto");
+				await simpanHasilPindaiKlien(laporanId, null, {
+					modelType: "street",
+					alasanGagal: "laporan tidak menyertakan foto",
+				});
 			}
 		} catch (err) {
 			console.error("[novira] Gagal mencatat hasil pindai laporan:", err);

@@ -9,7 +9,9 @@ import {
 	reporterTrust,
 } from "$lib/server/db/schema.js";
 import { generateId } from "$lib/server/id.js";
+import { storeAnnotatedImage } from "$lib/server/uploads.js";
 import type { JenisSampah } from "$lib/types/novira.js";
+import type { ModelTypeDeteksi } from "./deteksi.js";
 import { cariTerdekat, jarakMeter, normalisasiTelepon, parseTitik, type Titik } from "./geo.js";
 import { hitungPrioritas, serializeRincian, type FaktorPrioritas } from "./prioritas.js";
 
@@ -77,6 +79,7 @@ interface ImageDetectionResponse {
 	width: number;
 	height: number;
 	detections: PlitterDetection[];
+	annotated_image_base64: string;
 }
 
 /**
@@ -106,7 +109,11 @@ export function buatKodeTracking(): string {
  * pemindaian tidak boleh menggagalkan laporannya. Karena itu fungsi ini
  * menelan errornya sendiri dan mencatat `GAGAL_PINDAI`, bukan melempar.
  */
-export async function pindaiLaporan(laporanId: string): Promise<void> {
+export async function pindaiLaporan(
+	laporanId: string,
+	opsi: { modelType?: ModelTypeDeteksi } = {}
+): Promise<void> {
+	const modelType = opsi.modelType ?? "street";
 	const [laporan] = await db.select().from(publicReports).where(eq(publicReports.id, laporanId));
 	if (!laporan) return;
 
@@ -120,13 +127,14 @@ export async function pindaiLaporan(laporanId: string): Promise<void> {
 				{ label: "Tidak dapat dipindai", poin: 0, keterangan: "laporan tidak menyertakan foto" },
 			]),
 			aiDipindaiPada: new Date(),
+			aiModelType: modelType,
 		});
 		return;
 	}
 
 	let hasil: ImageDetectionResponse;
 	try {
-		hasil = await panggilDetectImage(laporan.urlFoto);
+		hasil = await panggilDetectImage(laporan.urlFoto, modelType);
 	} catch (err) {
 		const pesan = err instanceof Error ? err.message : String(err);
 		console.error("[novira] Pindai AI laporan gagal:", pesan);
@@ -136,11 +144,23 @@ export async function pindaiLaporan(laporanId: string): Promise<void> {
 				{ label: "Pemindaian gagal", poin: 0, keterangan: pesan.slice(0, 200) },
 			]),
 			aiDipindaiPada: new Date(),
+			aiModelType: modelType,
 		});
 		return;
 	}
 
-	await simpanHasilDeteksi(laporanId, hasil.detections);
+	// Foto beranotasi disimpan best-effort -- kegagalan upload blob tidak
+	// boleh membuang hasil deteksi yang sudah didapat.
+	let annotatedUrl: string | null = null;
+	try {
+		const bytes = Buffer.from(hasil.annotated_image_base64, "base64");
+		const file = new File([bytes], "hasil-analisa.jpg", { type: "image/jpeg" });
+		annotatedUrl = await storeAnnotatedImage(file);
+	} catch (err) {
+		console.error("[novira] Gagal menyimpan foto beranotasi:", err);
+	}
+
+	await simpanHasilDeteksi(laporanId, hasil.detections, { modelType, annotatedUrl });
 }
 
 export interface DeteksiKlien {
@@ -159,25 +179,36 @@ export interface DeteksiKlien {
 export async function simpanHasilPindaiKlien(
 	laporanId: string,
 	deteksi: DeteksiKlien[] | null,
-	alasanGagal = "pemindaian di perangkat pelapor tidak berhasil"
+	opsi: { modelType?: ModelTypeDeteksi; annotatedUrl?: string | null; alasanGagal?: string } = {}
 ): Promise<void> {
+	const modelType = opsi.modelType ?? "street";
 	if (deteksi === null) {
 		await tulisHasilPindai(laporanId, {
 			aiRekomendasi: "GAGAL_PINDAI",
 			aiRincian: serializeRincian([
-				{ label: "Tidak dapat dipindai", poin: 0, keterangan: alasanGagal },
+				{
+					label: "Tidak dapat dipindai",
+					poin: 0,
+					keterangan: opsi.alasanGagal ?? "pemindaian di perangkat pelapor tidak berhasil",
+				},
 			]),
 			aiDipindaiPada: new Date(),
+			aiModelType: modelType,
 		});
 		return;
 	}
 	await simpanHasilDeteksi(
 		laporanId,
-		deteksi.map((d) => ({ class_id: 0, class_name: d.className, score: d.score, box: [0, 0, 0, 0] }))
+		deteksi.map((d) => ({ class_id: 0, class_name: d.className, score: d.score, box: [0, 0, 0, 0] })),
+		{ modelType, annotatedUrl: opsi.annotatedUrl ?? null }
 	);
 }
 
-async function simpanHasilDeteksi(laporanId: string, deteksi: PlitterDetection[]): Promise<void> {
+async function simpanHasilDeteksi(
+	laporanId: string,
+	deteksi: PlitterDetection[],
+	opsi: { modelType: ModelTypeDeteksi; annotatedUrl: string | null }
+): Promise<void> {
 	const [laporan] = await db.select().from(publicReports).where(eq(publicReports.id, laporanId));
 	if (!laporan) return;
 
@@ -206,6 +237,8 @@ async function simpanHasilDeteksi(laporanId: string, deteksi: PlitterDetection[]
 		aiRekomendasi: rekomendasi,
 		aiRincian: serializeRincian(rincian),
 		aiDipindaiPada: new Date(),
+		aiModelType: opsi.modelType,
+		aiAnnotatedUrl: opsi.annotatedUrl,
 	});
 }
 
@@ -219,7 +252,11 @@ async function tulisHasilPindai(
 		.where(eq(publicReports.id, laporanId));
 }
 
-async function panggilDetectImage(urlFoto: string): Promise<ImageDetectionResponse> {
+async function panggilDetectImage(
+	urlFoto: string,
+	modelType: ModelTypeDeteksi,
+	confThres = 0.2
+): Promise<ImageDetectionResponse> {
 	// `urlFoto` adalah URL publik Vercel Blob dari storeUpload() -- ambil isinya
 	// lewat HTTP, bukan baca disk lokal (disk container/serverless efemeral).
 	const fotoRes = await fetch(urlFoto, { signal: AbortSignal.timeout(15_000) });
@@ -233,10 +270,13 @@ async function panggilDetectImage(urlFoto: string): Promise<ImageDetectionRespon
 	form.append("file", new Blob([isi], { type: "image/jpeg" }), namaFile);
 
 	const endpoint = new URL("/detect/image", PLITTER_API_URL);
-	endpoint.searchParams.set("model_type", "street");
+	endpoint.searchParams.set("model_type", modelType);
 	// Foto ponsel jarak dekat: objeknya besar di frame, jadi tiled inference
 	// (yang berguna untuk frame CCTV lebar) justru tidak diperlukan.
-	endpoint.searchParams.set("conf_thres", "0.2");
+	endpoint.searchParams.set("conf_thres", String(confThres));
+	// Perlu foto beranotasi supaya operator bisa membandingkan hasil deteksi
+	// terhadap foto asli tanpa membuka gambar mentah dan menghitung sendiri.
+	endpoint.searchParams.set("include_annotated", "true");
 
 	const res = await fetch(endpoint, {
 		method: "POST",

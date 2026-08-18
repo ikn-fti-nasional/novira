@@ -1,0 +1,1635 @@
+{
+  "id": "19628b96-5266-4b88-942a-f2f658effa03",
+  "prevId": "40e2edee-5edb-4203-9858-56114192d810",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.app_settings": {
+      "name": "app_settings",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.area_snapshots": {
+      "name": "area_snapshots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tanggal": {
+          "name": "tanggal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kecamatan": {
+          "name": "kecamatan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kota": {
+          "name": "kota",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skor_kebersihan": {
+          "name": "skor_kebersihan",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jumlah_insiden": {
+          "name": "jumlah_insiden",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "insiden_baru": {
+          "name": "insiden_baru",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "insiden_selesai": {
+          "name": "insiden_selesai",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rata_rata_durasi_jam": {
+          "name": "rata_rata_durasi_jam",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "area_snapshots_tanggal_area_idx": {
+          "name": "area_snapshots_tanggal_area_idx",
+          "columns": [
+            {
+              "expression": "tanggal",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kota",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kecamatan",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "area_snapshots_tanggal_idx": {
+          "name": "area_snapshots_tanggal_idx",
+          "columns": [
+            {
+              "expression": "tanggal",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "waktu": {
+          "name": "waktu",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pengguna": {
+          "name": "pengguna",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "peran": {
+          "name": "peran",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tindakan": {
+          "name": "tindakan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rincian": {
+          "name": "rincian",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wilayah": {
+          "name": "wilayah",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipe": {
+          "name": "tipe",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "incident_id": {
+          "name": "incident_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "audit_log_waktu_idx": {
+          "name": "audit_log_waktu_idx",
+          "columns": [
+            {
+              "expression": "waktu",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_log_incident_id_idx": {
+          "name": "audit_log_incident_id_idx",
+          "columns": [
+            {
+              "expression": "incident_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_log_incident_id_incidents_id_fk": {
+          "name": "audit_log_incident_id_incidents_id_fk",
+          "tableFrom": "audit_log",
+          "tableTo": "incidents",
+          "columnsFrom": [
+            "incident_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cameras": {
+      "name": "cameras",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nama": {
+          "name": "nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kota": {
+          "name": "kota",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kecamatan": {
+          "name": "kecamatan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kelurahan": {
+          "name": "kelurahan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url_stream": {
+          "name": "url_stream",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url_snapshot": {
+          "name": "url_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'OFFLINE'"
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.incidents": {
+      "name": "incidents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "camera_id": {
+          "name": "camera_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sumber": {
+          "name": "sumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'CCTV'"
+        },
+        "laporan_id": {
+          "name": "laporan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lokasi_teks": {
+          "name": "lokasi_teks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jenis_sampah": {
+          "name": "jenis_sampah",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label_sampah": {
+          "name": "label_sampah",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pertama_dilihat": {
+          "name": "pertama_dilihat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "terakhir_dilihat": {
+          "name": "terakhir_dilihat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'AKTIF'"
+        },
+        "keparahan": {
+          "name": "keparahan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tingkat_kepercayaan": {
+          "name": "tingkat_kepercayaan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url_snapshot": {
+          "name": "url_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url_snapshot_pertama": {
+          "name": "url_snapshot_pertama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "petugas_ditugaskan": {
+          "name": "petugas_ditugaskan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bukti_foto_url": {
+          "name": "bukti_foto_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "catatan_penyelesaian": {
+          "name": "catatan_penyelesaian",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_sla": {
+          "name": "status_sla",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'TEPAT_WAKTU'"
+        },
+        "skor_prioritas": {
+          "name": "skor_prioritas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rincian_prioritas": {
+          "name": "rincian_prioritas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tingkat_eskalasi": {
+          "name": "tingkat_eskalasi",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "terakhir_eskalasi_pada": {
+          "name": "terakhir_eskalasi_pada",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bbox_x": {
+          "name": "bbox_x",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bbox_y": {
+          "name": "bbox_y",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bbox_width": {
+          "name": "bbox_width",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bbox_height": {
+          "name": "bbox_height",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "incidents_camera_status_idx": {
+          "name": "incidents_camera_status_idx",
+          "columns": [
+            {
+              "expression": "camera_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "incidents_status_idx": {
+          "name": "incidents_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "incidents_status_prioritas_idx": {
+          "name": "incidents_status_prioritas_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "skor_prioritas",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "incidents_camera_id_cameras_id_fk": {
+          "name": "incidents_camera_id_cameras_id_fk",
+          "tableFrom": "incidents",
+          "tableTo": "cameras",
+          "columnsFrom": [
+            "camera_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "incidents_laporan_id_public_reports_id_fk": {
+          "name": "incidents_laporan_id_public_reports_id_fk",
+          "tableFrom": "incidents",
+          "tableTo": "public_reports",
+          "columnsFrom": [
+            "laporan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "incidents_petugas_ditugaskan_officers_id_fk": {
+          "name": "incidents_petugas_ditugaskan_officers_id_fk",
+          "tableFrom": "incidents",
+          "tableTo": "officers",
+          "columnsFrom": [
+            "petugas_ditugaskan"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notification_reads": {
+      "name": "notification_reads",
+      "schema": "",
+      "columns": {
+        "notification_id": {
+          "name": "notification_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "read": {
+          "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "dismissed": {
+          "name": "dismissed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "notification_reads_notification_id_notifications_id_fk": {
+          "name": "notification_reads_notification_id_notifications_id_fk",
+          "tableFrom": "notification_reads",
+          "tableTo": "notifications",
+          "columnsFrom": [
+            "notification_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "notification_reads_user_id_users_id_fk": {
+          "name": "notification_reads_user_id_users_id_fk",
+          "tableFrom": "notification_reads",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "notification_reads_notification_id_user_id_pk": {
+          "name": "notification_reads_notification_id_user_id_pk",
+          "columns": [
+            "notification_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notifications": {
+      "name": "notifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'info'"
+        },
+        "read": {
+          "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "notifications_user_id_idx": {
+          "name": "notifications_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notifications_read_created_idx": {
+          "name": "notifications_read_created_idx",
+          "columns": [
+            {
+              "expression": "read",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notifications_user_id_users_id_fk": {
+          "name": "notifications_user_id_users_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.officers": {
+      "name": "officers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nama": {
+          "name": "nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "peran": {
+          "name": "peran",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "telepon": {
+          "name": "telepon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wilayah_tugas": {
+          "name": "wilayah_tugas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'SIAP_TUGAS'"
+        },
+        "avatar": {
+          "name": "avatar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "officers_user_id_users_id_fk": {
+          "name": "officers_user_id_users_id_fk",
+          "tableFrom": "officers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "officers_user_id_unique": {
+          "name": "officers_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pages": {
+      "name": "pages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "template": {
+          "name": "template",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "author_id": {
+          "name": "author_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "pages_author_id_idx": {
+          "name": "pages_author_id_idx",
+          "columns": [
+            {
+              "expression": "author_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pages_status_idx": {
+          "name": "pages_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pages_author_id_users_id_fk": {
+          "name": "pages_author_id_users_id_fk",
+          "tableFrom": "pages",
+          "tableTo": "users",
+          "columnsFrom": [
+            "author_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "pages_slug_unique": {
+          "name": "pages_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.password_reset_tokens": {
+      "name": "password_reset_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "password_reset_tokens_token_hash_idx": {
+          "name": "password_reset_tokens_token_hash_idx",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "password_reset_tokens_user_id_idx": {
+          "name": "password_reset_tokens_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "password_reset_tokens_user_id_users_id_fk": {
+          "name": "password_reset_tokens_user_id_users_id_fk",
+          "tableFrom": "password_reset_tokens",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.public_reports": {
+      "name": "public_reports",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "kode_tracking": {
+          "name": "kode_tracking",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pelapor_nama": {
+          "name": "pelapor_nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pelapor_telepon": {
+          "name": "pelapor_telepon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deskripsi": {
+          "name": "deskripsi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jenis_sampah": {
+          "name": "jenis_sampah",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url_foto": {
+          "name": "url_foto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url_video": {
+          "name": "url_video",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kota": {
+          "name": "kota",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kecamatan": {
+          "name": "kecamatan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'MENUNGGU'"
+        },
+        "catatan_petugas": {
+          "name": "catatan_petugas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diproses_oleh": {
+          "name": "diproses_oleh",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_skor": {
+          "name": "ai_skor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_label": {
+          "name": "ai_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_jumlah_deteksi": {
+          "name": "ai_jumlah_deteksi",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_rekomendasi": {
+          "name": "ai_rekomendasi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_rincian": {
+          "name": "ai_rincian",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_dipindai_pada": {
+          "name": "ai_dipindai_pada",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_model_type": {
+          "name": "ai_model_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_annotated_url": {
+          "name": "ai_annotated_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insiden_id": {
+          "name": "insiden_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duplikat_dari_id": {
+          "name": "duplikat_dari_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "public_reports_status_created_idx": {
+          "name": "public_reports_status_created_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "public_reports_telepon_idx": {
+          "name": "public_reports_telepon_idx",
+          "columns": [
+            {
+              "expression": "pelapor_telepon",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "public_reports_diproses_oleh_users_id_fk": {
+          "name": "public_reports_diproses_oleh_users_id_fk",
+          "tableFrom": "public_reports",
+          "tableTo": "users",
+          "columnsFrom": [
+            "diproses_oleh"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "public_reports_insiden_id_incidents_id_fk": {
+          "name": "public_reports_insiden_id_incidents_id_fk",
+          "tableFrom": "public_reports",
+          "tableTo": "incidents",
+          "columnsFrom": [
+            "insiden_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "public_reports_duplikat_dari_id_public_reports_id_fk": {
+          "name": "public_reports_duplikat_dari_id_public_reports_id_fk",
+          "tableFrom": "public_reports",
+          "tableTo": "public_reports",
+          "columnsFrom": [
+            "duplikat_dari_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "public_reports_kode_tracking_unique": {
+          "name": "public_reports_kode_tracking_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "kode_tracking"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reporter_trust": {
+      "name": "reporter_trust",
+      "schema": "",
+      "columns": {
+        "telepon": {
+          "name": "telepon",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "laporan_total": {
+          "name": "laporan_total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "laporan_valid": {
+          "name": "laporan_valid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "laporan_ditolak": {
+          "name": "laporan_ditolak",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "skor": {
+          "name": "skor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 50
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "sessions_user_id_idx": {
+          "name": "sessions_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'operator'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

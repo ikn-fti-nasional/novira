@@ -32,6 +32,8 @@
 	/** Hasil pindai pLitter dari browser -- dikirim sebagai JSON lewat field tersembunyi `aiDeteksi`. */
 	let aiDeteksiJson = $state("");
 	let memindai = $state(false);
+	/** Foto beranotasi (kotak deteksi) dari pLitter -- disisipkan ke FormData sebelum form dikirim. */
+	let fotoAnalisa: File | null = $state(null);
 
 	const jenisSampahOptions = [
 		{ value: "tumpukan_sampah", label: "Tumpukan sampah" },
@@ -60,6 +62,7 @@
 
 		mengompres = true;
 		aiDeteksiJson = "";
+		fotoAnalisa = null;
 		let dikirim = file;
 		try {
 			dikirim = await resizeFoto(file);
@@ -81,6 +84,9 @@
 			aiDeteksiJson = JSON.stringify(
 				hasil.deteksi.map((d: DeteksiUnggahan) => ({ className: d.className, score: d.score }))
 			);
+			const annotatedRes = await fetch(hasil.annotatedDataUrl);
+			const annotatedBlob = await annotatedRes.blob();
+			fotoAnalisa = new File([annotatedBlob], "hasil-analisa.jpg", { type: "image/jpeg" });
 		} catch (err) {
 			// Pemindaian gagal (pLitter tidak terjangkau, dst) -- laporan tetap
 			// bisa dikirim, operator akan menilai manual (lihat GAGAL_PINDAI).
@@ -215,8 +221,9 @@
 			<form
 				method="POST"
 				enctype="multipart/form-data"
-				use:enhance={() => {
+				use:enhance={({ formData }) => {
 					mengirim = true;
+					if (fotoAnalisa) formData.set("aiFotoAnalisa", fotoAnalisa);
 					return async ({ update }) => {
 						await update();
 						mengirim = false;
