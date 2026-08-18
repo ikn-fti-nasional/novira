@@ -1,18 +1,16 @@
-import { validateUpload } from "$lib/server/uploads.js";
-import { MODEL_TYPES_TERSEDIA, type ModelTypeDeteksi } from "./deteksi.js";
+import { env } from "$env/dynamic/public";
+import type { ModelTypeDeteksi } from "$lib/server/novira/deteksi.js";
 
 /**
- * Analisa ad-hoc: operator mengunggah satu foto/video dari perangkatnya
- * (bukan dari kamera CCTV terdaftar) dan langsung dikirim ke pLitter untuk
- * dianalisa. Berbeda dari `jalankanAnalisaManual` di deteksi.ts (yang
- * menangkap ulang cuplikan dari kamera Bandung) dan dari `laporan.ts` (alur
- * publik laporan warga) -- ini murni alat bantu lihat-hasil untuk operator,
- * tidak menulis apa pun ke tabel `incidents`.
+ * Client-side (browser) pLitter calls -- foto/video TIDAK lagi singgah di
+ * server Novira untuk dianalisa. Browser mengompres/resize dulu, lalu
+ * langsung POST ke pLitter; server Novira hanya menyimpan hasilnya.
+ *
+ * Ini butuh pLitter dijangkau langsung dari browser pengguna (bukan cuma
+ * dari jaringan server), jadi `PUBLIC_PLITTER_API_URL` harus berupa URL
+ * publik dan pLitter harus mengizinkan CORS dari origin Novira.
  */
-
-const PLITTER_API_URL = process.env.PLITTER_API_URL ?? "http://localhost:8000";
-const MAX_FRAMES_VIDEO = 60;
-const SKIP_FRAMES_VIDEO = 5;
+const PLITTER_API_URL = env.PUBLIC_PLITTER_API_URL || "http://localhost:8000";
 
 export interface DeteksiUnggahan {
 	classId: number;
@@ -51,18 +49,6 @@ export interface HasilAnalisaVideo {
 
 export type HasilAnalisaUnggahan = HasilAnalisaFoto | HasilAnalisaVideo;
 
-export function parseModelType(raw: FormDataEntryValue | null): ModelTypeDeteksi | null {
-	if (typeof raw !== "string") return null;
-	return (MODEL_TYPES_TERSEDIA as readonly string[]).includes(raw)
-		? (raw as ModelTypeDeteksi)
-		: null;
-}
-
-export function parseConfThres(raw: FormDataEntryValue | null, fallback: number): number {
-	const n = Number(raw);
-	return Number.isFinite(n) && n > 0 && n <= 1 ? n : fallback;
-}
-
 interface PengaturanAnalisa {
 	modelType: ModelTypeDeteksi;
 	confThres: number;
@@ -75,23 +61,46 @@ interface PlitterDetectionRaw {
 	box: [number, number, number, number];
 }
 
-export async function analisaUnggahan(
-	file: File,
-	opsi: PengaturanAnalisa
-): Promise<HasilAnalisaUnggahan> {
-	const kind: "foto" | "video" = file.type.startsWith("video/") ? "video" : "foto";
-	const error = validateUpload(file, kind);
-	if (error) throw new Error(error);
+const MAX_FRAMES_VIDEO = 60;
+const SKIP_FRAMES_VIDEO = 5;
 
-	const buffer = await file.arrayBuffer();
-	return kind === "foto" ? analisaFoto(file, buffer, opsi) : analisaVideo(file, buffer, opsi);
+/**
+ * Resize + kompres sebuah foto di browser sebelum dikirim ke pLitter --
+ * tidak ada batas ukuran yang dilihat pengguna, ini yang menjaga unggahan
+ * tetap ringan. Dipakai oleh halaman /lapor dan Unggah & Analisa.
+ */
+export async function resizeFoto(
+	file: File,
+	opsi: { maksDimensi?: number; kualitas?: number } = {}
+): Promise<File> {
+	if (!file.type.startsWith("image/")) return file;
+	const maksDimensi = opsi.maksDimensi ?? 1920;
+	const kualitas = opsi.kualitas ?? 0.8;
+
+	const bitmap = await createImageBitmap(file);
+	const skala = Math.min(1, maksDimensi / Math.max(bitmap.width, bitmap.height));
+	const lebar = Math.round(bitmap.width * skala);
+	const tinggi = Math.round(bitmap.height * skala);
+
+	const canvas = document.createElement("canvas");
+	canvas.width = lebar;
+	canvas.height = tinggi;
+	const ctx = canvas.getContext("2d");
+	if (!ctx) return file;
+	ctx.drawImage(bitmap, 0, 0, lebar, tinggi);
+
+	const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", kualitas));
+	if (!blob) return file;
+
+	const namaBaru = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+	return new File([blob], namaBaru, { type: "image/jpeg" });
 }
 
-async function analisaFoto(
+export async function analisaFotoLangsung(
 	file: File,
-	buffer: ArrayBuffer,
 	opsi: PengaturanAnalisa
 ): Promise<HasilAnalisaFoto> {
+	const buffer = await file.arrayBuffer();
 	// pLitter mengembalikan JSON deteksi + gambar beranotasi (base64) dalam satu
 	// response saat include_annotated=true -- satu kali hit, bukan dua.
 	const res = await kirimKePlitter("/detect/image", file, buffer, opsi, {
@@ -116,11 +125,11 @@ async function analisaFoto(
 	};
 }
 
-async function analisaVideo(
+export async function analisaVideoLangsung(
 	file: File,
-	buffer: ArrayBuffer,
 	opsi: PengaturanAnalisa
 ): Promise<HasilAnalisaVideo> {
+	const buffer = await file.arrayBuffer();
 	const res = await kirimKePlitter(
 		"/detect/video",
 		file,

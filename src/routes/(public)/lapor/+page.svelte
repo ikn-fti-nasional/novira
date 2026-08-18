@@ -13,6 +13,7 @@
 	import LeafIcon from "@lucide/svelte/icons/leaf";
 	import LoaderCircleIcon from "@lucide/svelte/icons/loader-circle";
 	import type { Map as LeafletMap, Marker } from "leaflet";
+	import { resizeFoto, analisaFotoLangsung, type DeteksiUnggahan } from "$lib/plitter-client.js";
 
 	let { form } = $props();
 
@@ -28,6 +29,9 @@
 	let mengompres = $state(false);
 	let ukuranFotoKb = $state<number | null>(null);
 	let mengirim = $state(false);
+	/** Hasil pindai pLitter dari browser -- dikirim sebagai JSON lewat field tersembunyi `aiDeteksi`. */
+	let aiDeteksiJson = $state("");
+	let memindai = $state(false);
 
 	const jenisSampahOptions = [
 		{ value: "tumpukan_sampah", label: "Tumpukan sampah" },
@@ -39,57 +43,51 @@
 	];
 
 	/**
-	 * Foto dari kamera ponsel bisa 8-12 MB. Server tidak lagi memaksa batas
-	 * ukuran ke pengguna -- alih-alih, setiap foto dikompres di browser jadi
-	 * JPEG beresolusi wajar sebelum dikirim, supaya unggahan tetap ringan
-	 * tanpa pengguna perlu tahu soal batas apa pun.
+	 * Foto dari kamera ponsel bisa 8-12 MB. Server tidak memaksa batas ukuran
+	 * ke pengguna -- setiap foto diresize di browser jadi JPEG beresolusi
+	 * wajar (lihat `resizeFoto`), lalu dikirim LANGSUNG ke pLitter dari sini
+	 * juga -- server Novira tidak pernah menyentuh isinya untuk dianalisa,
+	 * hanya menyimpan hasilnya lewat field tersembunyi `aiDeteksi`.
 	 */
-	async function kompresFoto(file: File): Promise<File> {
-		if (!file.type.startsWith("image/")) return file;
-
-		const bitmap = await createImageBitmap(file);
-		const MAKS_DIMENSI = 1920;
-		const skala = Math.min(1, MAKS_DIMENSI / Math.max(bitmap.width, bitmap.height));
-		const lebar = Math.round(bitmap.width * skala);
-		const tinggi = Math.round(bitmap.height * skala);
-
-		const canvas = document.createElement("canvas");
-		canvas.width = lebar;
-		canvas.height = tinggi;
-		const ctx = canvas.getContext("2d");
-		if (!ctx) return file;
-		ctx.drawImage(bitmap, 0, 0, lebar, tinggi);
-
-		const blob: Blob | null = await new Promise((resolve) =>
-			canvas.toBlob(resolve, "image/jpeg", 0.8)
-		);
-		if (!blob) return file;
-
-		const namaBaru = file.name.replace(/\.[^.]+$/, "") + ".jpg";
-		return new File([blob], namaBaru, { type: "image/jpeg" });
-	}
-
 	async function tanganiPilihFoto(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) {
 			ukuranFotoKb = null;
+			aiDeteksiJson = "";
 			return;
 		}
 
 		mengompres = true;
+		aiDeteksiJson = "";
+		let dikirim = file;
 		try {
-			const dikompres = await kompresFoto(file);
+			dikirim = await resizeFoto(file);
 			const dt = new DataTransfer();
-			dt.items.add(dikompres);
+			dt.items.add(dikirim);
 			input.files = dt.files;
-			ukuranFotoKb = Math.round(dikompres.size / 1024);
+			ukuranFotoKb = Math.round(dikirim.size / 1024);
 		} catch {
-			// Kompresi gagal (mis. format tidak didukung createImageBitmap) --
+			// Resize gagal (mis. format tidak didukung createImageBitmap) --
 			// kirim berkas asli apa adanya daripada memblokir laporan warga.
 			ukuranFotoKb = Math.round(file.size / 1024);
 		} finally {
 			mengompres = false;
+		}
+
+		memindai = true;
+		try {
+			const hasil = await analisaFotoLangsung(dikirim, { modelType: "street", confThres: 0.2 });
+			aiDeteksiJson = JSON.stringify(
+				hasil.deteksi.map((d: DeteksiUnggahan) => ({ className: d.className, score: d.score }))
+			);
+		} catch (err) {
+			// Pemindaian gagal (pLitter tidak terjangkau, dst) -- laporan tetap
+			// bisa dikirim, operator akan menilai manual (lihat GAGAL_PINDAI).
+			console.error("[novira] Pindai pLitter dari browser gagal:", err);
+			aiDeteksiJson = "";
+		} finally {
+			memindai = false;
 		}
 	}
 
@@ -228,6 +226,7 @@
 			>
 				<input type="hidden" name="latitude" value={latitude} />
 				<input type="hidden" name="longitude" value={longitude} />
+				<input type="hidden" name="aiDeteksi" value={aiDeteksiJson} />
 				<input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" />
 
 				<!-- Upload foto -->
@@ -246,7 +245,7 @@
 							<div
 								class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
 							>
-								{#if mengompres}
+								{#if mengompres || memindai}
 									<LoaderCircleIcon class="size-5 animate-spin text-emerald-600 dark:text-emerald-400" />
 								{:else}
 									<CameraIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
@@ -257,6 +256,8 @@
 								<span class="text-xs text-muted-foreground">
 									{#if mengompres}
 										Mengompres foto…
+									{:else if memindai}
+										Memindai foto…
 									{:else if ukuranFotoKb !== null}
 										Terkompresi otomatis · {ukuranFotoKb} KB
 									{:else}
@@ -409,7 +410,7 @@
 					type="submit"
 					size="lg"
 					id="btn-kirim-laporan"
-					disabled={mengompres || mengirim}
+					disabled={mengompres || memindai || mengirim}
 					class="w-full gap-2 rounded-xl py-6 text-base font-semibold shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.01] hover:shadow-emerald-500/40"
 					style="background: linear-gradient(135deg, oklch(0.50 0.18 145), oklch(0.60 0.17 160)); color: white;"
 				>

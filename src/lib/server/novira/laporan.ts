@@ -110,8 +110,6 @@ export async function pindaiLaporan(laporanId: string): Promise<void> {
 	const [laporan] = await db.select().from(publicReports).where(eq(publicReports.id, laporanId));
 	if (!laporan) return;
 
-	const now = new Date();
-
 	// Laporan video-saja tidak bisa dipindai endpoint gambar. Ditandai
 	// GAGAL_PINDAI supaya operator tahu harus menilai manual, bukan mengira
 	// AI sudah menyatakan laporannya lemah.
@@ -121,7 +119,7 @@ export async function pindaiLaporan(laporanId: string): Promise<void> {
 			aiRincian: serializeRincian([
 				{ label: "Tidak dapat dipindai", poin: 0, keterangan: "laporan tidak menyertakan foto" },
 			]),
-			aiDipindaiPada: now,
+			aiDipindaiPada: new Date(),
 		});
 		return;
 	}
@@ -137,14 +135,55 @@ export async function pindaiLaporan(laporanId: string): Promise<void> {
 			aiRincian: serializeRincian([
 				{ label: "Pemindaian gagal", poin: 0, keterangan: pesan.slice(0, 200) },
 			]),
-			aiDipindaiPada: now,
+			aiDipindaiPada: new Date(),
 		});
 		return;
 	}
 
+	await simpanHasilDeteksi(laporanId, hasil.detections);
+}
+
+export interface DeteksiKlien {
+	className: string;
+	score: number;
+}
+
+/**
+ * Catat hasil pindai yang SUDAH dihitung di browser pelapor -- foto dikirim
+ * langsung dari klien ke pLitter (lihat `src/lib/plitter-client.ts`), server
+ * Novira tidak lagi memanggil pLitter untuk alur laporan warga. `deteksi`
+ * bernilai `null` kalau pemindaian di perangkat pelapor gagal (jaringan
+ * lambat, endpoint tidak terjangkau, dst) -- laporan tetap masuk, hanya
+ * ditandai GAGAL_PINDAI supaya operator menilai manual.
+ */
+export async function simpanHasilPindaiKlien(
+	laporanId: string,
+	deteksi: DeteksiKlien[] | null,
+	alasanGagal = "pemindaian di perangkat pelapor tidak berhasil"
+): Promise<void> {
+	if (deteksi === null) {
+		await tulisHasilPindai(laporanId, {
+			aiRekomendasi: "GAGAL_PINDAI",
+			aiRincian: serializeRincian([
+				{ label: "Tidak dapat dipindai", poin: 0, keterangan: alasanGagal },
+			]),
+			aiDipindaiPada: new Date(),
+		});
+		return;
+	}
+	await simpanHasilDeteksi(
+		laporanId,
+		deteksi.map((d) => ({ class_id: 0, class_name: d.className, score: d.score, box: [0, 0, 0, 0] }))
+	);
+}
+
+async function simpanHasilDeteksi(laporanId: string, deteksi: PlitterDetection[]): Promise<void> {
+	const [laporan] = await db.select().from(publicReports).where(eq(publicReports.id, laporanId));
+	if (!laporan) return;
+
 	// Hanya kelas sampah yang dihitung; `Trash bin` (tempat sampah) adalah
 	// perabot kota, bukan sampah — sama seperti di siklus deteksi CCTV.
-	const relevan = hasil.detections.filter((d) => CLASS_TO_JENIS[d.class_name] !== undefined);
+	const relevan = deteksi.filter((d) => CLASS_TO_JENIS[d.class_name] !== undefined);
 	const terkuat = relevan.reduce<PlitterDetection | null>(
 		(best, d) => (!best || d.score > best.score ? d : best),
 		null
@@ -166,7 +205,7 @@ export async function pindaiLaporan(laporanId: string): Promise<void> {
 		aiJumlahDeteksi: relevan.length,
 		aiRekomendasi: rekomendasi,
 		aiRincian: serializeRincian(rincian),
-		aiDipindaiPada: now,
+		aiDipindaiPada: new Date(),
 	});
 }
 

@@ -10,18 +10,22 @@
 	import Loader2Icon from "@lucide/svelte/icons/loader-2";
 	import ImageIcon from "@lucide/svelte/icons/image";
 	import VideoIcon from "@lucide/svelte/icons/video";
-	import { enhance } from "$app/forms";
-	import type { HasilAnalisaUnggahan } from "$lib/server/novira/analisaUnggahan.js";
+	import {
+		analisaFotoLangsung,
+		analisaVideoLangsung,
+		resizeFoto,
+		type HasilAnalisaUnggahan,
+	} from "$lib/plitter-client.js";
 
-	let { data, form } = $props();
+	let { data } = $props();
 
 	let file = $state<File | null>(null);
 	let previewUrl = $state<string | null>(null);
 	let modelType = $state(data.defaultModelType);
 	let confThres = $state(data.defaultConfThres);
 	let menganalisa = $state(false);
-
-	const hasil = $derived(form?.success ? (form.hasil as HasilAnalisaUnggahan) : null);
+	let errorMsg = $state<string | null>(null);
+	let hasil = $state<HasilAnalisaUnggahan | null>(null);
 
 	const labelModel: Record<string, string> = {
 		street: "Street (jalan/trotoar)",
@@ -35,6 +39,32 @@
 		file = dipilih;
 		if (previewUrl) URL.revokeObjectURL(previewUrl);
 		previewUrl = dipilih ? URL.createObjectURL(dipilih) : null;
+	}
+
+	/**
+	 * Dikirim langsung dari browser ke pLitter -- server Novira tidak pernah
+	 * menyentuh berkasnya. Foto diresize dulu di browser (lihat
+	 * `resizeFoto`) supaya tidak ada batas ukuran yang perlu dipedulikan
+	 * pengguna.
+	 */
+	async function jalankanAnalisa(e: Event) {
+		e.preventDefault();
+		if (!file) return;
+
+		menganalisa = true;
+		errorMsg = null;
+		hasil = null;
+		try {
+			const opsi = { modelType, confThres };
+			hasil = file.type.startsWith("video/")
+				? await analisaVideoLangsung(file, opsi)
+				: await analisaFotoLangsung(await resizeFoto(file), opsi);
+		} catch (err) {
+			const pesan = err instanceof Error ? err.message : String(err);
+			errorMsg = `Analisa gagal: ${pesan.slice(0, 300)}`;
+		} finally {
+			menganalisa = false;
+		}
 	}
 
 	function formatPersen(skor: number) {
@@ -62,22 +92,13 @@
 	<Card.Root>
 		<Card.Header>
 			<Card.Title>Unggah Berkas</Card.Title>
-			<Card.Description>Foto maks. 5MB (JPEG/PNG/WebP), video maks. 20MB (MP4/WebM/MOV).</Card.Description>
+			<Card.Description>
+				Foto (JPEG/PNG/WebP) tanpa batas ukuran -- otomatis diresize di browser sebelum dikirim
+				langsung ke pLitter. Video maks. 20MB (MP4/WebM/MOV).
+			</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<form
-				method="POST"
-				action="?/analisa"
-				enctype="multipart/form-data"
-				use:enhance={() => {
-					menganalisa = true;
-					return async ({ update }) => {
-						await update();
-						menganalisa = false;
-					};
-				}}
-				class="space-y-6"
-			>
+			<form onsubmit={jalankanAnalisa} class="space-y-6">
 				<div class="grid gap-2">
 					<Label for="file">Foto / Video</Label>
 					<Input
@@ -145,8 +166,8 @@
 				</Button>
 			</form>
 
-			{#if form && !form.success}
-				<p class="mt-4 text-sm text-red-600 dark:text-red-400">{form.message}</p>
+			{#if errorMsg}
+				<p class="mt-4 text-sm text-red-600 dark:text-red-400">{errorMsg}</p>
 			{/if}
 		</Card.Content>
 	</Card.Root>

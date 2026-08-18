@@ -3,7 +3,8 @@ import { db } from "$lib/server/db/index.js";
 import { publicReports } from "$lib/server/db/schema.js";
 import { storeUpload, validateUpload } from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
-import { buatKodeTracking, pindaiLaporan } from "$lib/server/novira/laporan.js";
+import { buatKodeTracking, simpanHasilPindaiKlien } from "$lib/server/novira/laporan.js";
+import type { DeteksiKlien } from "$lib/server/novira/laporan.js";
 import type { Actions, PageServerLoad } from "./$types.js";
 
 const RATE_LIMIT_MS = 30_000;
@@ -104,15 +105,44 @@ export const actions: Actions = {
 
 		recentSubmissions.set(ip, Date.now());
 
-		// Pindai AI sengaja TIDAK ditunggu. Inferensi bisa memakan puluhan detik
-		// dan warga sering melapor dari jaringan seluler di pinggir jalan —
-		// menahan halaman konfirmasi selama itu akan membuat sebagian orang
-		// mengira laporannya gagal lalu mengirim ulang. Hasil pindai menyusul
-		// masuk ke baris laporan, dan operator melihatnya di antrian triase.
-		void pindaiLaporan(laporanId).catch((err) => {
-			console.error("[novira] Pindai laporan gagal dijadwalkan:", err);
-		});
+		// Foto sudah dipindai langsung dari browser pelapor ke pLitter (lihat
+		// `src/lib/plitter-client.ts`) sebelum form ini dikirim -- server hanya
+		// mencatat hasilnya, tidak lagi memanggil pLitter sendiri. Ini murni
+		// tulis DB, jadi aman ditunggu tanpa menahan halaman konfirmasi lama.
+		try {
+			if (punyaFoto) {
+				const aiDeteksiRaw = String(form.get("aiDeteksi") ?? "");
+				const deteksi = parseAiDeteksi(aiDeteksiRaw);
+				await simpanHasilPindaiKlien(laporanId, deteksi);
+			} else {
+				await simpanHasilPindaiKlien(laporanId, null, "laporan tidak menyertakan foto");
+			}
+		} catch (err) {
+			console.error("[novira] Gagal mencatat hasil pindai laporan:", err);
+		}
 
 		redirect(303, `/lapor/berhasil?kode=${kodeTracking}`);
 	},
 };
+
+/**
+ * `aiDeteksi` datang dari `analisaFotoLangsung()` yang dijalankan di browser
+ * pelapor sebelum form ini dikirim -- input tak tepercaya, jadi divalidasi
+ * bentuknya sebelum disimpan. Bentuk yang tak terduga (atau field kosong
+ * karena pemindaian klien gagal/dilewati) dianggap sama dengan "gagal".
+ */
+function parseAiDeteksi(raw: string): DeteksiKlien[] | null {
+	if (!raw) return null;
+	try {
+		const data = JSON.parse(raw);
+		if (!Array.isArray(data)) return null;
+		return data
+			.filter(
+				(d): d is DeteksiKlien =>
+					d && typeof d.className === "string" && typeof d.score === "number"
+			)
+			.map((d) => ({ className: d.className, score: d.score }));
+	} catch {
+		return null;
+	}
+}
