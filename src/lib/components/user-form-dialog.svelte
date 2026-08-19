@@ -5,6 +5,7 @@
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 	import { enhance } from "$app/forms";
+	import { OPSI_PERAN, labelPeran } from "$lib/peran.js";
 
 	type UserData = {
 		id: string;
@@ -21,6 +22,13 @@
 	};
 
 	let { open = $bindable(false), mode, user = null }: Props = $props();
+
+	// State lokal: tanpa `bind:value`, label pemicu Select tidak berubah saat
+	// peran lain dipilih.
+	let peran = $state(user?.role ?? "operator");
+	$effect(() => {
+		peran = user?.role ?? "operator";
+	});
 
 	const title = $derived(mode === "create" ? "Tambah Pengguna" : "Ubah Pengguna");
 	const action = $derived(mode === "create" ? "?/create" : "?/update");
@@ -81,17 +89,14 @@
 				{/if}
 				<div class="grid gap-2">
 					<Label for="role">Peran</Label>
-					<Select.Root name="role" type="single" value={user?.role ?? "operator"}>
+					<Select.Root name="role" type="single" bind:value={peran}>
 						<Select.Trigger>
-							<span>{user?.role ?? "operator"}</span>
+							<span>{labelPeran(peran)}</span>
 						</Select.Trigger>
 						<Select.Content>
-							<Select.Item value="admin">Admin (IT Sistem)</Select.Item>
-							<Select.Item value="operator">Operator DLH</Select.Item>
-							<Select.Item value="kepala_seksi">Kepala Seksi</Select.Item>
-							<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
-							<Select.Item value="walikota">Wali Kota</Select.Item>
-							<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
+							{#each OPSI_PERAN as opt (opt.value)}
+								<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
+							{/each}
 						</Select.Content>
 					</Select.Root>
 				</div>

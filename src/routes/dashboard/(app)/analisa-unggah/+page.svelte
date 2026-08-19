@@ -16,6 +16,7 @@
 		resizeFoto,
 		type HasilAnalisaUnggahan,
 	} from "$lib/plitter-client.js";
+	import { DESKRIPSI_MODEL, LABEL_MODEL } from "$lib/model-deteksi.js";
 
 	let { data } = $props();
 
@@ -27,11 +28,7 @@
 	let errorMsg = $state<string | null>(null);
 	let hasil = $state<HasilAnalisaUnggahan | null>(null);
 
-	const labelModel: Record<string, string> = {
-		street: "Street (jalan/trotoar)",
-		cctv: "CCTV Apung (sungai/kanal)",
-		taco: "TACO (dataset umum)",
-	};
+	const labelModel = LABEL_MODEL;
 
 	function handlePilihFile(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -137,7 +134,8 @@
 							</Select.Content>
 						</Select.Root>
 						<p class="text-muted-foreground text-xs">
-							Default mengikuti pengaturan model CCTV di halaman Pengaturan.
+							{DESKRIPSI_MODEL[modelType] ??
+								"Default mengikuti pengaturan model di halaman Pengaturan."}
 						</p>
 					</div>
 
@@ -184,7 +182,8 @@
 					<Card.Title>Hasil Analisa</Card.Title>
 				</div>
 				<Card.Description>
-					Model <strong>{labelModel[hasil.modelType] ?? hasil.modelType}</strong>, ambang kepercayaan
+					Model <strong>{labelModel[hasil.modelType] ?? hasil.modelType}</strong>, ambang
+					kepercayaan
 					{hasil.confThres}
 				</Card.Description>
 			</Card.Header>

@@ -10,6 +10,7 @@ import {
 	type ModelTypeDeteksi,
 } from "$lib/server/novira/deteksi.js";
 import { periksaKesehatanKamera } from "$lib/server/novira/kesehatanKamera.js";
+import { noviraSiap } from "$lib/server/novira/modelNovira.js";
 import { hashPassword, verifyPassword } from "$lib/server/password.js";
 import { requireRoleOrFail } from "$lib/authorize.js";
 import { fail, redirect } from "@sveltejs/kit";
@@ -109,6 +110,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		notificationPrefs: notifPrefs,
 		pengaturanModel,
 		modelTypesTersedia: MODEL_TYPES_TERSEDIA,
+		noviraSiap: noviraSiap(),
 	};
 };
 

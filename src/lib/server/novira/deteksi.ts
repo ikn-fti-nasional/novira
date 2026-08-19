@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { db } from "$lib/server/db/index.js";
 import { cameras, incidents, auditLog, notifications, appSettings } from "$lib/server/db/schema.js";
 import { storeUpload } from "$lib/server/uploads.js";
+import { analisaGambarNovira } from "./modelNovira.js";
 import { generateId } from "$lib/server/id.js";
 import type { JenisSampah } from "$lib/types/novira.js";
 import { hitungPrioritas, serializeRincian } from "./prioritas.js";
@@ -39,8 +40,17 @@ export async function cekKesehatanPlitter(timeoutMs = 4000): Promise<boolean> {
 	}
 }
 
-/** Model pLitter yang boleh dipakai untuk analisa CCTV -- `urban` tidak diaktifkan di deployment ini (butuh weights GPL terpisah, lihat pLitter/Dockerfile), jadi sengaja tidak masuk daftar. */
-export const MODEL_TYPES_TERSEDIA = ["street", "cctv", "taco"] as const;
+/**
+ * Model deteksi yang boleh dipilih operator.
+ *
+ * Tiga yang pertama adalah model pLitter yang kami latih sendiri (`urban`
+ * tidak diaktifkan di deployment ini -- butuh weights GPL terpisah, lihat
+ * pLitter/Dockerfile). `novira` adalah model multimodal yang dijalankan lewat
+ * `modelNovira.ts`: ia mengenali sampah dari gambarnya, bukan dari bobot yang
+ * kami latih, dan kotak deteksinya digambar sendiri oleh Novira dari koordinat
+ * yang dikembalikan model.
+ */
+export const MODEL_TYPES_TERSEDIA = ["street", "cctv", "taco", "novira"] as const;
 export type ModelTypeDeteksi = (typeof MODEL_TYPES_TERSEDIA)[number];
 
 const SETTING_KEY_MODEL = "deteksi_model_type";
@@ -72,7 +82,8 @@ export async function ambilPengaturanModel(): Promise<PengaturanModelDeteksi> {
 		: DEFAULT_MODEL_TYPE;
 
 	const rawConf = Number(map[SETTING_KEY_CONF]);
-	const confThres = Number.isFinite(rawConf) && rawConf > 0 && rawConf <= 1 ? rawConf : DEFAULT_CONF_THRES;
+	const confThres =
+		Number.isFinite(rawConf) && rawConf > 0 && rawConf <= 1 ? rawConf : DEFAULT_CONF_THRES;
 
 	return { modelType, confThres };
 }
@@ -124,6 +135,12 @@ const CLASS_TO_JENIS: Partial<Record<string, JenisSampah>> = {
 	Pile: "tumpukan_sampah",
 	Plastic: "kantong_plastik",
 	"Face mask": "kantong_plastik",
+	// Empat kelas berikut hanya pernah muncul dari model Novira -- pLitter tidak
+	// mengenalinya. Aman disatukan di sini karena pemetaan ini berbasis nama kelas.
+	Bottle: "botol_minuman",
+	Cardboard: "kardus_kemasan",
+	"Bulky waste": "pembuangan_liar_besar",
+	"Construction debris": "puing_bangunan",
 };
 
 // Keparahan tidak lagi berupa tabel statis jenis→level. Sekarang diturunkan
@@ -219,9 +236,7 @@ async function petaTerbatas<T, R>(
 		}
 	}
 
-	await Promise.all(
-		Array.from({ length: Math.min(MAKS_KAMERA_PARALEL, items.length) }, pekerja)
-	);
+	await Promise.all(Array.from({ length: Math.min(MAKS_KAMERA_PARALEL, items.length) }, pekerja));
 	return hasil;
 }
 
@@ -332,7 +347,11 @@ interface HasilTangkapan {
  * analisa manual (yang menahan hasilnya sampai operator menekan "Verifikasi").
  */
 function escapeXml(s: string): string {
-	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+	return s
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;");
 }
 
 const KOTAK_STROKE = "#ef4444"; // red-500 -- konsisten dengan warna alert/insiden di UI
@@ -391,7 +410,13 @@ async function tangkapKamera(
 
 	const endpoint = new URL("/detect/snapshot", PLITTER_API_URL);
 	endpoint.searchParams.set("source", streamUrl);
-	endpoint.searchParams.set("model_type", pengaturan.modelType);
+	// Model Novira tidak berjalan di pLitter -- untuk mode itu pLitter dipakai
+	// hanya sebagai pengambil frame (`street` model paling ringan), lalu
+	// frame-nya dianalisa ulang oleh Model Novira di bawah.
+	endpoint.searchParams.set(
+		"model_type",
+		pengaturan.modelType === "novira" ? "street" : pengaturan.modelType
+	);
 	endpoint.searchParams.set("slice_infer", "true");
 	endpoint.searchParams.set("suppress_vehicles", "true");
 	endpoint.searchParams.set("conf_thres", String(pengaturan.confThres));
@@ -417,7 +442,22 @@ async function tangkapKamera(
 
 	const data = (await res.json()) as SnapshotResponse;
 
-	const relevanMentah = data.detections
+	// Deteksi pLitter dibuang saat mode Novira aktif; frame-nya yang dipakai.
+	// Konsekuensinya `suppress_vehicles` (yang bekerja di sisi pLitter) tidak
+	// berlaku di mode ini -- kendaraan disaring lewat instruksi model.
+	const deteksiMentah =
+		pengaturan.modelType === "novira"
+			? (
+					await analisaGambarNovira(Buffer.from(data.image_base64, "base64"), {
+						confThres: pengaturan.confThres,
+					}).catch((err) => {
+						console.error("[novira] Analisa Model Novira gagal untuk kamera:", err);
+						throw err;
+					})
+				).detections
+			: data.detections;
+
+	const relevanMentah = deteksiMentah
 		.map((d) => ({ detection: d, jenisSampah: CLASS_TO_JENIS[d.class_name] }))
 		.filter(
 			(d): d is { detection: PlitterDetection; jenisSampah: JenisSampah } =>
@@ -472,8 +512,17 @@ async function terapkanDeteksi(params: {
 	openIncidents: (typeof incidents.$inferSelect)[];
 	kekambuhanPerKamera: number;
 }): Promise<{ insidenId: string; baru: boolean }> {
-	const { camera, now, jenisSampah, labelSampah, skor, bbox, urlSnapshot, openIncidents, kekambuhanPerKamera } =
-		params;
+	const {
+		camera,
+		now,
+		jenisSampah,
+		labelSampah,
+		skor,
+		bbox,
+		urlSnapshot,
+		openIncidents,
+		kekambuhanPerKamera,
+	} = params;
 
 	const matchIndex = openIncidents.findIndex(
 		(inc) =>
@@ -570,7 +619,9 @@ async function kondisiKamera(cameraId: string) {
 	const openIncidents = await db
 		.select()
 		.from(incidents)
-		.where(and(eq(incidents.cameraId, cameraId), inArray(incidents.status, ["AKTIF", "PERINGATAN"])));
+		.where(
+			and(eq(incidents.cameraId, cameraId), inArray(incidents.status, ["AKTIF", "PERINGATAN"]))
+		);
 
 	// Berapa kali titik ini pernah dibersihkan lalu kotor lagi. Dihitung sekali
 	// per kamera (bukan per deteksi) karena nilainya sama untuk semua deteksi
@@ -738,7 +789,12 @@ export async function verifikasiTemuanManual(
 	const { openIncidents, kekambuhanPerKamera } = await kondisiKamera(temuan.cameraId);
 
 	const hasil = await terapkanDeteksi({
-		camera: { id: temuan.cameraId, nama: temuan.cameraNama, kota: temuan.kota, kecamatan: temuan.kecamatan },
+		camera: {
+			id: temuan.cameraId,
+			nama: temuan.cameraNama,
+			kota: temuan.kota,
+			kecamatan: temuan.kecamatan,
+		},
 		now,
 		jenisSampah: temuan.jenisSampah,
 		labelSampah: temuan.labelSampah,

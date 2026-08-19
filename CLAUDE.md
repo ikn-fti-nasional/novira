@@ -103,6 +103,7 @@ Leave it unset on real deployments. For a hands-off public demo, an hourly cron 
 | -------------------- | ------------------------------------------------------------------------------------------------------- |
 | `index.ts`           | Data seam — every `+page.server.ts` reads operational data through here                                 |
 | `deteksi.ts`         | Twice-daily CCTV detection cycle against the pLitter API, IoU persistence matching                      |
+| `modelNovira.ts`     | "Model Novira" — multimodal detection path; returns normalized boxes, Novira draws them with sharp      |
 | `prioritas.ts`       | **Pure** 0–100 priority engine. No DB, no I/O — callers supply the inputs                               |
 | `laporan.ts`         | Citizen-report pipeline: AI scan → duplicate detection → triage → promote to incident → public tracking |
 | `eskalasi.ts`        | SLA escalation ladder (12 h → operator, 24 h → kepala seksi, 48 h → kepala dinas)                       |
@@ -111,6 +112,13 @@ Leave it unset on real deployments. For a hands-off public demo, an hourly cron 
 | `geo.ts`             | Haversine distance, coordinate parsing, phone normalization                                             |
 | `kesehatanKamera.ts` | 15-minute camera reachability probe                                                                     |
 | `scheduler.ts`       | Registers every cron above (guarded against double registration)                                        |
+
+**Two detection backends.** `MODEL_TYPES_TERSEDIA` now holds four options: three pLitter models we trained (`street`, `cctv`, `taco`) and `novira`, a multimodal model called through `modelNovira.ts`. The Novira path differs in two ways that matter:
+
+- **It runs server-side only.** pLitter is called straight from the browser (`plitter-client.ts`), but the Novira key is secret and every call costs money, so photo analysis goes through `POST /api/analisa-novira` — rate-limited per IP because `/lapor` (public, no session) uses it too. Requires `NOVIRA_MODEL_API_KEY`; without it the option still lists but `noviraSiap()` is false and Settings says so.
+- **We draw the boxes.** The model returns normalized 0–1 coordinates, not an annotated image; `gambarKotakNovira()` composites them with sharp so the evidence photo looks identical to a pLitter one. `petakanDeteksiNovira()` treats the model output as untrusted — flipped boxes, out-of-frame coordinates, and unknown labels are all cleaned or dropped there, and it is the unit-tested seam.
+
+Novira emits pLitter's own class names plus four it doesn't know (`Bottle`, `Cardboard`, `Bulky waste`, `Construction debris`), so `CLASS_TO_JENIS` in **both** `deteksi.ts` and `laporan.ts` covers them — those two maps must stay in sync. Photos only: video analysis rejects `novira` up front. In CCTV mode, pLitter is still called for the frame grab (with `street`) and its detections are discarded, which also means `suppress_vehicles` does not apply there.
 
 **Two invariants worth knowing before editing:**
 
@@ -142,7 +150,7 @@ After modifying `schema.ts`, also update the `SCHEMA_SQL` in `test-utils.ts` and
 
 - Forms use SvelteKit form actions with `use:enhance` for progressive enhancement
 - Dark/light mode via `mode-watcher` — use `mode.current` (runes object), NOT `$mode`
-- **`$effect` dependency order:** read every reactive value *before* any early-return guard. An effect that bails out before touching a rune never registers it as a dependency and will never re-run — this silently killed the hotspot map's layer toggle, and only an E2E test caught it
+- **`$effect` dependency order:** read every reactive value _before_ any early-return guard. An effect that bails out before touching a rune never registers it as a dependency and will never re-run — this silently killed the hotspot map's layer toggle, and only an E2E test caught it
 - App shell layout: sidebar (`app-sidebar.svelte`) + topbar with breadcrumbs (generated from URL pathname)
 - `App.Locals` typed in `src/app.d.ts` — `user: SessionUser | null`, `session: Session | null`
 - `seed.ts` runs outside SvelteKit context — use relative imports (not `$lib/`) and `generateId()` from `$lib/server/id.js`

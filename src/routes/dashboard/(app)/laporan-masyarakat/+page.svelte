@@ -16,9 +16,22 @@
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 	import CopyCheckIcon from "@lucide/svelte/icons/copy-check";
 	import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
+	import { MODEL_TYPES_UI } from "$lib/model-deteksi.js";
 	import type { ActionData, PageData } from "./$types.js";
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	// Pilihan dropdown per laporan. Tanpa state lokal + `bind:value`, label pada
+	// pemicu Select tetap menampilkan nilai dari server walau operator sudah
+	// memilih item lain.
+	let pilihanJenis = $state<Record<string, string>>({});
+	let pilihanModel = $state<Record<string, string>>({});
+	$effect(() => {
+		for (const rep of data.reports) {
+			pilihanJenis[rep.id] ??= rep.jenisSampah ?? "";
+			pilihanModel[rep.id] ??= rep.aiModelType ?? "street";
+		}
+	});
 
 	const statusBadge: Record<string, { label: string; class: string }> = {
 		MENUNGGU: { label: "Menunggu", class: "bg-amber-500 text-white" },
@@ -52,11 +65,14 @@
 		},
 	};
 
-	const MODEL_TYPES = ["street", "cctv", "taco"] as const;
+	const MODEL_TYPES = MODEL_TYPES_UI;
+	// Ruangnya sempit (dropdown selebar 9.5rem di samping tombol), jadi
+	// dipakai label pendek, bukan `LABEL_MODEL` yang panjang.
 	const modelLabel: Record<string, string> = {
 		street: "Street (default)",
 		cctv: "CCTV/kanal",
 		taco: "TACO",
+		novira: "Novira Vision",
 	};
 
 	const jenisSampahOptions = [
@@ -147,10 +163,7 @@
 									{rekomendasiBadge[rep.aiRekomendasi].label}
 								</Badge>
 							{:else if !rep.aiDipindaiPada}
-								<Badge
-									variant="outline"
-									class="text-slate-500 dark:text-slate-400"
-								>
+								<Badge variant="outline" class="text-slate-500 dark:text-slate-400">
 									<SparklesIcon class="mr-1 size-3" />
 									Belum dipindai
 								</Badge>
@@ -187,7 +200,11 @@
 								rel="noopener noreferrer"
 								class="group overflow-hidden rounded-lg border border-border/60"
 							>
-								<img src={rep.urlFoto} alt="Foto asli laporan" class="aspect-video w-full object-cover" />
+								<img
+									src={rep.urlFoto}
+									alt="Foto asli laporan"
+									class="aspect-video w-full object-cover"
+								/>
 								<span
 									class="flex items-center gap-1 border-t border-border/60 bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground group-hover:text-emerald-600"
 								>
@@ -311,9 +328,9 @@
 							<input type="hidden" name="id" value={rep.id} />
 							<div class="space-y-1.5">
 								<Label.Root class="text-xs">Jenis sampah (koreksi bila perlu)</Label.Root>
-								<Select.Root type="single" name="jenisSampah" value={rep.jenisSampah ?? ""}>
+								<Select.Root type="single" name="jenisSampah" bind:value={pilihanJenis[rep.id]}>
 									<Select.Trigger class="w-full">
-										<span>{labelJenis(rep.jenisSampah)}</span>
+										<span>{labelJenis(pilihanJenis[rep.id])}</span>
 									</Select.Trigger>
 									<Select.Content>
 										{#each jenisSampahOptions as opt (opt.value)}
@@ -338,9 +355,9 @@
 								>
 									Verifikasi → jadikan insiden
 								</Button>
-								<Select.Root type="single" name="modelType" value={rep.aiModelType ?? "street"}>
+								<Select.Root type="single" name="modelType" bind:value={pilihanModel[rep.id]}>
 									<Select.Trigger class="h-8 w-[9.5rem] text-xs">
-										<span>{modelLabel[rep.aiModelType ?? "street"] ?? rep.aiModelType}</span>
+										<span>{modelLabel[pilihanModel[rep.id]] ?? pilihanModel[rep.id]}</span>
 									</Select.Trigger>
 									<Select.Content>
 										{#each MODEL_TYPES as m (m)}
