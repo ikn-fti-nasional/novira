@@ -450,6 +450,7 @@ async function tangkapKamera(
 			? (
 					await analisaGambarNovira(Buffer.from(data.image_base64, "base64"), {
 						confThres: pengaturan.confThres,
+						sumber: "cctv",
 					}).catch((err) => {
 						console.error("[novira] Analisa Model Novira gagal untuk kamera:", err);
 						throw err;

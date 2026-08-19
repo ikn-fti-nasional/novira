@@ -68,7 +68,18 @@ interface TemuanMentah {
 }
 
 const MODEL_ID = process.env.NOVIRA_MODEL_ID || "claude-sonnet-5";
-const MAX_TOKENS = 8000;
+/**
+ * Model CCTV terpisah dari model laporan warga: siklus CCTV memanggil ini
+ * per kamera, dua kali sehari, jadi volumenya jauh lebih besar daripada foto
+ * laporan warga yang tetap ditinjau manusia. Haiku cukup untuk task deteksi
+ * kotak sederhana ini di volume tinggi; kalau akurasinya kurang, naikkan
+ * lewat env tanpa menyentuh kode.
+ */
+const MODEL_ID_CCTV = process.env.NOVIRA_MODEL_ID_CCTV || "claude-haiku-4-5";
+/** Cukup untuk maksimum 25 deteksi + sedikit thinking; jadi jaring pengaman
+ * dari biaya outlier, bukan penentu biaya rata-rata (hanya token yang benar-
+ * benar dipakai yang dibayar). */
+const MAX_TOKENS = 1500;
 
 /**
  * Sisi terpanjang gambar yang dikirim ke model. Snapshot CCTV datang dari
@@ -169,7 +180,7 @@ async function kompresGambarUntukModel(
  */
 export async function analisaGambarNovira(
 	gambar: Uint8Array,
-	opsi: { confThres?: number } = {}
+	opsi: { confThres?: number; sumber?: "laporan" | "cctv" } = {}
 ): Promise<HasilAnalisaNovira> {
 	const apiKey = ambilKunci();
 	if (!apiKey) {
@@ -178,6 +189,7 @@ export async function analisaGambarNovira(
 		);
 	}
 	const confThres = opsi.confThres ?? 0.2;
+	const model = opsi.sumber === "cctv" ? MODEL_ID_CCTV : MODEL_ID;
 
 	const buffer = Buffer.from(gambar);
 	const meta = await sharp(buffer).metadata();
@@ -191,7 +203,7 @@ export async function analisaGambarNovira(
 
 	const client = new Anthropic({ apiKey });
 	const response = await client.messages.create({
-		model: MODEL_ID,
+		model,
 		max_tokens: MAX_TOKENS,
 		system: PROMPT_SISTEM,
 		output_config: {
