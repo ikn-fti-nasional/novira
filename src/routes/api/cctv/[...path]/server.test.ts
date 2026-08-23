@@ -2,16 +2,29 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 const { GET } = await import("./+server.js");
 
+const AUTHED_LOCALS = { user: { id: "u1", role: "operator" } };
+
 async function callGet(path: string, headers: Record<string, string> = {}): Promise<Response> {
 	return GET({
 		params: { path },
 		request: new Request("http://localhost/api/cctv/" + path, { headers }),
+		locals: AUTHED_LOCALS,
 	} as any);
 }
 
 describe("CCTV proxy route", () => {
 	afterEach(() => {
 		vi.unstubAllGlobals();
+	});
+
+	it("rejects unauthenticated requests with 401", async () => {
+		await expect(
+			GET({
+				params: { path: "bandung/stream.m3u8" },
+				request: new Request("http://localhost/api/cctv/bandung/stream.m3u8"),
+				locals: { user: null },
+			} as any)
+		).rejects.toMatchObject({ status: 401 });
 	});
 
 	it("returns 404 for unknown source", async () => {

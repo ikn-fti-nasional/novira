@@ -37,6 +37,8 @@ interface Jenjang {
 	statusSla: "HAMPIR_BREACH" | "MELANGGAR_SLA";
 }
 
+type UserRole = (typeof users.$inferSelect)["role"];
+
 /**
  * Ambang 12/24/48 jam mengikuti SLA operasional yang sudah dipakai siklus
  * deteksi (`deteksi.ts`): 12 jam hampir breach, 24 jam melanggar. Jenjang 48
@@ -90,6 +92,21 @@ export async function jalankanEskalasiSla(sekarang = new Date()): Promise<Ringka
 
 	const ringkasan: RingkasanEskalasi = { diperiksa: terbuka.length, dieskalasi: 0, perJenjang: {} };
 
+	// Cache penerima per peran sekali — hindari N+1 query `select users where role in` per insiden.
+	const semuaPeran = [...new Set(JENJANG.flatMap((j) => [...j.peranTujuan]))] as Role[];
+	const penerimaByRole = new Map<Role, string[]>();
+	if (semuaPeran.length > 0) {
+		const rows = await db
+			.select({ id: users.id, role: users.role })
+			.from(users)
+			.where(inArray(users.role, semuaPeran as UserRole[]));
+		for (const r of rows) {
+			const arr = penerimaByRole.get(r.role as Role) ?? [];
+			arr.push(r.id);
+			penerimaByRole.set(r.role as Role, arr);
+		}
+	}
+
 	for (const { incident, camera, petugas } of terbuka) {
 		const durasiJam = (sekarang.getTime() - incident.pertamaDilihat.getTime()) / 3600_000;
 		const jenjang = jenjangUntuk(durasiJam);
@@ -111,54 +128,68 @@ export async function jalankanEskalasiSla(sekarang = new Date()): Promise<Ringka
 			dariLaporanWarga: incident.sumber === "LAPORAN_WARGA",
 		});
 
-		await db
-			.update(incidents)
-			.set({
-				tingkatEskalasi: jenjang.tingkat,
-				terakhirEskalasiPada: sekarang,
-				statusSla: jenjang.statusSla,
-				status: "PERINGATAN",
-				keparahan: prioritas.keparahan,
-				skorPrioritas: prioritas.skor,
-				rincianPrioritas: serializeRincian(prioritas.rincian),
-				updatedAt: sekarang,
-			})
-			.where(eq(incidents.id, incident.id));
-
 		const pesan =
 			`Insiden ${incident.id} (${incident.labelSampah}) di ${lokasi} belum selesai setelah ` +
 			`${formatDurasi(durasiJam)}.` +
 			(petugas ? ` Ditugaskan ke ${petugas.nama}.` : " Belum ada petugas yang ditugaskan.");
 
-		await kirimKePeran(
-			jenjang.peranTujuan,
-			jenjang.judul,
-			pesan,
-			jenjang.tingkat >= 2 ? "error" : "warning"
-		);
+		// Atomik per insiden: update status + notifikasi peran + notifikasi petugas + audit log
+		// harus sukses bersama — kalau tidak, retry cron bisa duplikat notifikasi.
+		await db.transaction(async (tx) => {
+			await tx
+				.update(incidents)
+				.set({
+					tingkatEskalasi: jenjang.tingkat,
+					terakhirEskalasiPada: sekarang,
+					statusSla: jenjang.statusSla,
+					status: "PERINGATAN",
+					keparahan: prioritas.keparahan,
+					skorPrioritas: prioritas.skor,
+					rincianPrioritas: serializeRincian(prioritas.rincian),
+					updatedAt: sekarang,
+				})
+				.where(eq(incidents.id, incident.id));
 
-		// Petugas yang sedang memegang insiden ini selalu ikut diberi tahu di
-		// setiap jenjang — merekalah yang bisa langsung bertindak.
-		if (petugas?.userId) {
-			await db.insert(notifications).values({
+			const peranIds: string[] = [];
+			for (const peran of jenjang.peranTujuan) {
+				const ids = penerimaByRole.get(peran);
+				if (ids) peranIds.push(...ids);
+			}
+			if (peranIds.length > 0) {
+				await tx.insert(notifications).values(
+					peranIds.map((uid) => ({
+						id: generateId(10),
+						userId: uid,
+						title: jenjang.judul,
+						message: pesan,
+						type: (jenjang.tingkat >= 2 ? "error" : "warning") as "error" | "warning",
+					}))
+				);
+			}
+
+			// Petugas yang sedang memegang insiden ini selalu ikut diberi tahu di
+			// setiap jenjang — merekalah yang bisa langsung bertindak.
+			if (petugas?.userId) {
+				await tx.insert(notifications).values({
+					id: generateId(10),
+					userId: petugas.userId,
+					title: jenjang.judul,
+					message: pesan,
+					type: jenjang.tingkat >= 2 ? "error" : "warning",
+				});
+			}
+
+			await tx.insert(auditLog).values({
 				id: generateId(10),
-				userId: petugas.userId,
-				title: jenjang.judul,
-				message: pesan,
-				type: jenjang.tingkat >= 2 ? "error" : "warning",
+				waktu: sekarang,
+				pengguna: "sistem",
+				peran: "SISTEM",
+				tindakan: `Eskalasi SLA jenjang ${jenjang.tingkat}`,
+				rincian: `${pesan} Diteruskan ke: ${jenjang.peranTujuan.join(", ")}. Prioritas naik ke ${prioritas.skor}/100.`,
+				wilayah,
+				tipe: "ESKALASI",
+				incidentId: incident.id,
 			});
-		}
-
-		await db.insert(auditLog).values({
-			id: generateId(10),
-			waktu: sekarang,
-			pengguna: "sistem",
-			peran: "SISTEM",
-			tindakan: `Eskalasi SLA jenjang ${jenjang.tingkat}`,
-			rincian: `${pesan} Diteruskan ke: ${jenjang.peranTujuan.join(", ")}. Prioritas naik ke ${prioritas.skor}/100.`,
-			wilayah,
-			tipe: "ESKALASI",
-			incidentId: incident.id,
 		});
 
 		ringkasan.dieskalasi++;
@@ -166,37 +197,6 @@ export async function jalankanEskalasiSla(sekarang = new Date()): Promise<Ringka
 	}
 
 	return ringkasan;
-}
-
-/**
- * Notifikasi per-pengguna ke semua pemegang peran tertentu.
- *
- * Sengaja tidak memakai notifikasi global (`userId = NULL`): eskalasi adalah
- * tanggung jawab jabatan tertentu, dan kalau semua orang menerimanya, tidak
- * ada yang merasa itu tugasnya.
- */
-async function kirimKePeran(
-	peran: readonly Role[],
-	judul: string,
-	pesan: string,
-	tipe: "warning" | "error"
-): Promise<void> {
-	if (peran.length === 0) return;
-	const penerima = await db
-		.select({ id: users.id })
-		.from(users)
-		.where(inArray(users.role, [...peran]));
-	if (penerima.length === 0) return;
-
-	await db.insert(notifications).values(
-		penerima.map((u) => ({
-			id: generateId(10),
-			userId: u.id,
-			title: judul,
-			message: pesan,
-			type: tipe,
-		}))
-	);
 }
 
 /** Ringkasan eskalasi aktif untuk kartu dashboard — berapa insiden mandek di tiap jenjang. */

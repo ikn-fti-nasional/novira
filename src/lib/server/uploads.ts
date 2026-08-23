@@ -33,6 +33,44 @@ export function validateUpload(file: File, kind: "foto" | "video"): string | nul
 	return null;
 }
 
+const MAGIC: Record<string, { offset: number; bytes: number[] }[]> = {
+	"image/jpeg": [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
+	"image/png": [{ offset: 0, bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+	"image/webp": [{ offset: 0, bytes: [0x52, 0x49, 0x46, 0x46] }], // RIFF....WEBP checked separately
+	"video/mp4": [{ offset: 4, bytes: [0x66, 0x74, 0x79, 0x70] }], // ftyp at 4
+	"video/webm": [{ offset: 0, bytes: [0x1a, 0x45, 0xdf, 0xa3] }],
+	"video/quicktime": [{ offset: 4, bytes: [0x66, 0x74, 0x79, 0x70] }],
+};
+
+function matchesMagic(buf: Uint8Array, type: string): boolean {
+	const patterns = MAGIC[type];
+	if (!patterns) return true;
+	for (const { offset, bytes } of patterns) {
+		if (buf.length < offset + bytes.length) return false;
+		for (let i = 0; i < bytes.length; i++) if (buf[offset + i] !== bytes[i]) return false;
+	}
+	// Extra WEBP check: bytes 8-11 must be WEBP
+	if (type === "image/webp") {
+		if (buf.length < 12) return false;
+		return buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50;
+	}
+	return true;
+}
+
+async function assertMagic(file: File, kind: "foto" | "video"): Promise<string | null> {
+	try {
+		const slice = await file.slice(0, 16).arrayBuffer();
+		const buf = new Uint8Array(slice);
+		if (buf.length === 0) return null;
+		if (!matchesMagic(buf, file.type)) {
+			return `${kind === "foto" ? "Foto" : "Video"} tidak sesuai format ${file.type} (header tidak cocok)`;
+		}
+	} catch {
+		// Kalau gagal baca header (mis. stream error), jangan blokir — validasi MIME sudah lolos.
+	}
+	return null;
+}
+
 /**
  * Simpan berkas unggahan ke Vercel Blob (bukan disk lokal) -- filesystem
  * container/serverless bersifat efemeral, jadi foto/video bukti yang ditulis
@@ -42,6 +80,8 @@ export function validateUpload(file: File, kind: "foto" | "video"): string | nul
 export async function storeUpload(file: File, kind: "foto" | "video"): Promise<string> {
 	const error = validateUpload(file, kind);
 	if (error) throw new Error(error);
+	const magicError = await assertMagic(file, kind);
+	if (magicError) throw new Error(magicError);
 
 	const name = `${kind}/${Date.now()}-${randomBytes(6).toString("hex")}.${EXTENSION[file.type] ?? "bin"}`;
 	const blob = await put(name, file, { access: "public", contentType: file.type });

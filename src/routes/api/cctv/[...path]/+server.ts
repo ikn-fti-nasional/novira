@@ -164,7 +164,12 @@ async function fetchUpstream(
 	};
 }
 
-export const GET: RequestHandler = async ({ params, request }) => {
+export const GET: RequestHandler = async ({ params, request, locals }) => {
+	// Proxy CCTV adalah bandwidth & SSRF-sensitive — hanya user login yang boleh pakai.
+	// Tanpa auth, siapa pun bisa crawl upstream ATCS lewat server kita.
+	if (!locals.user) {
+		error(401, "Unauthorized");
+	}
 	const [sourceName, ...rest] = (params.path ?? "").split("/");
 	const source = SOURCES[sourceName];
 	if (!source || rest.length === 0) {

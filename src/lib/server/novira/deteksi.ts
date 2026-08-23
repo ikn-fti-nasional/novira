@@ -5,7 +5,9 @@ import { cameras, incidents, auditLog, notifications, appSettings } from "$lib/s
 import { storeUpload } from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
 import type { JenisSampah } from "$lib/types/novira.js";
+import { CLASS_TO_JENIS } from "./klasifikasi.js";
 import { hitungPrioritas, serializeRincian } from "./prioritas.js";
+import { petaTerbatas } from "./petaTerbatas.js";
 
 /**
  * Twice-daily (12:00 & 15:00 WIB, see scheduler.ts) Bandung CCTV detection
@@ -72,22 +74,25 @@ export async function ambilPengaturanModel(): Promise<PengaturanModelDeteksi> {
 		: DEFAULT_MODEL_TYPE;
 
 	const rawConf = Number(map[SETTING_KEY_CONF]);
-	const confThres = Number.isFinite(rawConf) && rawConf > 0 && rawConf <= 1 ? rawConf : DEFAULT_CONF_THRES;
+	const confThres =
+		Number.isFinite(rawConf) && rawConf > 0 && rawConf <= 1 ? rawConf : DEFAULT_CONF_THRES;
 
 	return { modelType, confThres };
 }
 
 export async function simpanPengaturanModel(pengaturan: PengaturanModelDeteksi): Promise<void> {
 	const now = new Date();
-	for (const [key, value] of [
-		[SETTING_KEY_MODEL, pengaturan.modelType],
-		[SETTING_KEY_CONF, String(pengaturan.confThres)],
-	] as const) {
-		await db
-			.insert(appSettings)
-			.values({ key, value, updatedAt: now })
-			.onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: now } });
-	}
+	await db.transaction(async (tx) => {
+		for (const [key, value] of [
+			[SETTING_KEY_MODEL, pengaturan.modelType],
+			[SETTING_KEY_CONF, String(pengaturan.confThres)],
+		] as const) {
+			await tx
+				.insert(appSettings)
+				.values({ key, value, updatedAt: now })
+				.onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: now } });
+		}
+	});
 }
 
 export interface ProgresAnalisaManual {
@@ -117,14 +122,10 @@ interface SnapshotResponse {
 	vehicle_blockers: number;
 }
 
-// Only the `street` model's 4 classes matter today. `Trash bin` is a fixture
-// (not litter) so it's intentionally excluded -- see BANDUNG_FINETUNE.md for
-// why `street` (not `cctv`/`urban`) is the safe default for these cameras.
-const CLASS_TO_JENIS: Partial<Record<string, JenisSampah>> = {
-	Pile: "tumpukan_sampah",
-	Plastic: "kantong_plastik",
-	"Face mask": "kantong_plastik",
-};
+// Only the `street` model's classes matter today. `Trash bin` is a fixture
+// (not litter) so it's intentionally excluded -- see the mapping in
+// klasifikasi.ts, and BANDUNG_FINETUNE.md for why `street` (not `cctv`/
+// `urban`) is the safe default for these cameras.
 
 // Keparahan tidak lagi berupa tabel statis jenis→level. Sekarang diturunkan
 // dari skor mesin prioritas (`prioritas.ts`), yang juga memperhitungkan
@@ -195,36 +196,6 @@ function resolveStreamUrl(urlStream: string): string {
  */
 const MAKS_KAMERA_PARALEL = 6;
 
-/**
- * `Promise.allSettled` dengan batas konkurensi: menjaga urutan hasil tetap
- * sama dengan urutan masukan, karena pemanggil memasangkan `results[i]`
- * dengan `bandungCameras[i]` untuk menyusun laporan errornya.
- */
-async function petaTerbatas<T, R>(
-	items: readonly T[],
-	kerjakan: (item: T) => Promise<R>
-): Promise<PromiseSettledResult<R>[]> {
-	const hasil = new Array<PromiseSettledResult<R>>(items.length);
-	let berikutnya = 0;
-
-	async function pekerja(): Promise<void> {
-		for (;;) {
-			const i = berikutnya++;
-			if (i >= items.length) return;
-			try {
-				hasil[i] = { status: "fulfilled", value: await kerjakan(items[i]) };
-			} catch (reason) {
-				hasil[i] = { status: "rejected", reason };
-			}
-		}
-	}
-
-	await Promise.all(
-		Array.from({ length: Math.min(MAKS_KAMERA_PARALEL, items.length) }, pekerja)
-	);
-	return hasil;
-}
-
 export interface SiklusDeteksiSummary {
 	camerasProcessed: number;
 	camerasFailed: number;
@@ -263,7 +234,7 @@ export async function jalankanSiklusDeteksi(): Promise<SiklusDeteksiSummary> {
 	const now = new Date();
 	const pengaturan = await ambilPengaturanModel();
 
-	const results = await petaTerbatas(bandungCameras, (camera) =>
+	const results = await petaTerbatas(bandungCameras, MAKS_KAMERA_PARALEL, (camera) =>
 		prosesKamera(camera, now, pengaturan)
 	);
 
@@ -332,7 +303,11 @@ interface HasilTangkapan {
  * analisa manual (yang menahan hasilnya sampai operator menekan "Verifikasi").
  */
 function escapeXml(s: string): string {
-	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+	return s
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;");
 }
 
 const KOTAK_STROKE = "#ef4444"; // red-500 -- konsisten dengan warna alert/insiden di UI
@@ -472,8 +447,17 @@ async function terapkanDeteksi(params: {
 	openIncidents: (typeof incidents.$inferSelect)[];
 	kekambuhanPerKamera: number;
 }): Promise<{ insidenId: string; baru: boolean }> {
-	const { camera, now, jenisSampah, labelSampah, skor, bbox, urlSnapshot, openIncidents, kekambuhanPerKamera } =
-		params;
+	const {
+		camera,
+		now,
+		jenisSampah,
+		labelSampah,
+		skor,
+		bbox,
+		urlSnapshot,
+		openIncidents,
+		kekambuhanPerKamera,
+	} = params;
 
 	const matchIndex = openIncidents.findIndex(
 		(inc) =>
@@ -570,7 +554,9 @@ async function kondisiKamera(cameraId: string) {
 	const openIncidents = await db
 		.select()
 		.from(incidents)
-		.where(and(eq(incidents.cameraId, cameraId), inArray(incidents.status, ["AKTIF", "PERINGATAN"])));
+		.where(
+			and(eq(incidents.cameraId, cameraId), inArray(incidents.status, ["AKTIF", "PERINGATAN"]))
+		);
 
 	// Berapa kali titik ini pernah dibersihkan lalu kotor lagi. Dihitung sekali
 	// per kamera (bukan per deteksi) karena nilainya sama untuk semua deteksi
@@ -642,7 +628,7 @@ export async function jalankanAnalisaManual(
 	let selesai = 0;
 	const pengaturan = await ambilPengaturanModel();
 
-	const results = await petaTerbatas(bandungCameras, async (camera) => {
+	const results = await petaTerbatas(bandungCameras, MAKS_KAMERA_PARALEL, async (camera) => {
 		onProgress?.({
 			cameraId: camera.id,
 			cameraNama: camera.nama,
@@ -738,7 +724,12 @@ export async function verifikasiTemuanManual(
 	const { openIncidents, kekambuhanPerKamera } = await kondisiKamera(temuan.cameraId);
 
 	const hasil = await terapkanDeteksi({
-		camera: { id: temuan.cameraId, nama: temuan.cameraNama, kota: temuan.kota, kecamatan: temuan.kecamatan },
+		camera: {
+			id: temuan.cameraId,
+			nama: temuan.cameraNama,
+			kota: temuan.kota,
+			kecamatan: temuan.kecamatan,
+		},
 		now,
 		jenisSampah: temuan.jenisSampah,
 		labelSampah: temuan.labelSampah,

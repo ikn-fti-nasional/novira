@@ -13,6 +13,7 @@ import { storeAnnotatedImage } from "$lib/server/uploads.js";
 import type { JenisSampah } from "$lib/types/novira.js";
 import type { ModelTypeDeteksi } from "./deteksi.js";
 import { cariTerdekat, jarakMeter, normalisasiTelepon, parseTitik, type Titik } from "./geo.js";
+import { CLASS_TO_JENIS } from "./klasifikasi.js";
 import { hitungPrioritas, serializeRincian, type FaktorPrioritas } from "./prioritas.js";
 
 /**
@@ -49,13 +50,6 @@ export type RekomendasiAi =
 	| "PERLU_TINJAUAN"
 	| "KEMUNGKINAN_SPAM"
 	| "GAGAL_PINDAI";
-
-/** Pemetaan kelas mentah model → enum jenis sampah kami. Sengaja sama dengan `deteksi.ts`. */
-const CLASS_TO_JENIS: Partial<Record<string, JenisSampah>> = {
-	Pile: "tumpukan_sampah",
-	Plastic: "kantong_plastik",
-	"Face mask": "kantong_plastik",
-};
 
 const JENIS_VALID: readonly JenisSampah[] = [
 	"tumpukan_sampah",
@@ -199,7 +193,12 @@ export async function simpanHasilPindaiKlien(
 	}
 	await simpanHasilDeteksi(
 		laporanId,
-		deteksi.map((d) => ({ class_id: 0, class_name: d.className, score: d.score, box: [0, 0, 0, 0] })),
+		deteksi.map((d) => ({
+			class_id: 0,
+			class_name: d.className,
+			score: d.score,
+			box: [0, 0, 0, 0],
+		})),
 		{ modelType, annotatedUrl: opsi.annotatedUrl ?? null }
 	);
 }
@@ -478,14 +477,16 @@ async function ambilReputasi(telepon: string | null) {
  * sebagai pengirim spam. Ini penting karena skor tersebut ikut menentukan
  * apakah laporan berikutnya ditandai KEMUNGKINAN_SPAM.
  */
+type DbClient = typeof db;
 export async function perbaruiReputasi(
 	telepon: string | null,
-	hasil: "valid" | "ditolak"
+	hasil: "valid" | "ditolak",
+	client: Pick<DbClient, "select" | "insert"> = db
 ): Promise<void> {
 	const kunci = normalisasiTelepon(telepon);
 	if (!kunci) return;
 
-	const [row] = await db.select().from(reporterTrust).where(eq(reporterTrust.telepon, kunci));
+	const [row] = await client.select().from(reporterTrust).where(eq(reporterTrust.telepon, kunci));
 	const valid = (row?.laporanValid ?? 0) + (hasil === "valid" ? 1 : 0);
 	const ditolak = (row?.laporanDitolak ?? 0) + (hasil === "ditolak" ? 1 : 0);
 	const total = (row?.laporanTotal ?? 0) + 1;
@@ -500,7 +501,7 @@ export async function perbaruiReputasi(
 		updatedAt: new Date(),
 	};
 
-	await db
+	await client
 		.insert(reporterTrust)
 		.values(nilai)
 		.onConflictDoUpdate({ target: reporterTrust.telepon, set: nilai });
@@ -570,69 +571,79 @@ export async function verifikasiLaporan(
 	});
 
 	const insidenId = generateId(10);
-	await db.insert(incidents).values({
-		id: insidenId,
-		cameraId: kameraTerdekat?.item.id ?? null,
-		sumber: "LAPORAN_WARGA",
-		laporanId,
-		latitude: laporan.latitude,
-		longitude: laporan.longitude,
-		lokasiTeks,
-		jenisSampah,
-		labelSampah: laporan.aiLabel ?? "laporan warga",
-		// Timer SLA berjalan sejak WARGA MELAPOR, bukan sejak operator sempat
-		// membuka antrian. Kalau tidak, keterlambatan verifikasi internal akan
-		// tersembunyi dari statistik waktu tanggap.
-		pertamaDilihat: laporan.createdAt,
-		terakhirDilihat: now,
-		status: "AKTIF",
-		keparahan: prioritas.keparahan,
-		tingkatKepercayaan: laporan.aiSkor ?? "0",
-		urlSnapshot: laporan.urlFoto ?? "",
-		urlSnapshotPertama: laporan.urlFoto ?? null,
-		statusSla: "TEPAT_WAKTU",
-		skorPrioritas: prioritas.skor,
-		rincianPrioritas: serializeRincian(prioritas.rincian),
-		// Laporan warga tidak punya bounding box dalam ruang gambar kamera —
-		// nol berarti "tidak berlaku", dan UI menyembunyikan kotaknya saat
-		// lebar/tingginya nol.
-		bboxX: "0",
-		bboxY: "0",
-		bboxWidth: "0",
-		bboxHeight: "0",
-	});
 
-	await db
-		.update(publicReports)
-		.set({
-			status: "DIPROSES",
-			insidenId,
-			diprosesOleh: aktor.id,
-			catatanPetugas: opsi.catatan?.trim() || laporan.catatanPetugas,
-			updatedAt: now,
-		})
-		.where(eq(publicReports.id, laporanId));
+	// Empat tulisan ini harus atomik: insiden tanpa laporan yang ikut berubah
+	// status (atau sebaliknya) membuat pelacakan publik dan antrian triase
+	// saling bertentangan. Audit log & notifikasi ikut di dalam transaksi —
+	// jejak audit yang hilang justru pada kegagalan paling menarik untuk
+	// diselidiki. Reputasi pelapor sengaja ikut di dalam: nilainya turunan
+	// langsung dari keputusan ini, dan tx dipakai supaya baca-then-tulisnya
+	// konsisten.
+	await db.transaction(async (tx) => {
+		await tx.insert(incidents).values({
+			id: insidenId,
+			cameraId: kameraTerdekat?.item.id ?? null,
+			sumber: "LAPORAN_WARGA",
+			laporanId,
+			latitude: laporan.latitude,
+			longitude: laporan.longitude,
+			lokasiTeks,
+			jenisSampah,
+			labelSampah: laporan.aiLabel ?? "laporan warga",
+			// Timer SLA berjalan sejak WARGA MELAPOR, bukan sejak operator sempat
+			// membuka antrian. Kalau tidak, keterlambatan verifikasi internal akan
+			// tersembunyi dari statistik waktu tanggap.
+			pertamaDilihat: laporan.createdAt,
+			terakhirDilihat: now,
+			status: "AKTIF",
+			keparahan: prioritas.keparahan,
+			tingkatKepercayaan: laporan.aiSkor ?? "0",
+			urlSnapshot: laporan.urlFoto ?? "",
+			urlSnapshotPertama: laporan.urlFoto ?? null,
+			statusSla: "TEPAT_WAKTU",
+			skorPrioritas: prioritas.skor,
+			rincianPrioritas: serializeRincian(prioritas.rincian),
+			// Laporan warga tidak punya bounding box dalam ruang gambar kamera —
+			// nol berarti "tidak berlaku", dan UI menyembunyikan kotaknya saat
+			// lebar/tingginya nol.
+			bboxX: "0",
+			bboxY: "0",
+			bboxWidth: "0",
+			bboxHeight: "0",
+		});
 
-	await perbaruiReputasi(laporan.pelaporTelepon, "valid");
+		await tx
+			.update(publicReports)
+			.set({
+				status: "DIPROSES",
+				insidenId,
+				diprosesOleh: aktor.id,
+				catatanPetugas: opsi.catatan?.trim() || laporan.catatanPetugas,
+				updatedAt: now,
+			})
+			.where(eq(publicReports.id, laporanId));
 
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: now,
-		pengguna: aktor.nama,
-		peran: aktor.peran,
-		tindakan: "Laporan warga diverifikasi",
-		rincian: `Laporan ${laporan.kodeTracking} diverifikasi ${aktor.nama} dan dinaikkan menjadi insiden ${insidenId} (${lokasiTeks}, prioritas ${prioritas.skor}/100)`,
-		wilayah: laporan.kota ?? kameraTerdekat?.item.kota ?? "",
-		tipe: "LAPORAN_WARGA",
-		incidentId: insidenId,
-	});
+		await tx.insert(auditLog).values({
+			id: generateId(10),
+			waktu: now,
+			pengguna: aktor.nama,
+			peran: aktor.peran,
+			tindakan: "Laporan warga diverifikasi",
+			rincian: `Laporan ${laporan.kodeTracking} diverifikasi ${aktor.nama} dan dinaikkan menjadi insiden ${insidenId} (${lokasiTeks}, prioritas ${prioritas.skor}/100)`,
+			wilayah: laporan.kota ?? kameraTerdekat?.item.kota ?? "",
+			tipe: "LAPORAN_WARGA",
+			incidentId: insidenId,
+		});
 
-	await db.insert(notifications).values({
-		id: generateId(10),
-		userId: null,
-		title: "Insiden baru dari laporan warga",
-		message: `Laporan ${laporan.kodeTracking} di ${lokasiTeks} diverifikasi dan menjadi insiden dengan prioritas ${prioritas.skor}/100. Tugaskan petugas di halaman Insiden.`,
-		type: "warning",
+		await tx.insert(notifications).values({
+			id: generateId(10),
+			userId: null,
+			title: "Insiden baru dari laporan warga",
+			message: `Laporan ${laporan.kodeTracking} di ${lokasiTeks} diverifikasi dan menjadi insiden dengan prioritas ${prioritas.skor}/100. Tugaskan petugas di halaman Insiden.`,
+			type: "warning",
+		});
+
+		await perbaruiReputasi(laporan.pelaporTelepon, "valid", tx);
 	});
 
 	return { ok: true, insidenId };
@@ -677,22 +688,26 @@ export async function tolakLaporan(
 	}
 
 	const now = new Date();
-	await db
-		.update(publicReports)
-		.set({ status: "DITOLAK", catatanPetugas: alasan, diprosesOleh: aktor.id, updatedAt: now })
-		.where(eq(publicReports.id, laporanId));
+	// Atomik: laporan DITOLAK tanpa penurunan reputasi (atau sebaliknya)
+	// membuat skor pelapor tidak lagi mencerminkan keputusan operator.
+	await db.transaction(async (tx) => {
+		await tx
+			.update(publicReports)
+			.set({ status: "DITOLAK", catatanPetugas: alasan, diprosesOleh: aktor.id, updatedAt: now })
+			.where(eq(publicReports.id, laporanId));
 
-	await perbaruiReputasi(laporan.pelaporTelepon, "ditolak");
+		await perbaruiReputasi(laporan.pelaporTelepon, "ditolak", tx);
 
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: now,
-		pengguna: aktor.nama,
-		peran: aktor.peran,
-		tindakan: "Laporan warga ditolak",
-		rincian: `Laporan ${laporan.kodeTracking} ditolak ${aktor.nama}. Alasan: ${alasan}`,
-		wilayah: laporan.kota ?? "",
-		tipe: "LAPORAN_WARGA",
+		await tx.insert(auditLog).values({
+			id: generateId(10),
+			waktu: now,
+			pengguna: aktor.nama,
+			peran: aktor.peran,
+			tindakan: "Laporan warga ditolak",
+			rincian: `Laporan ${laporan.kodeTracking} ditolak ${aktor.nama}. Alasan: ${alasan}`,
+			wilayah: laporan.kota ?? "",
+			tipe: "LAPORAN_WARGA",
+		});
 	});
 
 	return { ok: true };
@@ -723,26 +738,28 @@ export async function tandaiDuplikat(
 	}
 
 	const now = new Date();
-	await db
-		.update(publicReports)
-		.set({
-			status: "DUPLIKAT",
-			duplikatDariId: indukId,
-			diprosesOleh: aktor.id,
-			catatanPetugas: `Digabungkan ke laporan ${induk.kodeTracking}`,
-			updatedAt: now,
-		})
-		.where(eq(publicReports.id, laporanId));
+	await db.transaction(async (tx) => {
+		await tx
+			.update(publicReports)
+			.set({
+				status: "DUPLIKAT",
+				duplikatDariId: indukId,
+				diprosesOleh: aktor.id,
+				catatanPetugas: `Digabungkan ke laporan ${induk.kodeTracking}`,
+				updatedAt: now,
+			})
+			.where(eq(publicReports.id, laporanId));
 
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: now,
-		pengguna: aktor.nama,
-		peran: aktor.peran,
-		tindakan: "Laporan warga digabungkan",
-		rincian: `Laporan ${laporan.kodeTracking} ditandai duplikat dari ${induk.kodeTracking}`,
-		wilayah: laporan.kota ?? "",
-		tipe: "LAPORAN_WARGA",
+		await tx.insert(auditLog).values({
+			id: generateId(10),
+			waktu: now,
+			pengguna: aktor.nama,
+			peran: aktor.peran,
+			tindakan: "Laporan warga digabungkan",
+			rincian: `Laporan ${laporan.kodeTracking} ditandai duplikat dari ${induk.kodeTracking}`,
+			wilayah: laporan.kota ?? "",
+			tipe: "LAPORAN_WARGA",
+		});
 	});
 
 	return { ok: true };
@@ -856,11 +873,81 @@ export async function listAntrianTriase(status: string) {
 		.where(eq(publicReports.status, status as "MENUNGGU"))
 		.orderBy(desc(publicReports.createdAt));
 
-	return Promise.all(
-		rows.map(async (laporan) => ({
-			...laporan,
-			reputasiPelapor: (await ambilReputasi(laporan.pelaporTelepon))?.skor ?? null,
-			duplikat: laporan.status === "MENUNGGU" ? await cariDuplikat(laporan.id) : [],
-		}))
-	);
+	if (rows.length === 0) return [];
+
+	// Batch reputasi: satu query untuk semua telepon, hindari N+1.
+	const teleponSet = new Set<string>();
+	for (const r of rows) {
+		const k = normalisasiTelepon(r.pelaporTelepon);
+		if (k) teleponSet.add(k);
+	}
+	const reputasiMap = new Map<string, number>();
+	if (teleponSet.size > 0) {
+		const telepons = [...teleponSet];
+		const trustRows = await db
+			.select()
+			.from(reporterTrust)
+			.where(inArray(reporterTrust.telepon, telepons));
+		for (const t of trustRows) reputasiMap.set(t.telepon, t.skor);
+	}
+
+	// Batch duplikat: pre-fetch semua kandidat yang mungkin dalam jendela waktu,
+	// lalu hitung jarak di JS sekali (hindari N SELECT * per laporan).
+	const kandidatMap = new Map<string, KandidatDuplikat[]>();
+	if (rows.some((r) => r.status === "MENUNGGU" && parseTitik(r.latitude, r.longitude))) {
+		const minCreated = new Date(
+			Math.min(...rows.map((r) => r.createdAt.getTime())) - JENDELA_DUPLIKAT_JAM * 3600_000
+		);
+		const kandidatRows = await db
+			.select()
+			.from(publicReports)
+			.where(
+				and(
+					gte(publicReports.createdAt, minCreated),
+					inArray(publicReports.status, ["MENUNGGU", "DIPROSES", "SELESAI"])
+				)
+			);
+		// Index kandidat by id for quick titik lookup
+		for (const laporan of rows) {
+			if (laporan.status !== "MENUNGGU") {
+				kandidatMap.set(laporan.id, []);
+				continue;
+			}
+			const titik = parseTitik(laporan.latitude, laporan.longitude);
+			if (!titik) {
+				kandidatMap.set(laporan.id, []);
+				continue;
+			}
+			const sejak = laporan.createdAt.getTime() - JENDELA_DUPLIKAT_JAM * 3600_000;
+			const duplikat: KandidatDuplikat[] = [];
+			for (const k of kandidatRows) {
+				if (k.id === laporan.id) continue;
+				if (k.createdAt.getTime() < sejak) continue;
+				const t = parseTitik(k.latitude, k.longitude);
+				if (!t) continue;
+				const jarak = jarakMeter(titik, t);
+				if (jarak > RADIUS_DUPLIKAT_METER) continue;
+				duplikat.push({
+					laporanId: k.id,
+					kodeTracking: k.kodeTracking,
+					jarakMeter: Math.round(jarak),
+					createdAt: k.createdAt,
+					status: k.status,
+				});
+			}
+			duplikat.sort((a, b) => a.jarakMeter - b.jarakMeter);
+			kandidatMap.set(laporan.id, duplikat);
+		}
+	} else {
+		for (const r of rows) kandidatMap.set(r.id, []);
+	}
+
+	return rows.map((laporan) => ({
+		...laporan,
+		reputasiPelapor: (() => {
+			const k = normalisasiTelepon(laporan.pelaporTelepon);
+			return k ? (reputasiMap.get(k) ?? null) : null;
+		})(),
+		duplikat: kandidatMap.get(laporan.id) ?? [],
+	}));
 }

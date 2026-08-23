@@ -8,6 +8,33 @@ import { fail, redirect } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types.js";
 
+// Throttle brute force per kombinasi IP+username. ponytail: in-memory berarti
+// batasnya per-instance dan hilang saat restart — cukup untuk deployment
+// single-instance; pindah ke tabel DB/Redis saat scale-out multi-instance.
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+const failedLogins = new Map<string, { count: number; at: number }>();
+
+function catatGagalLogin(key: string): void {
+	const now = Date.now();
+	const entry = failedLogins.get(key);
+	if (!entry || now - entry.at > WINDOW_MS) {
+		failedLogins.set(key, { count: 1, at: now });
+	} else {
+		entry.count++;
+		entry.at = now;
+	}
+	// Map tak dibersihkan bisa tumbuh tanpa batas — buang entri basi saat besar.
+	if (failedLogins.size > 5000) {
+		for (const [k, v] of failedLogins) if (now - v.at > WINDOW_MS) failedLogins.delete(k);
+	}
+}
+
+function loginTerblokir(key: string): boolean {
+	const entry = failedLogins.get(key);
+	return !!entry && entry.count >= MAX_ATTEMPTS && Date.now() - entry.at <= WINDOW_MS;
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
 		redirect(302, hasRole(locals.user, EXECUTIVE_ROLES) ? "/dashboard/eksekutif" : "/dashboard");
@@ -33,19 +60,31 @@ export const actions: Actions = {
 			return fail(400, { message: "Invalid password (6-255 characters required)" });
 		}
 
+		const throttleKey = `${getClientAddress()}:${username.toLowerCase()}`;
+		if (loginTerblokir(throttleKey)) {
+			return fail(429, {
+				message: "Terlalu banyak percobaan gagal — coba lagi dalam 15 menit.",
+			});
+		}
+
 		const existingUser = await db.query.users.findFirst({
 			where: eq(users.username, username.toLowerCase()),
 		});
 
 		if (!existingUser) {
+			catatGagalLogin(throttleKey);
 			return fail(400, { message: "Incorrect username or password" });
 		}
 
 		const validPassword = await verifyPassword(existingUser.passwordHash, password);
 
 		if (!validPassword) {
+			catatGagalLogin(throttleKey);
 			return fail(400, { message: "Incorrect username or password" });
 		}
+
+		// Sukses: reset counter supaya percobaan lama tidak menghukum login berikutnya.
+		failedLogins.delete(throttleKey);
 
 		const token = generateSessionToken();
 		const ua = request.headers.get("user-agent");
