@@ -13,7 +13,6 @@ import { petaTerbatas } from "./petaTerbatas.js";
  * manual admin, bukan sesuatu yang boleh ditimpa otomatis.
  */
 
-const ORIGIN = process.env.ORIGIN ?? "http://localhost:5173";
 const TIMEOUT_MS = 15_000;
 
 /**
@@ -29,14 +28,33 @@ const TIMEOUT_MS = 15_000;
  */
 const MAKS_PARALEL = 6;
 
+// Upstream Bandung — sama dengan SOURCES.bandung di api/cctv. Probe server-side
+// tidak perlu lewat proxy (yang kini butuh sesi); deteksi.ts juga langsung ke
+// upstream. Jangan pakai ORIGIN/proxy agar tidak kena 401.
+const BANDUNG_UPSTREAM_BASE = "https://pelindung.bandung.go.id:3443/video/";
+const BANDUNG_PROXY_PREFIX = "/api/cctv/bandung/";
+
 function resolveUrl(urlStream: string): string {
+	if (urlStream.startsWith(BANDUNG_PROXY_PREFIX)) {
+		return BANDUNG_UPSTREAM_BASE + urlStream.slice(BANDUNG_PROXY_PREFIX.length);
+	}
 	if (/^https?:\/\//i.test(urlStream)) return urlStream;
-	return new URL(urlStream, ORIGIN).toString();
+	const origin = process.env.ORIGIN ?? "http://localhost:5173";
+	return new URL(urlStream, origin).toString();
 }
 
 async function cekSatuKamera(urlStream: string): Promise<boolean> {
 	try {
-		const res = await fetch(resolveUrl(urlStream), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+		const url = resolveUrl(urlStream);
+		const headers: Record<string, string> = {};
+		if (url.startsWith(BANDUNG_UPSTREAM_BASE)) {
+			headers["Origin"] = new URL(BANDUNG_UPSTREAM_BASE).origin;
+			headers["Referer"] = new URL(BANDUNG_UPSTREAM_BASE).origin + "/";
+		}
+		const res = await fetch(url, {
+			headers: Object.keys(headers).length ? headers : undefined,
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
 		if (!res.ok) {
 			await res.body?.cancel();
 			return false;
