@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "$lib/server/db/index.js";
 import { cameras, auditLog } from "$lib/server/db/schema.js";
 import { generateId } from "$lib/server/id.js";
+import { petaTerbatas } from "./petaTerbatas.js";
 
 /**
  * Cek keterjangkauan stream setiap kamera (semua kota, bukan cuma Bandung)
@@ -12,7 +13,6 @@ import { generateId } from "$lib/server/id.js";
  * manual admin, bukan sesuatu yang boleh ditimpa otomatis.
  */
 
-const ORIGIN = process.env.ORIGIN ?? "http://localhost:5173";
 const TIMEOUT_MS = 15_000;
 
 /**
@@ -28,14 +28,33 @@ const TIMEOUT_MS = 15_000;
  */
 const MAKS_PARALEL = 6;
 
+// Upstream Bandung — sama dengan SOURCES.bandung di api/cctv. Probe server-side
+// tidak perlu lewat proxy (yang kini butuh sesi); deteksi.ts juga langsung ke
+// upstream. Jangan pakai ORIGIN/proxy agar tidak kena 401.
+const BANDUNG_UPSTREAM_BASE = "https://pelindung.bandung.go.id:3443/video/";
+const BANDUNG_PROXY_PREFIX = "/api/cctv/bandung/";
+
 function resolveUrl(urlStream: string): string {
+	if (urlStream.startsWith(BANDUNG_PROXY_PREFIX)) {
+		return BANDUNG_UPSTREAM_BASE + urlStream.slice(BANDUNG_PROXY_PREFIX.length);
+	}
 	if (/^https?:\/\//i.test(urlStream)) return urlStream;
-	return new URL(urlStream, ORIGIN).toString();
+	const origin = process.env.ORIGIN ?? "http://localhost:5173";
+	return new URL(urlStream, origin).toString();
 }
 
 async function cekSatuKamera(urlStream: string): Promise<boolean> {
 	try {
-		const res = await fetch(resolveUrl(urlStream), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+		const url = resolveUrl(urlStream);
+		const headers: Record<string, string> = {};
+		if (url.startsWith(BANDUNG_UPSTREAM_BASE)) {
+			headers["Origin"] = new URL(BANDUNG_UPSTREAM_BASE).origin;
+			headers["Referer"] = new URL(BANDUNG_UPSTREAM_BASE).origin + "/";
+		}
+		const res = await fetch(url, {
+			headers: Object.keys(headers).length ? headers : undefined,
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
 		if (!res.ok) {
 			await res.body?.cancel();
 			return false;
@@ -48,24 +67,6 @@ async function cekSatuKamera(urlStream: string): Promise<boolean> {
 	} catch {
 		return false;
 	}
-}
-
-/** Jalankan `tugas` dengan paralelisme terbatas, mempertahankan urutan hasil. */
-async function petaTerbatas<T, R>(
-	items: readonly T[],
-	batas: number,
-	tugas: (item: T) => Promise<R>
-): Promise<R[]> {
-	const hasil = new Array<R>(items.length);
-	let berikutnya = 0;
-	const pekerja = Array.from({ length: Math.min(batas, items.length) }, async () => {
-		while (berikutnya < items.length) {
-			const i = berikutnya++;
-			hasil[i] = await tugas(items[i]);
-		}
-	});
-	await Promise.all(pekerja);
-	return hasil;
 }
 
 export interface KesehatanKameraSummary {
@@ -88,8 +89,13 @@ export async function periksaKesehatanKamera(): Promise<KesehatanKameraSummary> 
 		return { cam, skip: false, ok };
 	});
 
+	const toUpdate: { id: string; status: "ONLINE" | "OFFLINE" }[] = [];
 	let berubah = 0;
-	for (const { cam, skip, ok } of hasil) {
+	for (const settled of hasil) {
+		// cekSatuKamera menelan errornya sendiri, jadi rejected di sini tidak
+		// seharusnya terjadi — lewati daripada menghitung kamera fiktif.
+		if (settled.status === "rejected") continue;
+		const { cam, skip, ok } = settled.value;
 		if (skip) {
 			summary.dilewati++;
 			continue;
@@ -97,30 +103,33 @@ export async function periksaKesehatanKamera(): Promise<KesehatanKameraSummary> 
 		summary.diperiksa++;
 		const statusBaru = ok ? "ONLINE" : "OFFLINE";
 		if (cam.status !== statusBaru) {
-			await db
-				.update(cameras)
-				.set({ status: statusBaru, updatedAt: now })
-				.where(eq(cameras.id, cam.id));
+			toUpdate.push({ id: cam.id, status: statusBaru });
 			berubah++;
 		}
 		if (ok) summary.online++;
 		else summary.offline++;
 	}
 
-	// Cek ini berjalan tiap 15 menit. Menulis baris audit setiap kali membuat
-	// jejak audit didominasi 96 entri "tidak ada yang berubah" per hari, dan
-	// tindakan operator yang sebenarnya penting terkubur di bawahnya. Catat
-	// hanya kalau ada status kamera yang benar-benar berpindah.
-	if (berubah > 0) {
-		await db.insert(auditLog).values({
-			id: generateId(10),
-			waktu: now,
-			pengguna: "sistem",
-			peran: "SISTEM",
-			tindakan: "Perubahan status kamera",
-			rincian: `${berubah} kamera berubah status — hasil cek: ${summary.online} online, ${summary.offline} offline dari ${summary.diperiksa} kamera diperiksa (${summary.dilewati} dilewati karena status Perbaikan)`,
-			wilayah: "Semua",
-			tipe: "KONFIGURASI",
+	// Batch update dalam satu transaksi — 290 kamera sequential tanpa tx = 290 round-trip
+	// + partial commit kalau proses mati di tengah.
+	if (toUpdate.length > 0) {
+		await db.transaction(async (tx) => {
+			for (const u of toUpdate) {
+				await tx
+					.update(cameras)
+					.set({ status: u.status, updatedAt: now })
+					.where(eq(cameras.id, u.id));
+			}
+			await tx.insert(auditLog).values({
+				id: generateId(10),
+				waktu: now,
+				pengguna: "sistem",
+				peran: "SISTEM",
+				tindakan: "Perubahan status kamera",
+				rincian: `${berubah} kamera berubah status — hasil cek: ${summary.online} online, ${summary.offline} offline dari ${summary.diperiksa} kamera diperiksa (${summary.dilewati} dilewati karena status Perbaikan)`,
+				wilayah: "Semua",
+				tipe: "KONFIGURASI",
+			});
 		});
 	}
 

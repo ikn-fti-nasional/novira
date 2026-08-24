@@ -1,4 +1,7 @@
 import cron from "node-cron";
+import { lte } from "drizzle-orm";
+import { db } from "$lib/server/db/index.js";
+import { sessions } from "$lib/server/db/schema.js";
 import { jalankanSiklusDeteksi } from "./deteksi.js";
 import { periksaKesehatanKamera } from "./kesehatanKamera.js";
 import { jalankanEskalasiSla } from "./eskalasi.js";
@@ -71,8 +74,25 @@ export function startDetectionScheduler(): void {
 		{ timezone: "Asia/Jakarta" }
 	);
 
+	// Bersihkan session kedaluwarsa sekali sehari. Tanpa ini baris session
+	// hanya terhapus kalau token-nya kebetulan dipakai lagi (validateSession)
+	// — session yang ditinggal begitu saja menumpuk di DB selamanya.
+	cron.schedule(
+		"0 3 * * *",
+		() => {
+			void db
+				.delete(sessions)
+				// expiresAt disimpan sebagai epoch ms (mode number), bukan Date.
+				.where(lte(sessions.expiresAt, Date.now()))
+				.catch((err) => {
+					console.error("[novira] Bersih-bersih session kedaluwarsa gagal:", err);
+				});
+		},
+		{ timezone: "Asia/Jakarta" }
+	);
+
 	console.log(
 		"[novira] Jadwal aktif — deteksi CCTV Bandung 12:00 & 15:00 WIB, cek kesehatan kamera tiap 15 menit, " +
-			"eskalasi SLA tiap jam, snapshot skor harian 23:50 WIB"
+			"eskalasi SLA tiap jam, snapshot skor harian 23:50 WIB, pembersihan session harian 03:00 WIB"
 	);
 }

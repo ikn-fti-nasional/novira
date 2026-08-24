@@ -61,6 +61,7 @@
 
 	let pilihKameraOpen = $state(false);
 	let cameraSearch = $state("");
+	// svelte-ignore state_referenced_locally
 	const selectedCameraIds = new SvelteSet<string>(data.kameraBandung.map((k) => k.id));
 
 	const kameraTerfilter = $derived(

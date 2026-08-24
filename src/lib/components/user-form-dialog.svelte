@@ -25,6 +25,7 @@
 
 	// State lokal: tanpa `bind:value`, label pemicu Select tidak berubah saat
 	// peran lain dipilih.
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let peran = $state(user?.role ?? "operator");
 	$effect(() => {
 		peran = user?.role ?? "operator";

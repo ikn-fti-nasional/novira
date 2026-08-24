@@ -17,6 +17,7 @@
 
 	// State lokal: tanpa `bind:value`, label pemicu Select tetap menampilkan
 	// peran saat ini walau peran lain sudah dipilih.
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let peranBaru = $state(currentRole);
 	$effect(() => {
 		peranBaru = currentRole;

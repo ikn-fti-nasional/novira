@@ -1,8 +1,9 @@
 import { db } from "$lib/server/db/index.js";
-import { publicReports } from "$lib/server/db/schema.js";
+import { auditLog, incidents, publicReports } from "$lib/server/db/schema.js";
 import { requireRoleOrRedirect, requireRoleOrFail, OPERATIONAL_ROLES } from "$lib/authorize.js";
 import { fail } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
+import { generateId } from "$lib/server/id.js";
 import {
 	listAntrianTriase,
 	pindaiLaporan,
@@ -120,9 +121,9 @@ export const actions: Actions = {
 		if (!id) return fail(400, { message: "Laporan tidak valid" });
 
 		const modelTypeRaw = String(form.get("modelType") ?? "");
-		const modelType: ModelTypeDeteksi = (
-			MODEL_TYPES_TERSEDIA as readonly string[]
-		).includes(modelTypeRaw)
+		const modelType: ModelTypeDeteksi = (MODEL_TYPES_TERSEDIA as readonly string[]).includes(
+			modelTypeRaw
+		)
 			? (modelTypeRaw as ModelTypeDeteksi)
 			: "street";
 
@@ -133,7 +134,14 @@ export const actions: Actions = {
 		return { success: true, message: "Pemindaian ulang selesai" };
 	},
 
-	/** Ubah status laporan yang sudah jadi insiden (mis. tandai selesai administratif). */
+	/**
+	 * Ubah status administratif — HANYA untuk menutup laporan yang sudah DIPROSES
+	 * menjadi SELESAI (mis. setelah insiden dibersihkan di lapangan).
+	 *
+	 * Sengaja dibatasi: transisi MENUNGGU→DITOLAK/DUPLIKAT/DIPROSES wajib lewat
+	 * `tolak`/`gabungkan`/`verifikasi` supaya reputasi & audit tetap konsisten.
+	 * Bypass langsung via update mentah sebelumnya bikin reputasi & jejak audit hilang.
+	 */
 	ubahStatus: async ({ request, locals }) => {
 		const denied = requireRoleOrFail(locals.user, [...OPERATIONAL_ROLES]);
 		if (denied) return denied;
@@ -145,10 +153,44 @@ export const actions: Actions = {
 		if (!id || !STATUSES.includes(status as Status))
 			return fail(400, { message: "Data tidak valid" });
 
-		await db
-			.update(publicReports)
-			.set({ status: status as Status, diprosesOleh: locals.user.id, updatedAt: new Date() })
-			.where(eq(publicReports.id, id));
+		// Hanya SELESAI yang boleh via jalur ini, dan hanya dari DIPROSES.
+		if (status !== "SELESAI") {
+			return fail(400, {
+				message: "Gunakan aksi Verifikasi/Tolak/Gabungkan untuk perubahan status ini",
+			});
+		}
+		const [existing] = await db.select().from(publicReports).where(eq(publicReports.id, id));
+		if (!existing) return fail(404, { message: "Laporan tidak ditemukan" });
+		if (existing.status !== "DIPROSES") {
+			return fail(400, {
+				message: `Hanya laporan DIPROSES yang bisa diselesaikan (status sekarang: ${existing.status})`,
+			});
+		}
+		if (existing.insidenId) {
+			const [ins] = await db.select().from(incidents).where(eq(incidents.id, existing.insidenId));
+			if (ins && ins.status !== "SELESAI" && ins.status !== "POSITIF_PALSU") {
+				return fail(400, { message: "Selesaikan insiden terkait dulu di halaman Insiden" });
+			}
+		}
+
+		const now = new Date();
+		await db.transaction(async (tx) => {
+			await tx
+				.update(publicReports)
+				.set({ status: "SELESAI", diprosesOleh: locals.user!.id, updatedAt: now })
+				.where(eq(publicReports.id, id));
+			await tx.insert(auditLog).values({
+				id: generateId(10),
+				waktu: now,
+				pengguna: locals.user!.name,
+				peran: locals.user!.role,
+				tindakan: "Laporan warga diselesaikan administratif",
+				rincian: `Laporan ${existing.kodeTracking} ditandai SELESAI oleh ${locals.user!.name}`,
+				wilayah: existing.kota ?? "",
+				tipe: "LAPORAN_WARGA",
+				incidentId: existing.insidenId ?? undefined,
+			});
+		});
 
 		return { success: true, message: "Status diperbarui" };
 	},

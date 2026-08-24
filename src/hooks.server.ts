@@ -53,10 +53,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		event.locals.user = user;
 		event.locals.session = session;
-	} catch {
+	} catch (err) {
 		// Unexpected error (e.g. DB hiccup) — treat as unauthenticated for this
 		// request but keep the cookie so the user isn't logged out on a transient
 		// failure. Expired/corrupt sessions are cleaned up inside validateSession.
+		console.error("[novira] validateSession gagal:", err);
 		event.locals.user = null;
 		event.locals.session = null;
 	}

@@ -14,6 +14,7 @@ import { cameras, incidents, officers, auditLog, publicReports } from "$lib/serv
 import { countAll } from "$lib/server/db/helpers.js";
 import { generateId } from "$lib/server/id.js";
 import { parseRincian } from "./prioritas.js";
+import { hitungSkorKebersihan } from "./skor.js";
 import { eq, and, inArray, desc, gte, isNotNull, sql } from "drizzle-orm";
 
 /**
@@ -288,32 +289,36 @@ export async function selesaikanInsiden(
 	// ditandai TEPAT_WAKTU.
 	const statusSla = existing.statusSla !== "MELANGGAR_SLA" ? "TEPAT_WAKTU" : existing.statusSla;
 
-	await db
-		.update(incidents)
-		.set({
-			status: "SELESAI",
-			statusSla,
-			buktiFotoUrl,
-			catatanPenyelesaian: catatan?.trim() || null,
-			terakhirDilihat: now,
-			updatedAt: now,
-		})
-		.where(eq(incidents.id, insidenId));
-
 	const camera = await ambilKamera(existing.cameraId);
 
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: now,
-		pengguna: actor?.nama ?? "petugas",
-		peran: actor?.peran ?? "petugas_lapangan",
-		tindakan: "Insiden diselesaikan",
-		rincian: catatan?.trim()
-			? `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai selesai. Catatan petugas: ${catatan.trim()}`
-			: `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai selesai`,
-		wilayah: wilayahAudit(existing, camera),
-		tipe: "TUGAS_PETUGAS",
-		incidentId: insidenId,
+	// Atomik: status SELESAI tanpa jejak audit (atau sebaliknya) merusak
+	// keterlacakan — audit log justru paling dibutuhkan saat penyelesaian.
+	await db.transaction(async (tx) => {
+		await tx
+			.update(incidents)
+			.set({
+				status: "SELESAI",
+				statusSla,
+				buktiFotoUrl,
+				catatanPenyelesaian: catatan?.trim() || null,
+				terakhirDilihat: now,
+				updatedAt: now,
+			})
+			.where(eq(incidents.id, insidenId));
+
+		await tx.insert(auditLog).values({
+			id: generateId(10),
+			waktu: now,
+			pengguna: actor?.nama ?? "petugas",
+			peran: actor?.peran ?? "petugas_lapangan",
+			tindakan: "Insiden diselesaikan",
+			rincian: catatan?.trim()
+				? `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai selesai. Catatan petugas: ${catatan.trim()}`
+				: `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai selesai`,
+			wilayah: wilayahAudit(existing, camera),
+			tipe: "TUGAS_PETUGAS",
+			incidentId: insidenId,
+		});
 	});
 
 	if (existing.petugasDitugaskan) await bebaskanPetugasJikaMenganggur(existing.petugasDitugaskan);
@@ -332,23 +337,25 @@ export async function tandaiPositifPalsu(
 	if (!existing) return null;
 
 	const now = new Date();
-	await db
-		.update(incidents)
-		.set({ status: "POSITIF_PALSU", terakhirDilihat: now, updatedAt: now })
-		.where(eq(incidents.id, insidenId));
-
 	const camera = await ambilKamera(existing.cameraId);
 
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: now,
-		pengguna: actor?.nama ?? "operator",
-		peran: actor?.peran ?? "operator",
-		tindakan: "Insiden ditandai positif palsu",
-		rincian: `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai sebagai deteksi AI yang keliru`,
-		wilayah: wilayahAudit(existing, camera),
-		tipe: "UBAH_STATUS",
-		incidentId: insidenId,
+	await db.transaction(async (tx) => {
+		await tx
+			.update(incidents)
+			.set({ status: "POSITIF_PALSU", terakhirDilihat: now, updatedAt: now })
+			.where(eq(incidents.id, insidenId));
+
+		await tx.insert(auditLog).values({
+			id: generateId(10),
+			waktu: now,
+			pengguna: actor?.nama ?? "operator",
+			peran: actor?.peran ?? "operator",
+			tindakan: "Insiden ditandai positif palsu",
+			rincian: `Insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)} ditandai sebagai deteksi AI yang keliru`,
+			wilayah: wilayahAudit(existing, camera),
+			tipe: "UBAH_STATUS",
+			incidentId: insidenId,
+		});
 	});
 
 	if (existing.petugasDitugaskan) await bebaskanPetugasJikaMenganggur(existing.petugasDitugaskan);
@@ -370,27 +377,32 @@ export async function tugaskanPetugas(
 	if (!petugas) return null;
 
 	const now = new Date();
-	await db
-		.update(incidents)
-		.set({ petugasDitugaskan: petugasId, updatedAt: now })
-		.where(eq(incidents.id, insidenId));
-	await db
-		.update(officers)
-		.set({ status: "SEDANG_BERTUGAS", updatedAt: now })
-		.where(eq(officers.id, petugasId));
-
 	const camera = await ambilKamera(existing.cameraId);
 
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: now,
-		pengguna: actor?.nama ?? "operator",
-		peran: actor?.peran ?? "operator",
-		tindakan: "Petugas ditugaskan",
-		rincian: `${petugas.nama} ditugaskan ke insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)}`,
-		wilayah: wilayahAudit(existing, camera),
-		tipe: "TUGAS_PETUGAS",
-		incidentId: insidenId,
+	// Atomik: penugasan tanpa audit log (atau status petugas yang tidak ikut
+	// berubah) membuat beban kerja petugas dan jejak siapa-mengerjakan-apa
+	// saling tidak cocok.
+	await db.transaction(async (tx) => {
+		await tx
+			.update(incidents)
+			.set({ petugasDitugaskan: petugasId, updatedAt: now })
+			.where(eq(incidents.id, insidenId));
+		await tx
+			.update(officers)
+			.set({ status: "SEDANG_BERTUGAS", updatedAt: now })
+			.where(eq(officers.id, petugasId));
+
+		await tx.insert(auditLog).values({
+			id: generateId(10),
+			waktu: now,
+			pengguna: actor?.nama ?? "operator",
+			peran: actor?.peran ?? "operator",
+			tindakan: "Petugas ditugaskan",
+			rincian: `${petugas.nama} ditugaskan ke insiden ${insidenId} (${existing.labelSampah}) di ${labelLokasiAudit(existing, camera)}`,
+			wilayah: wilayahAudit(existing, camera),
+			tipe: "TUGAS_PETUGAS",
+			incidentId: insidenId,
+		});
 	});
 
 	// Petugas yang digantikan (kalau ada) dilepas dari "sedang bertugas" jika
@@ -438,7 +450,7 @@ async function hitungSkorWilayah(): Promise<SkorKebersihanWilayah[]> {
 		.filter((r): r is typeof r & { kecamatan: string } => !!r.kecamatan)
 		.map((r) => {
 			const durasi = Number(r.rataRataDurasiJam);
-			const skor = Math.min(100, Math.max(0, Math.round(100 - r.jumlahInsiden * 5 - durasi)));
+			const skor = hitungSkorKebersihan(r.jumlahInsiden, durasi);
 			return {
 				peringkat: 0,
 				kelurahan: "",

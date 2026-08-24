@@ -22,7 +22,9 @@
 
 	let file = $state<File | null>(null);
 	let previewUrl = $state<string | null>(null);
+	// svelte-ignore state_referenced_locally
 	let modelType = $state(data.defaultModelType);
+	// svelte-ignore state_referenced_locally
 	let confThres = $state(data.defaultConfThres);
 	let menganalisa = $state(false);
 	let errorMsg = $state<string | null>(null);

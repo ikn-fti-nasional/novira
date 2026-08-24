@@ -1,7 +1,12 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { publicReports } from "$lib/server/db/schema.js";
-import { storeAnnotatedImage, storeUpload, validateUpload } from "$lib/server/uploads.js";
+import {
+	storeAnnotatedImage,
+	storeUpload,
+	validateUpload,
+	UploadValidationError,
+} from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
 import { buatKodeTracking, simpanHasilPindaiKlien } from "$lib/server/novira/laporan.js";
 import { ambilPengaturanModel, MODEL_TYPES_TERSEDIA } from "$lib/server/novira/deteksi.js";
@@ -11,6 +16,28 @@ import type { Actions, PageServerLoad } from "./$types.js";
 
 const RATE_LIMIT_MS = 30_000;
 const recentSubmissions = new Map<string, number>();
+
+// Map ini hanya menyimpan "IP → kirim terakhir"; entri lebih tua dari jendela
+// rate-limit tidak berguna lagi, tapi tanpa dibersihkan ia tumbuh tanpa batas
+// seiring IP publik yang lewat. ponytail: in-memory per-instance — ganti ke
+// store bersama (DB/Redis) saat scale-out multi-instance.
+function pruneRecentSubmissions(): void {
+	if (recentSubmissions.size < 1000) return;
+	const now = Date.now();
+	for (const [ip, waktu] of recentSubmissions) {
+		if (now - waktu > RATE_LIMIT_MS) recentSubmissions.delete(ip);
+	}
+	// Safety cap: kalau masih >5000 setelah prune (mis. flood IP unik),
+	// potong oldest agar tidak OOM.
+	if (recentSubmissions.size > 5000) {
+		const toDelete = recentSubmissions.size - 5000;
+		let i = 0;
+		for (const key of recentSubmissions.keys()) {
+			if (i++ >= toDelete) break;
+			recentSubmissions.delete(key);
+		}
+	}
+}
 
 export const load: PageServerLoad = async () => {
 	// Model yang dipakai memindai foto warga mengikuti pilihan admin di
@@ -23,6 +50,7 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	default: async ({ request, getClientAddress }) => {
 		const ip = getClientAddress();
+		pruneRecentSubmissions();
 		const last = recentSubmissions.get(ip);
 		if (last && Date.now() - last < RATE_LIMIT_MS) {
 			return fail(429, {
@@ -87,8 +115,17 @@ export const actions: Actions = {
 			return fail(400, { message: "Lokasi wajib diisi — izinkan GPS atau pilih kota." });
 		}
 
-		const urlFoto = punyaFoto ? await storeUpload(foto as File, "foto") : null;
-		const urlVideo = punyaVideo ? await storeUpload(video as File, "video") : null;
+		let urlFoto: string | null;
+		let urlVideo: string | null;
+		try {
+			urlFoto = punyaFoto ? await storeUpload(foto as File, "foto") : null;
+			urlVideo = punyaVideo ? await storeUpload(video as File, "video") : null;
+		} catch (err) {
+			if (err instanceof UploadValidationError) {
+				return fail(400, { message: err.message });
+			}
+			throw err;
+		}
 
 		const laporanId = generateId(16);
 		const kodeTracking = buatKodeTracking();

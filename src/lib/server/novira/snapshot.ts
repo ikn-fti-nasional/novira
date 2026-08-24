@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db } from "$lib/server/db/index.js";
 import { areaSnapshots, auditLog, cameras, incidents } from "$lib/server/db/schema.js";
 import { generateId } from "$lib/server/id.js";
+import { hitungSkorKebersihan } from "./skor.js";
 
 /**
  * Arsip skor kebersihan harian per kecamatan.
@@ -59,10 +60,7 @@ export async function simpanSnapshotHarian(sekarang = new Date()): Promise<Ringk
 		.filter((r): r is typeof r & { kecamatan: string } => !!r.kecamatan)
 		.map((r) => {
 			const durasi = Number(r.rataRataDurasiJam);
-			// Rumus skor sengaja dibuat sama persis dengan `hitungSkorWilayah()`
-			// di index.ts. Kalau keduanya berbeda, angka "hari ini" tidak akan
-			// nyambung dengan garis historisnya di grafik yang sama.
-			const skor = Math.min(100, Math.max(0, Math.round(100 - r.jumlahInsiden * 5 - durasi)));
+			const skor = hitungSkorKebersihan(r.jumlahInsiden, durasi);
 			return {
 				id: generateId(12),
 				tanggal,
@@ -76,32 +74,46 @@ export async function simpanSnapshotHarian(sekarang = new Date()): Promise<Ringk
 			};
 		});
 
-	for (const b of baris) {
-		await db
-			.insert(areaSnapshots)
-			.values(b)
-			.onConflictDoUpdate({
-				target: [areaSnapshots.tanggal, areaSnapshots.kota, areaSnapshots.kecamatan],
-				set: {
-					skorKebersihan: b.skorKebersihan,
-					jumlahInsiden: b.jumlahInsiden,
-					insidenBaru: b.insidenBaru,
-					insidenSelesai: b.insidenSelesai,
-					rataRataDurasiJam: b.rataRataDurasiJam,
-				},
+	if (baris.length > 0) {
+		await db.transaction(async (tx) => {
+			for (const b of baris) {
+				await tx
+					.insert(areaSnapshots)
+					.values(b)
+					.onConflictDoUpdate({
+						target: [areaSnapshots.tanggal, areaSnapshots.kota, areaSnapshots.kecamatan],
+						set: {
+							skorKebersihan: b.skorKebersihan,
+							jumlahInsiden: b.jumlahInsiden,
+							insidenBaru: b.insidenBaru,
+							insidenSelesai: b.insidenSelesai,
+							rataRataDurasiJam: b.rataRataDurasiJam,
+						},
+					});
+			}
+			await tx.insert(auditLog).values({
+				id: generateId(10),
+				waktu: sekarang,
+				pengguna: "sistem",
+				peran: "SISTEM",
+				tindakan: "Snapshot skor kebersihan harian",
+				rincian: `${baris.length} kecamatan diarsipkan untuk tanggal ${tanggal}`,
+				wilayah: "",
+				tipe: "KONFIGURASI",
 			});
+		});
+	} else {
+		await db.insert(auditLog).values({
+			id: generateId(10),
+			waktu: sekarang,
+			pengguna: "sistem",
+			peran: "SISTEM",
+			tindakan: "Snapshot skor kebersihan harian",
+			rincian: `${baris.length} kecamatan diarsipkan untuk tanggal ${tanggal}`,
+			wilayah: "",
+			tipe: "KONFIGURASI",
+		});
 	}
-
-	await db.insert(auditLog).values({
-		id: generateId(10),
-		waktu: sekarang,
-		pengguna: "sistem",
-		peran: "SISTEM",
-		tindakan: "Snapshot skor kebersihan harian",
-		rincian: `${baris.length} kecamatan diarsipkan untuk tanggal ${tanggal}`,
-		wilayah: "",
-		tipe: "KONFIGURASI",
-	});
 
 	return { tanggal, areaTersimpan: baris.length };
 }
@@ -269,7 +281,7 @@ export async function backfillSnapshot(jumlahHari = 14): Promise<number> {
 		for (const r of rows) {
 			if (!r.kecamatan) continue;
 			const durasi = Math.max(0, Number(r.rataRataDurasiJam));
-			const skor = Math.min(100, Math.max(0, Math.round(100 - r.jumlahInsiden * 5 - durasi)));
+			const skor = hitungSkorKebersihan(r.jumlahInsiden, durasi);
 			await db
 				.insert(areaSnapshots)
 				.values({
