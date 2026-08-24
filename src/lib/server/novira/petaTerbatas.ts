@@ -29,14 +29,4 @@ export async function petaTerbatas<T, R>(
 	return hasil;
 }
 
-export async function petaTerbatasNilai<T, R>(
-	items: readonly T[],
-	batas: number,
-	tugas: (item: T) => Promise<R>
-): Promise<R[]> {
-	const settled = await petaTerbatas(items, batas, tugas);
-	return settled.map((r) => {
-		if (r.status === "rejected") throw r.reason;
-		return r.value;
-	});
-}
+

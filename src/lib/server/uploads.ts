@@ -27,6 +27,9 @@ export function validateUpload(file: File, kind: "foto" | "video"): string | nul
 	if (!ALLOWED_TYPES[kind].includes(file.type)) {
 		return `${kind === "foto" ? "Foto" : "Video"} harus berformat ${ALLOWED_TYPES[kind].join(", ")}`;
 	}
+	if (file.size === 0) {
+		return `${kind === "foto" ? "Foto" : "Video"} tidak boleh kosong`;
+	}
 	if (file.size > MAX_SIZE[kind]) {
 		return `${kind === "foto" ? "Foto" : "Video"} maksimal ${MAX_SIZE[kind] / 1024 / 1024} MB`;
 	}
@@ -61,12 +64,14 @@ async function assertMagic(file: File, kind: "foto" | "video"): Promise<string |
 	try {
 		const slice = await file.slice(0, 16).arrayBuffer();
 		const buf = new Uint8Array(slice);
-		if (buf.length === 0) return null;
+		if (buf.length === 0) {
+			return `${kind === "foto" ? "Foto" : "Video"} tidak sesuai format ${file.type} (header kosong)`;
+		}
 		if (!matchesMagic(buf, file.type)) {
 			return `${kind === "foto" ? "Foto" : "Video"} tidak sesuai format ${file.type} (header tidak cocok)`;
 		}
 	} catch {
-		// Kalau gagal baca header (mis. stream error), jangan blokir — validasi MIME sudah lolos.
+		return `${kind === "foto" ? "Foto" : "Video"} gagal dibaca untuk validasi header`;
 	}
 	return null;
 }
@@ -88,12 +93,22 @@ export async function storeUpload(file: File, kind: "foto" | "video"): Promise<s
 	return blob.url;
 }
 
+const MAX_ANNOTATED_SIZE = 10 * 1024 * 1024;
+
 /**
- * Simpan foto beranotasi (kotak deteksi) yang dihasilkan pLitter -- ini
- * gambar yang sudah digenerate model, bukan unggahan mentah pengguna, jadi
- * tidak lewat `validateUpload`.
+ * Simpan foto beranotasi (kotak deteksi) — tetap divalidasi walau berasal dari
+ * pLitter/client. File ini datang dari FormData publik `/lapor` (bukan hanya
+ * server), jadi tanpa validasi bisa dipakai untuk hosting blob arbitrer.
  */
 export async function storeAnnotatedImage(file: File): Promise<string> {
+	if (file.size === 0) throw new Error("Foto analisa tidak boleh kosong");
+	if (file.size > MAX_ANNOTATED_SIZE) throw new Error("Foto analisa maksimal 10 MB");
+	if (!ALLOWED_TYPES.foto.includes(file.type)) {
+		throw new Error(`Foto analisa harus berformat ${ALLOWED_TYPES.foto.join(", ")}`);
+	}
+	const magicError = await assertMagic(file, "foto");
+	if (magicError) throw new Error(magicError);
+
 	const name = `foto-analisa/${Date.now()}-${randomBytes(6).toString("hex")}.jpg`;
 	const blob = await put(name, file, { access: "public", contentType: "image/jpeg" });
 	return blob.url;
