@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { db } from "$lib/server/db/index.js";
 import { cameras, incidents, auditLog, notifications, appSettings } from "$lib/server/db/schema.js";
 import { storeUpload } from "$lib/server/uploads.js";
+import { analisaGambarNovira } from "./modelNovira.js";
 import { generateId } from "$lib/server/id.js";
 import type { JenisSampah } from "$lib/types/novira.js";
 import { CLASS_TO_JENIS } from "./klasifikasi.js";
@@ -41,8 +42,17 @@ export async function cekKesehatanPlitter(timeoutMs = 4000): Promise<boolean> {
 	}
 }
 
-/** Model pLitter yang boleh dipakai untuk analisa CCTV -- `urban` tidak diaktifkan di deployment ini (butuh weights GPL terpisah, lihat pLitter/Dockerfile), jadi sengaja tidak masuk daftar. */
-export const MODEL_TYPES_TERSEDIA = ["street", "cctv", "taco"] as const;
+/**
+ * Model deteksi yang boleh dipilih operator.
+ *
+ * Tiga yang pertama adalah model pLitter yang kami latih sendiri (`urban`
+ * tidak diaktifkan di deployment ini -- butuh weights GPL terpisah, lihat
+ * pLitter/Dockerfile). `novira` adalah model multimodal yang dijalankan lewat
+ * `modelNovira.ts`: ia mengenali sampah dari gambarnya, bukan dari bobot yang
+ * kami latih, dan kotak deteksinya digambar sendiri oleh Novira dari koordinat
+ * yang dikembalikan model.
+ */
+export const MODEL_TYPES_TERSEDIA = ["street", "cctv", "taco", "novira"] as const;
 export type ModelTypeDeteksi = (typeof MODEL_TYPES_TERSEDIA)[number];
 
 const SETTING_KEY_MODEL = "deteksi_model_type";
@@ -366,7 +376,13 @@ async function tangkapKamera(
 
 	const endpoint = new URL("/detect/snapshot", PLITTER_API_URL);
 	endpoint.searchParams.set("source", streamUrl);
-	endpoint.searchParams.set("model_type", pengaturan.modelType);
+	// Model Novira tidak berjalan di pLitter -- untuk mode itu pLitter dipakai
+	// hanya sebagai pengambil frame (`street` model paling ringan), lalu
+	// frame-nya dianalisa ulang oleh Model Novira di bawah.
+	endpoint.searchParams.set(
+		"model_type",
+		pengaturan.modelType === "novira" ? "street" : pengaturan.modelType
+	);
 	endpoint.searchParams.set("slice_infer", "true");
 	endpoint.searchParams.set("suppress_vehicles", "true");
 	endpoint.searchParams.set("conf_thres", String(pengaturan.confThres));
@@ -392,7 +408,23 @@ async function tangkapKamera(
 
 	const data = (await res.json()) as SnapshotResponse;
 
-	const relevanMentah = data.detections
+	// Deteksi pLitter dibuang saat mode Novira aktif; frame-nya yang dipakai.
+	// Konsekuensinya `suppress_vehicles` (yang bekerja di sisi pLitter) tidak
+	// berlaku di mode ini -- kendaraan disaring lewat instruksi model.
+	const deteksiMentah =
+		pengaturan.modelType === "novira"
+			? (
+					await analisaGambarNovira(Buffer.from(data.image_base64, "base64"), {
+						confThres: pengaturan.confThres,
+						sumber: "cctv",
+					}).catch((err) => {
+						console.error("[novira] Analisa Model Novira gagal untuk kamera:", err);
+						throw err;
+					})
+				).detections
+			: data.detections;
+
+	const relevanMentah = deteksiMentah
 		.map((d) => ({ detection: d, jenisSampah: CLASS_TO_JENIS[d.class_name] }))
 		.filter(
 			(d): d is { detection: PlitterDetection; jenisSampah: JenisSampah } =>

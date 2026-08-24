@@ -40,8 +40,21 @@
 		return data.akunPetugas.find((u) => u.id === userId)?.name;
 	}
 
+	// State lokal untuk tiap Select. Tanpa `bind:value`, label pada pemicu Select
+	// tidak ikut berubah saat item lain dipilih.
+	let statusBaru = $state("SIAP_TUGAS");
+	let akunBaru = $state("");
+	let statusEdit = $state("SIAP_TUGAS");
+	let akunEdit = $state("");
+
+	function labelStatus(v: string) {
+		return statusOptions.find((o) => o.value === v)?.label ?? v.replace("_", " ");
+	}
+
 	function bukaEdit(officer: PetugasLapangan) {
 		petugasDiedit = officer;
+		statusEdit = officer.status;
+		akunEdit = officer.userId ?? "";
 		dialogEditTerbuka = true;
 	}
 </script>
@@ -104,8 +117,10 @@
 						</div>
 						<div class="space-y-2">
 							<Label.Root>Status</Label.Root>
-							<Select.Root type="single" name="status" value="SIAP_TUGAS">
-								<Select.Trigger class="w-full"><span>SIAP TUGAS</span></Select.Trigger>
+							<Select.Root type="single" name="status" bind:value={statusBaru}>
+								<Select.Trigger class="w-full"
+									><span>{labelStatus(statusBaru)}</span></Select.Trigger
+								>
 								<Select.Content>
 									{#each statusOptions as opt}
 										<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
@@ -115,8 +130,10 @@
 						</div>
 						<div class="space-y-2">
 							<Label.Root>Akun Login (opsional)</Label.Root>
-							<Select.Root type="single" name="userId" value="">
-								<Select.Trigger class="w-full"><span>Tidak dihubungkan</span></Select.Trigger>
+							<Select.Root type="single" name="userId" bind:value={akunBaru}>
+								<Select.Trigger class="w-full"
+									><span>{namaAkun(akunBaru) ?? "Tidak dihubungkan"}</span></Select.Trigger
+								>
 								<Select.Content>
 									<Select.Item value="" label="Tidak dihubungkan">Tidak dihubungkan</Select.Item>
 									{#each akunTersedia as akun (akun.id)}
@@ -261,9 +278,9 @@
 				</div>
 				<div class="space-y-2">
 					<Label.Root>Status</Label.Root>
-					<Select.Root type="single" name="status" value={petugasDiedit.status}>
+					<Select.Root type="single" name="status" bind:value={statusEdit}>
 						<Select.Trigger class="w-full">
-							<span>{petugasDiedit.status.replace("_", " ")}</span>
+							<span>{labelStatus(statusEdit)}</span>
 						</Select.Trigger>
 						<Select.Content>
 							{#each statusOptions as opt}
@@ -274,9 +291,9 @@
 				</div>
 				<div class="space-y-2">
 					<Label.Root>Akun Login (opsional)</Label.Root>
-					<Select.Root type="single" name="userId" value={petugasDiedit.userId ?? ""}>
+					<Select.Root type="single" name="userId" bind:value={akunEdit}>
 						<Select.Trigger class="w-full">
-							<span>{namaAkun(petugasDiedit.userId) ?? "Tidak dihubungkan"}</span>
+							<span>{namaAkun(akunEdit) ?? "Tidak dihubungkan"}</span>
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="" label="Tidak dihubungkan">Tidak dihubungkan</Select.Item>

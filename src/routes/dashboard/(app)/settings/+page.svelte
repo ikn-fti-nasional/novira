@@ -23,8 +23,13 @@
 	import RotateCcwIcon from "@lucide/svelte/icons/rotate-ccw";
 	import PlayIcon from "@lucide/svelte/icons/play";
 	import ActivityIcon from "@lucide/svelte/icons/activity";
+	import { DESKRIPSI_MODEL, labelModel } from "$lib/model-deteksi.js";
 
 	let { data, form } = $props();
+
+	// Select butuh state lokal: tanpa `bind:value` label pemicunya terpaku pada
+	// nilai dari server dan tidak ikut berubah saat operator memilih item lain.
+	let modelDipilih = $state(data.pengaturanModel?.modelType ?? "street");
 
 	$effect(() => {
 		if (form?.message) toast.error(form.message);
@@ -307,41 +312,36 @@
 							<Card.Title>Model Deteksi AI untuk CCTV</Card.Title>
 							<Card.Description>
 								Model dan ambang kepercayaan yang dipakai siklus deteksi CCTV (otomatis maupun
-								analisa manual). Pilih <strong>Street</strong> untuk kamera yang mengarah ke jalan/
-								trotoar, atau <strong>CCTV Apung</strong> untuk kamera yang mengarah ke sungai/kanal
-								(sampah mengambang).
+								analisa manual), sekaligus model default untuk analisa foto laporan warga. Pilih
+								<strong>Street</strong> untuk kamera yang mengarah ke jalan/trotoar,
+								<strong>CCTV Apung</strong> untuk kamera yang mengarah ke sungai/kanal (sampah
+								mengambang), atau <strong>Novira Vision</strong> untuk foto laporan warga.
 							</Card.Description>
 						</Card.Header>
 						<Card.Content>
 							<form method="POST" action="?/updateModelDeteksi" use:enhance class="space-y-6">
 								<div class="grid gap-2">
 									<Label>Model Deteksi</Label>
-									<Select.Root
-										name="modelType"
-										type="single"
-										value={data.pengaturanModel.modelType}
-									>
+									<Select.Root name="modelType" type="single" bind:value={modelDipilih}>
 										<Select.Trigger>
-											<span>
-												{data.pengaturanModel.modelType === "street"
-													? "Street (jalan/trotoar)"
-													: data.pengaturanModel.modelType === "cctv"
-														? "CCTV Apung (sungai/kanal)"
-														: "TACO (dataset umum)"}
-											</span>
+											<span>{labelModel(modelDipilih)}</span>
 										</Select.Trigger>
 										<Select.Content>
 											{#each data.modelTypesTersedia as tipe (tipe)}
-												<Select.Item value={tipe}>
-													{tipe === "street"
-														? "Street (jalan/trotoar)"
-														: tipe === "cctv"
-															? "CCTV Apung (sungai/kanal)"
-															: "TACO (dataset umum)"}
-												</Select.Item>
+												<Select.Item value={tipe}>{labelModel(tipe)}</Select.Item>
 											{/each}
 										</Select.Content>
 									</Select.Root>
+									<p class="text-muted-foreground text-xs">
+										{DESKRIPSI_MODEL[modelDipilih] ?? ""}
+									</p>
+									{#if modelDipilih === "novira" && !data.noviraSiap}
+										<p class="text-xs text-amber-600 dark:text-amber-400">
+											Model Novira belum aktif — kunci API model belum disetel pada server (<code
+												>NOVIRA_MODEL_API_KEY</code
+											>). Analisa akan gagal sampai kunci diisi.
+										</p>
+									{/if}
 								</div>
 
 								<div class="grid gap-2">

@@ -89,7 +89,9 @@ export async function resizeFoto(
 	if (!ctx) return file;
 	ctx.drawImage(bitmap, 0, 0, lebar, tinggi);
 
-	const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", kualitas));
+	const blob: Blob | null = await new Promise((resolve) =>
+		canvas.toBlob(resolve, "image/jpeg", kualitas)
+	);
 	if (!blob) return file;
 
 	const namaBaru = file.name.replace(/\.[^.]+$/, "") + ".jpg";
@@ -100,6 +102,10 @@ export async function analisaFotoLangsung(
 	file: File,
 	opsi: PengaturanAnalisa
 ): Promise<HasilAnalisaFoto> {
+	// Model Novira tidak berjalan di pLitter dan kuncinya rahasia, jadi
+	// foto dikirim ke endpoint Novira sendiri. Bentuk responsnya sama.
+	if (opsi.modelType === "novira") return analisaFotoNovira(file, opsi);
+
 	const buffer = await file.arrayBuffer();
 	// pLitter mengembalikan JSON deteksi + gambar beranotasi (base64) dalam satu
 	// response saat include_annotated=true -- satu kali hit, bukan dua.
@@ -125,10 +131,59 @@ export async function analisaFotoLangsung(
 	};
 }
 
+/**
+ * Sama seperti `analisaFotoLangsung`, tapi lewat server Novira. Foto sudah
+ * diresize di browser sebelum sampai ke sini, jadi yang naik ke server tetap
+ * berkas ringan.
+ */
+async function analisaFotoNovira(file: File, opsi: PengaturanAnalisa): Promise<HasilAnalisaFoto> {
+	// Dikecilkan lagi sebelum naik ke server: batas body request SvelteKit
+	// (adapter-node, default 512 KB) jauh lebih ketat daripada batas unggahan
+	// pLitter, dan model multimodal toh menskalakan gambar besar ke ~1,5k px --
+	// jadi tidak ada detail deteksi yang hilang dari pengecilan ini.
+	const dikirim = await resizeFoto(file, { maksDimensi: 1280, kualitas: 0.75 });
+
+	const form = new FormData();
+	form.append("file", dikirim, dikirim.name);
+	form.append("conf_thres", String(opsi.confThres));
+
+	const res = await fetch("/api/analisa-novira", {
+		method: "POST",
+		body: form,
+		signal: AbortSignal.timeout(120_000),
+	});
+	if (!res.ok) {
+		const body = await res.text().catch(() => "");
+		throw new Error(`Model Novira ${res.status}: ${body.slice(0, 300)}`);
+	}
+	const data = (await res.json()) as {
+		width: number;
+		height: number;
+		detections: PlitterDetectionRaw[];
+		annotated_image_base64: string;
+	};
+
+	return {
+		kind: "foto",
+		modelType: opsi.modelType,
+		confThres: opsi.confThres,
+		width: data.width,
+		height: data.height,
+		deteksi: data.detections.map(petakanDeteksi),
+		annotatedDataUrl: `data:image/jpeg;base64,${data.annotated_image_base64}`,
+	};
+}
+
 export async function analisaVideoLangsung(
 	file: File,
 	opsi: PengaturanAnalisa
 ): Promise<HasilAnalisaVideo> {
+	// Model Novira menganalisa gambar diam, bukan rangkaian frame video --
+	// menjalankannya per frame terlalu lambat dan mahal untuk dipakai interaktif.
+	if (opsi.modelType === "novira") {
+		throw new Error("Model Novira hanya mendukung foto. Pilih model lain untuk menganalisa video.");
+	}
+
 	const buffer = await file.arrayBuffer();
 	const res = await kirimKePlitter(
 		"/detect/video",

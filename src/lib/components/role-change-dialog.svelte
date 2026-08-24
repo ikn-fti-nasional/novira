@@ -4,6 +4,7 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 	import { enhance } from "$app/forms";
+	import { OPSI_PERAN, labelPeran } from "$lib/peran.js";
 
 	type Props = {
 		open: boolean;
@@ -13,6 +14,14 @@
 	};
 
 	let { open = $bindable(false), userId, userName, currentRole }: Props = $props();
+
+	// State lokal: tanpa `bind:value`, label pemicu Select tetap menampilkan
+	// peran saat ini walau peran lain sudah dipilih.
+	// eslint-disable-next-line svelte/prefer-writable-derived
+	let peranBaru = $state(currentRole);
+	$effect(() => {
+		peranBaru = currentRole;
+	});
 </script>
 
 <Dialog.Root bind:open>
@@ -20,7 +29,7 @@
 		<Dialog.Header>
 			<Dialog.Title>Ubah Peran</Dialog.Title>
 			<Dialog.Description>
-				Ubah peran untuk {userName}. Peran saat ini: {currentRole}.
+				Ubah peran untuk {userName}. Peran saat ini: {labelPeran(currentRole)}.
 			</Dialog.Description>
 		</Dialog.Header>
 		<form
@@ -39,17 +48,14 @@
 			<div class="grid gap-4 py-4">
 				<div class="grid gap-2">
 					<Label for="newRole">Peran Baru</Label>
-					<Select.Root name="newRole" type="single" value={currentRole}>
+					<Select.Root name="newRole" type="single" bind:value={peranBaru}>
 						<Select.Trigger>
-							<span>{currentRole}</span>
+							<span>{labelPeran(peranBaru)}</span>
 						</Select.Trigger>
 						<Select.Content>
-							<Select.Item value="admin">Admin (IT Sistem)</Select.Item>
-							<Select.Item value="operator">Operator DLH</Select.Item>
-							<Select.Item value="kepala_seksi">Kepala Seksi</Select.Item>
-							<Select.Item value="kepala_dinas">Kepala Dinas Lingkungan Hidup</Select.Item>
-							<Select.Item value="walikota">Wali Kota</Select.Item>
-							<Select.Item value="petugas_lapangan">Petugas Lapangan</Select.Item>
+							{#each OPSI_PERAN as opt (opt.value)}
+								<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
+							{/each}
 						</Select.Content>
 					</Select.Root>
 				</div>

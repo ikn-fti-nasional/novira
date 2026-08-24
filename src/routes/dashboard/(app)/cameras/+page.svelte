@@ -30,9 +30,7 @@
 		)
 	);
 
-	const paginated = $derived(
-		filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-	);
+	const paginated = $derived(filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize));
 
 	$effect(() => {
 		search;
@@ -44,6 +42,9 @@
 		{ value: "OFFLINE", label: "OFFLINE" },
 		{ value: "PERBAIKAN", label: "PERBAIKAN" },
 	];
+
+	// State lokal supaya label pemicu Select ikut berubah saat item dipilih.
+	let statusBaru = $state("OFFLINE");
 
 	function statusBadge(status: string): { variant: "default" | "secondary"; class: string } {
 		switch (status) {
@@ -117,8 +118,8 @@
 						</div>
 						<div class="space-y-2">
 							<Label.Root>Status</Label.Root>
-							<Select.Root type="single" name="status" value="OFFLINE">
-								<Select.Trigger class="w-full"><span>OFFLINE</span></Select.Trigger>
+							<Select.Root type="single" name="status" bind:value={statusBaru}>
+								<Select.Trigger class="w-full"><span>{statusBaru}</span></Select.Trigger>
 								<Select.Content>
 									{#each statusOptions as opt}
 										<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
@@ -150,7 +151,11 @@
 
 	<div class="relative max-w-sm">
 		<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-		<Input.Root placeholder="Cari nama kamera, kota, atau kecamatan..." class="pl-9" bind:value={search} />
+		<Input.Root
+			placeholder="Cari nama kamera, kota, atau kecamatan..."
+			class="pl-9"
+			bind:value={search}
+		/>
 	</div>
 
 	<Card.Root>
@@ -225,7 +230,9 @@
 					{:else}
 						<Table.Row>
 							<Table.Cell colspan={5} class="h-24 text-center text-xs text-muted-foreground">
-								{search ? "Tidak ada kamera yang cocok dengan pencarian." : "Belum ada kamera CCTV."}
+								{search
+									? "Tidak ada kamera yang cocok dengan pencarian."
+									: "Belum ada kamera CCTV."}
 							</Table.Cell>
 						</Table.Row>
 					{/each}

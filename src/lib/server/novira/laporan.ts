@@ -12,6 +12,7 @@ import { generateId } from "$lib/server/id.js";
 import { storeAnnotatedImage } from "$lib/server/uploads.js";
 import type { JenisSampah } from "$lib/types/novira.js";
 import type { ModelTypeDeteksi } from "./deteksi.js";
+import { analisaGambarNovira } from "./modelNovira.js";
 import { cariTerdekat, jarakMeter, normalisasiTelepon, parseTitik, type Titik } from "./geo.js";
 import { CLASS_TO_JENIS } from "./klasifikasi.js";
 import { hitungPrioritas, serializeRincian, type FaktorPrioritas } from "./prioritas.js";
@@ -264,6 +265,19 @@ async function panggilDetectImage(
 	}
 	const isi = await fotoRes.arrayBuffer();
 	const namaFile = new URL(urlFoto).pathname.split("/").pop() || "foto.jpg";
+
+	// Model Novira berjalan di dalam aplikasi ini, bukan di pLitter.
+	if (modelType === "novira") {
+		const hasil = await analisaGambarNovira(new Uint8Array(isi), { confThres });
+		return {
+			filename: namaFile,
+			model_type: modelType,
+			width: hasil.width,
+			height: hasil.height,
+			detections: hasil.detections,
+			annotated_image_base64: hasil.annotated_image_base64,
+		};
+	}
 
 	const form = new FormData();
 	form.append("file", new Blob([isi], { type: "image/jpeg" }), namaFile);

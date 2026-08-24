@@ -15,7 +15,7 @@
 	import type { Map as LeafletMap, Marker } from "leaflet";
 	import { resizeFoto, analisaFotoLangsung, type DeteksiUnggahan } from "$lib/plitter-client.js";
 
-	let { form } = $props();
+	let { data, form } = $props();
 
 	const DEFAULT_CENTER: [number, number] = [-6.9175, 107.6191]; // Bandung — dipakai saat GPS ditolak/gagal
 
@@ -34,6 +34,9 @@
 	let memindai = $state(false);
 	/** Foto beranotasi (kotak deteksi) dari pLitter -- disisipkan ke FormData sebelum form dikirim. */
 	let fotoAnalisa: File | null = $state(null);
+
+	/** State lokal: tanpa `bind:value`, label pemicu Select tidak ikut berubah. */
+	let jenisSampah = $state("");
 
 	const jenisSampahOptions = [
 		{ value: "tumpukan_sampah", label: "Tumpukan sampah" },
@@ -80,7 +83,10 @@
 
 		memindai = true;
 		try {
-			const hasil = await analisaFotoLangsung(dikirim, { modelType: "street", confThres: 0.2 });
+			const hasil = await analisaFotoLangsung(dikirim, {
+				modelType: data.modelType,
+				confThres: data.confThres,
+			});
 			aiDeteksiJson = JSON.stringify(
 				hasil.deteksi.map((d: DeteksiUnggahan) => ({ className: d.className, score: d.score }))
 			);
@@ -90,7 +96,7 @@
 		} catch (err) {
 			// Pemindaian gagal (pLitter tidak terjangkau, dst) -- laporan tetap
 			// bisa dikirim, operator akan menilai manual (lihat GAGAL_PINDAI).
-			console.error("[novira] Pindai pLitter dari browser gagal:", err);
+			console.error("[novira] Pindai foto dari browser gagal:", err);
 			aiDeteksiJson = "";
 		} finally {
 			memindai = false;
@@ -234,6 +240,7 @@
 				<input type="hidden" name="latitude" value={latitude} />
 				<input type="hidden" name="longitude" value={longitude} />
 				<input type="hidden" name="aiDeteksi" value={aiDeteksiJson} />
+				<input type="hidden" name="aiModelType" value={data.modelType} />
 				<input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" />
 
 				<!-- Upload foto -->
@@ -253,7 +260,9 @@
 								class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
 							>
 								{#if mengompres || memindai}
-									<LoaderCircleIcon class="size-5 animate-spin text-emerald-600 dark:text-emerald-400" />
+									<LoaderCircleIcon
+										class="size-5 animate-spin text-emerald-600 dark:text-emerald-400"
+									/>
 								{:else}
 									<CameraIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
 								{/if}
@@ -350,8 +359,13 @@
 				<!-- Jenis sampah -->
 				<div class="space-y-3">
 					<Label.Root class="text-sm font-semibold">Jenis sampah</Label.Root>
-					<Select.Root type="single" name="jenisSampah">
-						<Select.Trigger class="w-full"><span>Pilih jenis sampah</span></Select.Trigger>
+					<Select.Root type="single" name="jenisSampah" bind:value={jenisSampah}>
+						<Select.Trigger class="w-full">
+							<span>
+								{jenisSampahOptions.find((o) => o.value === jenisSampah)?.label ??
+									"Pilih jenis sampah"}
+							</span>
+						</Select.Trigger>
 						<Select.Content>
 							{#each jenisSampahOptions as opt}
 								<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>

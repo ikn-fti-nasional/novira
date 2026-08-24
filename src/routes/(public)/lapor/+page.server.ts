@@ -9,6 +9,8 @@ import {
 } from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
 import { buatKodeTracking, simpanHasilPindaiKlien } from "$lib/server/novira/laporan.js";
+import { ambilPengaturanModel, MODEL_TYPES_TERSEDIA } from "$lib/server/novira/deteksi.js";
+import type { ModelTypeDeteksi } from "$lib/server/novira/deteksi.js";
 import type { DeteksiKlien } from "$lib/server/novira/laporan.js";
 import type { Actions, PageServerLoad } from "./$types.js";
 
@@ -38,7 +40,11 @@ function pruneRecentSubmissions(): void {
 }
 
 export const load: PageServerLoad = async () => {
-	return {};
+	// Model yang dipakai memindai foto warga mengikuti pilihan admin di
+	// halaman Pengaturan -- pemindaiannya sendiri berjalan di browser pelapor
+	// (lihat `plitter-client.ts`), jadi nilainya harus ikut dikirim ke sana.
+	const pengaturan = await ambilPengaturanModel();
+	return { modelType: pengaturan.modelType, confThres: pengaturan.confThres };
 };
 
 export const actions: Actions = {
@@ -147,6 +153,15 @@ export const actions: Actions = {
 		// mencatat hasilnya, tidak lagi memanggil pLitter sendiri. Ini murni
 		// tulis DB, jadi aman ditunggu tanpa menahan halaman konfirmasi lama.
 		try {
+			// Model dikirim balik oleh halaman (nilainya berasal dari `load`),
+			// tetap divalidasi karena datang dari form publik.
+			const modelTypeRaw = String(form.get("aiModelType") ?? "");
+			const modelType: ModelTypeDeteksi = (MODEL_TYPES_TERSEDIA as readonly string[]).includes(
+				modelTypeRaw
+			)
+				? (modelTypeRaw as ModelTypeDeteksi)
+				: "street";
+
 			if (punyaFoto) {
 				const aiDeteksiRaw = String(form.get("aiDeteksi") ?? "");
 				const deteksi = parseAiDeteksi(aiDeteksiRaw);
@@ -158,10 +173,10 @@ export const actions: Actions = {
 								return null;
 							})
 						: null;
-				await simpanHasilPindaiKlien(laporanId, deteksi, { modelType: "street", annotatedUrl });
+				await simpanHasilPindaiKlien(laporanId, deteksi, { modelType, annotatedUrl });
 			} else {
 				await simpanHasilPindaiKlien(laporanId, null, {
-					modelType: "street",
+					modelType,
 					alasanGagal: "laporan tidak menyertakan foto",
 				});
 			}
