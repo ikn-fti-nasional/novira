@@ -27,6 +27,16 @@ function catatGagalLogin(key: string): void {
 	// Map tak dibersihkan bisa tumbuh tanpa batas — buang entri basi saat besar.
 	if (failedLogins.size > 5000) {
 		for (const [k, v] of failedLogins) if (now - v.at > WINDOW_MS) failedLogins.delete(k);
+		// Safety cap: kalau masih >5000 setelah cleanup (flood IP unik),
+		// potong oldest untuk mencegah OOM.
+		if (failedLogins.size > 5000) {
+			const toDelete = failedLogins.size - 5000;
+			let i = 0;
+			for (const k of failedLogins.keys()) {
+				if (i++ >= toDelete) break;
+				failedLogins.delete(k);
+			}
+		}
 	}
 }
 

@@ -1,7 +1,12 @@
 import { fail, redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db/index.js";
 import { publicReports } from "$lib/server/db/schema.js";
-import { storeAnnotatedImage, storeUpload, validateUpload } from "$lib/server/uploads.js";
+import {
+	storeAnnotatedImage,
+	storeUpload,
+	validateUpload,
+	UploadValidationError,
+} from "$lib/server/uploads.js";
 import { generateId } from "$lib/server/id.js";
 import { buatKodeTracking, simpanHasilPindaiKlien } from "$lib/server/novira/laporan.js";
 import type { DeteksiKlien } from "$lib/server/novira/laporan.js";
@@ -104,8 +109,17 @@ export const actions: Actions = {
 			return fail(400, { message: "Lokasi wajib diisi — izinkan GPS atau pilih kota." });
 		}
 
-		const urlFoto = punyaFoto ? await storeUpload(foto as File, "foto") : null;
-		const urlVideo = punyaVideo ? await storeUpload(video as File, "video") : null;
+		let urlFoto: string | null;
+		let urlVideo: string | null;
+		try {
+			urlFoto = punyaFoto ? await storeUpload(foto as File, "foto") : null;
+			urlVideo = punyaVideo ? await storeUpload(video as File, "video") : null;
+		} catch (err) {
+			if (err instanceof UploadValidationError) {
+				return fail(400, { message: err.message });
+			}
+			throw err;
+		}
 
 		const laporanId = generateId(16);
 		const kodeTracking = buatKodeTracking();

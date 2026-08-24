@@ -1,6 +1,13 @@
 import { randomBytes } from "node:crypto";
 import { put } from "@vercel/blob";
 
+export class UploadValidationError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "UploadValidationError";
+	}
+}
+
 // Foto dikompres otomatis di browser sebelum diunggah (lihat `kompresFoto` di
 // halaman /lapor), jadi ini bukan batas yang dilihat pengguna -- hanya jaring
 // pengaman untuk unggahan mentah kalau kompresi klien gagal/dilewati.
@@ -84,9 +91,9 @@ async function assertMagic(file: File, kind: "foto" | "video"): Promise<string |
  */
 export async function storeUpload(file: File, kind: "foto" | "video"): Promise<string> {
 	const error = validateUpload(file, kind);
-	if (error) throw new Error(error);
+	if (error) throw new UploadValidationError(error);
 	const magicError = await assertMagic(file, kind);
-	if (magicError) throw new Error(magicError);
+	if (magicError) throw new UploadValidationError(magicError);
 
 	const name = `${kind}/${Date.now()}-${randomBytes(6).toString("hex")}.${EXTENSION[file.type] ?? "bin"}`;
 	const blob = await put(name, file, { access: "public", contentType: file.type });
@@ -101,15 +108,19 @@ const MAX_ANNOTATED_SIZE = 10 * 1024 * 1024;
  * server), jadi tanpa validasi bisa dipakai untuk hosting blob arbitrer.
  */
 export async function storeAnnotatedImage(file: File): Promise<string> {
-	if (file.size === 0) throw new Error("Foto analisa tidak boleh kosong");
-	if (file.size > MAX_ANNOTATED_SIZE) throw new Error("Foto analisa maksimal 10 MB");
+	if (file.size === 0) throw new UploadValidationError("Foto analisa tidak boleh kosong");
+	if (file.size > MAX_ANNOTATED_SIZE)
+		throw new UploadValidationError("Foto analisa maksimal 10 MB");
 	if (!ALLOWED_TYPES.foto.includes(file.type)) {
-		throw new Error(`Foto analisa harus berformat ${ALLOWED_TYPES.foto.join(", ")}`);
+		throw new UploadValidationError(
+			`Foto analisa harus berformat ${ALLOWED_TYPES.foto.join(", ")}`
+		);
 	}
 	const magicError = await assertMagic(file, "foto");
-	if (magicError) throw new Error(magicError);
+	if (magicError) throw new UploadValidationError(magicError);
 
-	const name = `foto-analisa/${Date.now()}-${randomBytes(6).toString("hex")}.jpg`;
-	const blob = await put(name, file, { access: "public", contentType: "image/jpeg" });
+	const ext = EXTENSION[file.type] ?? "jpg";
+	const name = `foto-analisa/${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
+	const blob = await put(name, file, { access: "public", contentType: file.type });
 	return blob.url;
 }

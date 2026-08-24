@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db } from "$lib/server/db/index.js";
 import {
 	auditLog,
@@ -612,7 +612,7 @@ export async function verifikasiLaporan(
 			bboxHeight: "0",
 		});
 
-		await tx
+		const result = await tx
 			.update(publicReports)
 			.set({
 				status: "DIPROSES",
@@ -621,7 +621,12 @@ export async function verifikasiLaporan(
 				catatanPetugas: opsi.catatan?.trim() || laporan.catatanPetugas,
 				updatedAt: now,
 			})
-			.where(eq(publicReports.id, laporanId));
+			.where(and(eq(publicReports.id, laporanId), isNull(publicReports.insidenId)))
+			.returning({ id: publicReports.id });
+
+		if (result.length === 0) {
+			throw new Error("Laporan sudah diproses oleh operator lain");
+		}
 
 		await tx.insert(auditLog).values({
 			id: generateId(10),
@@ -691,10 +696,15 @@ export async function tolakLaporan(
 	// Atomik: laporan DITOLAK tanpa penurunan reputasi (atau sebaliknya)
 	// membuat skor pelapor tidak lagi mencerminkan keputusan operator.
 	await db.transaction(async (tx) => {
-		await tx
+		const result = await tx
 			.update(publicReports)
 			.set({ status: "DITOLAK", catatanPetugas: alasan, diprosesOleh: aktor.id, updatedAt: now })
-			.where(eq(publicReports.id, laporanId));
+			.where(and(eq(publicReports.id, laporanId), ne(publicReports.status, "DITOLAK")))
+			.returning({ id: publicReports.id });
+
+		if (result.length === 0) {
+			throw new Error("Laporan sudah ditolak sebelumnya");
+		}
 
 		await perbaruiReputasi(laporan.pelaporTelepon, "ditolak", tx);
 
@@ -896,7 +906,8 @@ export async function listAntrianTriase(status: string) {
 	const kandidatMap = new Map<string, KandidatDuplikat[]>();
 	if (rows.some((r) => r.status === "MENUNGGU" && parseTitik(r.latitude, r.longitude))) {
 		const minCreated = new Date(
-			Math.min(...rows.map((r) => r.createdAt.getTime())) - JENDELA_DUPLIKAT_JAM * 3600_000
+			rows.reduce((min, r) => Math.min(min, r.createdAt.getTime()), Infinity) -
+				JENDELA_DUPLIKAT_JAM * 3600_000
 		);
 		const kandidatRows = await db
 			.select()

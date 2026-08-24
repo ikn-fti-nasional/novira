@@ -50,8 +50,15 @@
 		},
 	];
 
-	let username = $state(data.demoMode ? akunDemo[0].username : "");
-	let password = $state(data.demoMode ? akunDemo[0].password : "");
+	let username = $state("");
+	let password = $state("");
+
+	$effect(() => {
+		if (data.demoMode) {
+			username = akunDemo[0].username;
+			password = akunDemo[0].password;
+		}
+	});
 
 	function pakaiAkun(akun: (typeof akunDemo)[number]) {
 		username = akun.username;

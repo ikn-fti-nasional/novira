@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, lt } from "drizzle-orm";
 import { db } from "$lib/server/db/index.js";
 import {
 	auditLog,
@@ -135,8 +135,8 @@ export async function jalankanEskalasiSla(sekarang = new Date()): Promise<Ringka
 
 		// Atomik per insiden: update status + notifikasi peran + notifikasi petugas + audit log
 		// harus sukses bersama — kalau tidak, retry cron bisa duplikat notifikasi.
-		await db.transaction(async (tx) => {
-			await tx
+		const didUpdate = await db.transaction(async (tx) => {
+			const result = await tx
 				.update(incidents)
 				.set({
 					tingkatEskalasi: jenjang.tingkat,
@@ -148,7 +148,11 @@ export async function jalankanEskalasiSla(sekarang = new Date()): Promise<Ringka
 					rincianPrioritas: serializeRincian(prioritas.rincian),
 					updatedAt: sekarang,
 				})
-				.where(eq(incidents.id, incident.id));
+				.where(and(eq(incidents.id, incident.id), lt(incidents.tingkatEskalasi, jenjang.tingkat)))
+				.returning({ id: incidents.id });
+
+			// Hanya lanjutkan notifikasi & audit bila update benar-benar mengubah baris.
+			if (result.length === 0) return false;
 
 			const peranIds: string[] = [];
 			for (const peran of jenjang.peranTujuan) {
@@ -190,8 +194,10 @@ export async function jalankanEskalasiSla(sekarang = new Date()): Promise<Ringka
 				tipe: "ESKALASI",
 				incidentId: incident.id,
 			});
+			return true;
 		});
 
+		if (!didUpdate) continue;
 		ringkasan.dieskalasi++;
 		ringkasan.perJenjang[jenjang.tingkat] = (ringkasan.perJenjang[jenjang.tingkat] ?? 0) + 1;
 	}
