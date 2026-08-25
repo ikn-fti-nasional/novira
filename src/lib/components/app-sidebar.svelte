@@ -311,21 +311,35 @@
 
 					<DropdownMenu.Content class="w-56" align="end">
 						<DropdownMenu.Group>
-							<DropdownMenu.Item class="flex items-center gap-2 cursor-pointer">
-								<UserIcon class="size-4" />
-								<a href="/dashboard/settings" class="flex-1">Profil Saya</a>
+							<DropdownMenu.Item>
+								{#snippet child({ props })}
+									<a
+										{...props}
+										href="/dashboard/settings"
+										onclick={handleNavigate}
+										class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+									>
+										<UserIcon class="size-4" />
+										Profil Saya
+									</a>
+								{/snippet}
 							</DropdownMenu.Item>
 						</DropdownMenu.Group>
 						<DropdownMenu.Separator />
 						<DropdownMenu.Group>
 							<form method="POST" action="/logout" class="w-full">
-								<button
-									type="submit"
-									class="flex w-full items-center gap-2 px-2 py-1.5 text-sm cursor-pointer hover:bg-accent rounded-sm"
-								>
-									<LogOutIcon class="size-4" />
-									<span>Keluar</span>
-								</button>
+								<DropdownMenu.Item>
+									{#snippet child({ props })}
+										<button
+											type="submit"
+											{...props}
+											class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+										>
+											<LogOutIcon class="size-4" />
+											Keluar
+										</button>
+									{/snippet}
+								</DropdownMenu.Item>
 							</form>
 						</DropdownMenu.Group>
 					</DropdownMenu.Content>

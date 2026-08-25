@@ -30,6 +30,20 @@
 	let errorMsg = $state<string | null>(null);
 	let hasil = $state<HasilAnalisaUnggahan | null>(null);
 
+	// Ketikan mentah saat pengguna sedang mengedit ambang; null berarti
+	// tampilkan nilai yang sudah di-clamp. Clamp ditunda sampai blur/submit
+	// supaya mengetik "15" tidak terpotong jadi "5%" di tombol pertama.
+	let confThresKetikan = $state<string | null>(null);
+
+	function terapkanConfThres() {
+		if (confThresKetikan === null) return;
+		const percent = Number(confThresKetikan.replace(/[^0-9]/g, ""));
+		if (percent > 0) {
+			confThres = Math.min(1, Math.max(0.05, percent / 100));
+		}
+		confThresKetikan = null;
+	}
+
 	const labelModel = LABEL_MODEL;
 
 	function handlePilihFile(e: Event) {
@@ -50,6 +64,7 @@
 		e.preventDefault();
 		if (!file) return;
 
+		terapkanConfThres();
 		menganalisa = true;
 		errorMsg = null;
 		hasil = null;
@@ -143,19 +158,15 @@
 
 					<div class="grid gap-2">
 						<Label for="confThres">Ambang Kepercayaan</Label>
-						<Input
-							id="confThres"
-							name="confThres"
-							type="text"
-							inputmode="numeric"
-							value={`${Math.round(confThres * 100)}%`}
-							oninput={(e) => {
-								const value = e.currentTarget.value.replace(/[^0-9]/g, "");
-								const percent = Math.min(100, Math.max(5, Number(value || 5)));
-								confThres = percent / 100;
-								e.currentTarget.value = `${percent}%`;
-							}}
-						/>
+					<Input
+						id="confThres"
+						name="confThres"
+						type="text"
+						inputmode="numeric"
+						value={confThresKetikan ?? `${Math.round(confThres * 100)}%`}
+						oninput={(e) => (confThresKetikan = e.currentTarget.value)}
+						onblur={terapkanConfThres}
+					/>
 					</div>
 				</div>
 
