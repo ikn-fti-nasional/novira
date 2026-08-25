@@ -47,7 +47,6 @@ export const PAGE_ACCESS: Record<string, readonly Role[]> = {
 	"/dashboard/eksekutif": ["admin", "kepala_dinas", "walikota"],
 	"/dashboard/monitoring": NON_EXECUTIVE_ROLES,
 	"/dashboard/incidents": NON_EXECUTIVE_ROLES,
-	"/dashboard/tugas-saya": ["petugas_lapangan", "admin"],
 	"/dashboard/hotspots": ALL_ROLES,
 	"/dashboard/cameras": OPERATIONAL_ROLES,
 	"/dashboard/analisa-unggah": OPERATIONAL_ROLES,
@@ -61,9 +60,6 @@ export const PAGE_ACCESS: Record<string, readonly Role[]> = {
 	"/dashboard/roles": SYSTEM_ADMIN_ROLES,
 	"/dashboard/database": SYSTEM_ADMIN_ROLES,
 	"/dashboard/laporan-masyarakat": OPERATIONAL_ROLES,
-	// Analitik turunan (titik kronis, jam rawan, eskalasi) juga dibuka untuk
-	// eksekutif: isinya bahan keputusan anggaran, bukan operasional harian.
-	"/dashboard/analitik": ["admin", "operator", "kepala_seksi", "kepala_dinas", "walikota"],
 };
 
 /** Pure predicate — may `role` open `path`? */

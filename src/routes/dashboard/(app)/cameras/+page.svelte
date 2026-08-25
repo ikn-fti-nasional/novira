@@ -7,12 +7,15 @@
 	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Label from "$lib/components/ui/label/index.js";
 	import DataTablePagination from "$lib/components/data-table-pagination.svelte";
+	import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import PlusIcon from "@lucide/svelte/icons/plus";
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
 	import SearchIcon from "@lucide/svelte/icons/search";
+	import { toast } from "svelte-sonner";
 	import { enhance } from "$app/forms";
+	import type { ActionResult } from "@sveltejs/kit";
 
 	let { data, form } = $props();
 
@@ -20,6 +23,20 @@
 	let search = $state("");
 	let pageSize = $state(10);
 	let currentPage = $state(1);
+
+	// Kamera yang menunggu konfirmasi hapus.
+	let hapusOpen = $state(false);
+	let hapusId = $state("");
+	let hapusNama = $state("");
+
+	function toastHasilAksi(result: ActionResult, namaSukses: string, pesanGagalDefault: string) {
+		if (result.type === "failure") {
+			const data = result.data as { message?: string } | undefined;
+			toast.error(data?.message ?? pesanGagalDefault);
+		} else if (result.type === "success") {
+			toast.success(namaSukses);
+		}
+	}
 
 	const filtered = $derived(
 		data.kameraList.filter(
@@ -101,7 +118,16 @@
 				</Card.Description>
 			</Card.Header>
 			<Card.Content class="pt-4">
-				<form method="POST" action="?/tambah" use:enhance>
+				<form
+						method="POST"
+						action="?/tambah"
+						use:enhance={() => {
+							return async ({ update, result }) => {
+								await update();
+								toastHasilAksi(result, "Kamera baru berhasil disimpan", "Gagal menyimpan kamera");
+							};
+						}}
+					>
 					<div class="grid gap-4 md:grid-cols-2">
 						<div class="space-y-2">
 							<Label.Root>Nama Kamera</Label.Root>
@@ -190,7 +216,20 @@
 								<Table.Cell class="py-3 pl-4 whitespace-nowrap">
 									<div class="flex items-center gap-1.5">
 										<!-- Form ubah status otomatis kirim saat select berganti -->
-										<form method="POST" action="?/ubahStatus" use:enhance>
+										<form
+											method="POST"
+											action="?/ubahStatus"
+											use:enhance={() => {
+												return async ({ update, result }) => {
+													await update();
+													toastHasilAksi(
+														result,
+														`Status ${cam.nama} diperbarui`,
+														`Gagal mengubah status ${cam.nama}`
+													);
+												};
+											}}
+										>
 											<input type="hidden" name="id" value={cam.id} />
 											<select
 												name="status"
@@ -205,19 +244,21 @@
 											</select>
 										</form>
 
-										<!-- Form hapus kamera -->
-										<form method="POST" action="?/hapus" use:enhance>
-											<input type="hidden" name="id" value={cam.id} />
-											<Button
-												variant="ghost"
-												size="sm"
-												class="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/50"
-												title="Hapus Kamera"
-												aria-label="Hapus Kamera"
-											>
-												<TrashIcon class="size-3.5" />
-											</Button>
-										</form>
+										<!-- Hapus kamera: wajib lewat dialog konfirmasi dulu -->
+										<Button
+											variant="ghost"
+											size="sm"
+											class="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/50"
+											title="Hapus Kamera"
+											aria-label={`Hapus kamera ${cam.nama}`}
+											onclick={() => {
+												hapusId = cam.id;
+												hapusNama = cam.nama;
+												hapusOpen = true;
+											}}
+										>
+											<TrashIcon class="size-3.5" />
+										</Button>
 									</div>
 								</Table.Cell>
 
@@ -272,4 +313,11 @@
 			<DataTablePagination totalItems={filtered.length} bind:pageSize bind:currentPage />
 		</Card.Content>
 	</Card.Root>
+
+	<DeleteConfirmDialog
+		bind:open={hapusOpen}
+		action="?/hapus"
+		id={hapusId}
+		itemName={`kamera ${hapusNama}`}
+	/>
 </div>

@@ -47,7 +47,7 @@
 
 	const trendSeriesData = $derived(
 		activeTrendData.map((d) => ({
-			time: d.time,
+			time: d.label,
 			rataRataKota: d.rataRataKota,
 			bandungWetan: d.bandungWetan,
 			coblong: d.coblong,
