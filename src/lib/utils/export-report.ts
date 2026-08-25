@@ -1,3 +1,9 @@
+/**
+ * Escapes HTML-sensitive characters in a value converted to a string.
+ *
+ * @param str - The value to escape; `null` and `undefined` produce an empty string
+ * @returns The escaped string, or an empty string for `null` or `undefined`
+ */
 function escapeHtml(str: string | number | null | undefined): string {
 	if (str === null || str === undefined) return "";
 	return String(str)
@@ -8,6 +14,14 @@ function escapeHtml(str: string | number | null | undefined): string {
 		.replace(/'/g, "&#039;");
 }
 
+/**
+ * Generates and prints a formatted report in a browser print dialog.
+ *
+ * @param title - The report title
+ * @param author - The report author
+ * @param headers - The table column headers
+ * @param rows - The table rows and their cell values
+ */
 export function triggerPdfReportPrint(
 	title: string,
 	author: string,
