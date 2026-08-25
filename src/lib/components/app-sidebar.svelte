@@ -309,8 +309,26 @@
 						{/snippet}
 					</DropdownMenu.Trigger>
 
-					<!-- Content Dropdown Footer -->
-					<!-- ... sesuaikan seperti sebelumnya ... -->
+					<DropdownMenu.Content class="w-56" align="end">
+						<DropdownMenu.Group>
+							<DropdownMenu.Item class="flex items-center gap-2 cursor-pointer">
+								<UserIcon class="size-4" />
+								<a href="/dashboard/settings" class="flex-1">Profil Saya</a>
+							</DropdownMenu.Item>
+						</DropdownMenu.Group>
+						<DropdownMenu.Separator />
+						<DropdownMenu.Group>
+							<form method="POST" action="/logout" class="w-full">
+								<button
+									type="submit"
+									class="flex w-full items-center gap-2 px-2 py-1.5 text-sm cursor-pointer hover:bg-accent rounded-sm"
+								>
+									<LogOutIcon class="size-4" />
+									<span>Keluar</span>
+								</button>
+							</form>
+						</DropdownMenu.Group>
+					</DropdownMenu.Content>
 				</DropdownMenu.Root>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>

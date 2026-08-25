@@ -25,7 +25,7 @@
 	// svelte-ignore state_referenced_locally
 	let modelType = $state(data.defaultModelType);
 	// svelte-ignore state_referenced_locally
-	let confThres = $state(data.defaultConfThres);
+	let confThres = $state(Math.min(1, Math.max(0.05, data.defaultConfThres)));
 	let menganalisa = $state(false);
 	let errorMsg = $state<string | null>(null);
 	let hasil = $state<HasilAnalisaUnggahan | null>(null);

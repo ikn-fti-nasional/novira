@@ -188,15 +188,15 @@
 							class="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400 group"
 							title="Buka di Google Maps"
 						>
-							<!-- Tampilkan thumbnail map mini untuk UX yang lebih baik sesuai request user (meskipun sebelumnya belum ada) -->
-							<div class="h-10 w-16 overflow-hidden rounded border border-border/60 opacity-80 group-hover:opacity-100 transition-opacity hidden sm:block">
-								<img src={`https://static-maps.yandex.ru/1.x/?lang=en-US&ll=${rep.longitude},${rep.latitude}&z=15&l=map&size=100,60&pt=${rep.longitude},${rep.latitude},pm2rdm`} alt="Map Thumbnail" class="h-full w-full object-cover" />
-							</div>
 							<div class="flex flex-col items-end text-right">
 								<span class="flex items-center gap-1 font-medium">
-									<MapPinIcon class="size-3.5" /> {rep.kota ?? "Lokasi GPS"} <ExternalLinkIcon class="size-3" />
+									<MapPinIcon class="size-3.5" />
+									{rep.kota ?? "Lokasi GPS"}
+									<ExternalLinkIcon class="size-3" />
 								</span>
-								<span class="text-[10px] text-muted-foreground">({rep.latitude}, {rep.longitude})</span>
+								<span class="text-[10px] text-muted-foreground"
+									>({rep.latitude}, {rep.longitude})</span
+								>
 							</div>
 						</a>
 					{:else}

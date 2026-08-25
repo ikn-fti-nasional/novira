@@ -1,3 +1,13 @@
+function escapeHtml(str: string | number | null | undefined): string {
+	if (str === null || str === undefined) return "";
+	return String(str)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
 export function triggerPdfReportPrint(
 	title: string,
 	author: string,
@@ -33,7 +43,7 @@ export function triggerPdfReportPrint(
 		<!DOCTYPE html>
 		<html>
 		<head>
-			<title>${title.replace(/_/g, " ")}</title>
+			<title>${escapeHtml(title.replace(/_/g, " "))}</title>
 			<style>
 				@page {
 					margin: 1.5cm;
@@ -144,17 +154,17 @@ export function triggerPdfReportPrint(
 			</div>
 			
 			<div class="report-meta">
-				<h1>${title.replace(/_/g, " ")}</h1>
+				<h1>${escapeHtml(title.replace(/_/g, " "))}</h1>
 				<div class="report-meta-grid">
-					<p><strong>Dicetak oleh:</strong> ${author}</p>
-					<p style="text-align: right;"><strong>Waktu Cetak:</strong> ${dateStr}</p>
+					<p><strong>Dicetak oleh:</strong> ${escapeHtml(author)}</p>
+					<p style="text-align: right;"><strong>Waktu Cetak:</strong> ${escapeHtml(dateStr)}</p>
 				</div>
 			</div>
 
 			<table>
 				<thead>
 					<tr>
-						${headers.map((h) => `<th>${h}</th>`).join("")}
+						${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}
 					</tr>
 				</thead>
 				<tbody>
@@ -162,7 +172,7 @@ export function triggerPdfReportPrint(
 						.map(
 							(row) => `
 						<tr>
-							${row.map((cell) => `<td>${cell !== null && cell !== undefined ? cell : ""}</td>`).join("")}
+							${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}
 						</tr>
 					`
 						)

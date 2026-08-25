@@ -45,15 +45,15 @@
 
 	const activeTrendData = $derived(chartMode === "mingguan" ? data.trenMingguan : data.trenBulanan);
 
-	const trendSeriesData = [
-		{ time: "Senin", rataRataKota: 75, bandungWetan: 80, coblong: 65, lengkong: 70 },
-		{ time: "Selasa", rataRataKota: 78, bandungWetan: 82, coblong: 68, lengkong: 72 },
-		{ time: "Rabu", rataRataKota: 80, bandungWetan: 85, coblong: 70, lengkong: 75 },
-		{ time: "Kamis", rataRataKota: 82, bandungWetan: 88, coblong: 72, lengkong: 78 },
-		{ time: "Jumat", rataRataKota: 85, bandungWetan: 90, coblong: 75, lengkong: 80 },
-		{ time: "Sabtu", rataRataKota: 88, bandungWetan: 92, coblong: 78, lengkong: 82 },
-		{ time: "Minggu", rataRataKota: 90, bandungWetan: 95, coblong: 80, lengkong: 85 },
-	];
+	const trendSeriesData = $derived(
+		activeTrendData.map((d) => ({
+			time: d.time,
+			rataRataKota: d.rataRataKota,
+			bandungWetan: d.bandungWetan,
+			coblong: d.coblong,
+			lengkong: d.lengkong,
+		}))
+	);
 
 	// Leaderboard Filtered
 	const filteredLeaderboard = $derived(
