@@ -100,7 +100,6 @@ Pelapor memantau seluruh rantai itu lewat kode laporannya di `/lacak`, tanpa per
 - **Kamera CCTV** — registri 290 kamera Kota Bandung beserta kecamatan, kelurahan, koordinat, status, dan URL stream. Kecamatan/kelurahan diturunkan lewat reverse geocoding koordinat ke batas administratif OpenStreetMap, karena data sumber pemda tidak menyertakannya.
 - **Laporan wilayah** — agregasi bertingkat provinsi → kabupaten/kota → kecamatan → kelurahan, dengan filter dan ekspor.
 - **Dashboard eksekutif** — ringkasan KPI untuk kepala dinas/walikota.
-- **Analitik lanjutan** — analisa turunan yang tidak membutuhkan model tambahan:
   - **Titik kronis** — lokasi yang berulang kali dibersihkan lalu kotor lagi, masing-masing disertai usulan intervensi beserta alasannya (tambah TPS bila siklusnya jam-jaman, ubah jadwal angkut bila harian, pengawasan & penindakan bila polanya disengaja).
   - **Jam rawan & usulan jadwal patroli** — distribusi jam kemunculan sampah per kecamatan, dengan usulan jendela patroli 3 jam. Kecamatan dengan kurang dari 5 laporan sengaja tidak diusulkan karena polanya belum bisa dibedakan dari kebetulan.
   - **Arsip skor harian** — snapshot skor kebersihan tiap kecamatan disimpan tiap malam, sehingga tren antarwaktu dihitung dari data nyata. Selama arsipnya belum cukup panjang, aplikasi menyatakan datanya belum ada alih-alih menampilkan `+0.0%` yang menyesatkan.

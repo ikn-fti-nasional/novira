@@ -25,10 +25,24 @@
 	// svelte-ignore state_referenced_locally
 	let modelType = $state(data.defaultModelType);
 	// svelte-ignore state_referenced_locally
-	let confThres = $state(data.defaultConfThres);
+	let confThres = $state(Math.min(1, Math.max(0.05, data.defaultConfThres)));
 	let menganalisa = $state(false);
 	let errorMsg = $state<string | null>(null);
 	let hasil = $state<HasilAnalisaUnggahan | null>(null);
+
+	// Ketikan mentah saat pengguna sedang mengedit ambang; null berarti
+	// tampilkan nilai yang sudah di-clamp. Clamp ditunda sampai blur/submit
+	// supaya mengetik "15" tidak terpotong jadi "5%" di tombol pertama.
+	let confThresKetikan = $state<string | null>(null);
+
+	function terapkanConfThres() {
+		if (confThresKetikan === null) return;
+		const percent = Number(confThresKetikan.replace(/[^0-9]/g, ""));
+		if (percent > 0) {
+			confThres = Math.min(1, Math.max(0.05, percent / 100));
+		}
+		confThresKetikan = null;
+	}
 
 	const labelModel = LABEL_MODEL;
 
@@ -50,6 +64,7 @@
 		e.preventDefault();
 		if (!file) return;
 
+		terapkanConfThres();
 		menganalisa = true;
 		errorMsg = null;
 		hasil = null;
@@ -143,15 +158,15 @@
 
 					<div class="grid gap-2">
 						<Label for="confThres">Ambang Kepercayaan</Label>
-						<Input
-							id="confThres"
-							name="confThres"
-							type="number"
-							min="0.05"
-							max="1"
-							step="0.05"
-							bind:value={confThres}
-						/>
+					<Input
+						id="confThres"
+						name="confThres"
+						type="text"
+						inputmode="numeric"
+						value={confThresKetikan ?? `${Math.round(confThres * 100)}%`}
+						oninput={(e) => (confThresKetikan = e.currentTarget.value)}
+						onblur={terapkanConfThres}
+					/>
 					</div>
 				</div>
 
@@ -186,7 +201,7 @@
 				<Card.Description>
 					Model <strong>{labelModel[hasil.modelType] ?? hasil.modelType}</strong>, ambang
 					kepercayaan
-					{hasil.confThres}
+					{Math.round(hasil.confThres * 100)}%
 				</Card.Description>
 			</Card.Header>
 			<Card.Content class="space-y-6">

@@ -8,7 +8,6 @@
 	import ThemeToggle from "$lib/components/theme-toggle.svelte";
 	import CommandPalette from "$lib/components/command-palette.svelte";
 	import NotificationBell from "$lib/components/notification-bell.svelte";
-	import AppsMenu from "$lib/components/apps-menu.svelte";
 
 	let { children, data } = $props();
 
@@ -86,7 +85,6 @@
 					count={data.unreadNotificationCount}
 					notifications={data.recentNotifications}
 				/>
-				<AppsMenu role={data.user.role} />
 				<ThemeToggle />
 			</div>
 		</header>

@@ -244,6 +244,7 @@
 							class="accent-primary size-4"
 						/>
 					</Table.Head>
+					<Table.Head class="w-[100px]">Tindakan</Table.Head>
 					{#each columns as col (col.key)}
 						{@const SortIcon = sortIcon(col.key)}
 						<Table.Head>
@@ -256,7 +257,6 @@
 							</button>
 						</Table.Head>
 					{/each}
-					<Table.Head class="w-[100px]">Tindakan</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
@@ -270,13 +270,6 @@
 								class="accent-primary size-4"
 							/>
 						</Table.Cell>
-						<Table.Cell class="font-medium">{user.name}</Table.Cell>
-						<Table.Cell class="text-muted-foreground">{user.username}</Table.Cell>
-						<Table.Cell class="text-muted-foreground">{user.email}</Table.Cell>
-						<Table.Cell>
-							<Badge variant={roleBadgeVariant(user.role)} class="capitalize">{user.role}</Badge>
-						</Table.Cell>
-						<Table.Cell class="text-muted-foreground">{formatDate(user.createdAt)}</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-center gap-1">
 								<Button
@@ -303,6 +296,13 @@
 								{/if}
 							</div>
 						</Table.Cell>
+						<Table.Cell class="font-medium">{user.name}</Table.Cell>
+						<Table.Cell class="text-muted-foreground">{user.username}</Table.Cell>
+						<Table.Cell class="text-muted-foreground">{user.email}</Table.Cell>
+						<Table.Cell>
+							<Badge variant={roleBadgeVariant(user.role)} class="capitalize">{user.role}</Badge>
+						</Table.Cell>
+						<Table.Cell class="text-muted-foreground">{formatDate(user.createdAt)}</Table.Cell>
 					</Table.Row>
 				{:else}
 					<Table.Row>

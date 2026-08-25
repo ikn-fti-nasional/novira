@@ -34,6 +34,7 @@
 	let memindai = $state(false);
 	/** Foto beranotasi (kotak deteksi) dari pLitter -- disisipkan ke FormData sebelum form dikirim. */
 	let fotoAnalisa: File | null = $state(null);
+	let previewUrl = $state("");
 
 	/** State lokal: tanpa `bind:value`, label pemicu Select tidak ikut berubah. */
 	let jenisSampah = $state("");
@@ -73,10 +74,16 @@
 			dt.items.add(dikirim);
 			input.files = dt.files;
 			ukuranFotoKb = Math.round(dikirim.size / 1024);
+			
+			if (previewUrl) URL.revokeObjectURL(previewUrl);
+			previewUrl = URL.createObjectURL(dikirim);
 		} catch {
 			// Resize gagal (mis. format tidak didukung createImageBitmap) --
 			// kirim berkas asli apa adanya daripada memblokir laporan warga.
 			ukuranFotoKb = Math.round(file.size / 1024);
+			
+			if (previewUrl) URL.revokeObjectURL(previewUrl);
+			previewUrl = URL.createObjectURL(file);
 		} finally {
 			mengompres = false;
 		}
@@ -256,31 +263,45 @@
 							for="foto"
 							class="flex cursor-pointer flex-col items-center gap-2 text-center"
 						>
-							<div
-								class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
-							>
-								{#if mengompres || memindai}
-									<LoaderCircleIcon
-										class="size-5 animate-spin text-emerald-600 dark:text-emerald-400"
-									/>
-								{:else}
-									<CameraIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
-								{/if}
-							</div>
-							<div>
-								<span class="block text-sm font-semibold">Unggah Foto</span>
-								<span class="text-xs text-muted-foreground">
-									{#if mengompres}
-										Mengompres foto…
-									{:else if memindai}
-										Memindai foto…
-									{:else if ukuranFotoKb !== null}
-										Terkompresi otomatis · {ukuranFotoKb} KB
-									{:else}
-										JPG / PNG / WEBP — dikompresi otomatis, ambil dari kamera langsung
+							{#if previewUrl}
+								<div class="relative w-full aspect-video rounded-lg overflow-hidden border border-border/80">
+									<img src={previewUrl} alt="Preview Foto" class="w-full h-full object-cover" />
+									{#if mengompres || memindai}
+										<div class="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm">
+											<LoaderCircleIcon class="size-8 animate-spin text-emerald-600 dark:text-emerald-400" />
+										</div>
 									{/if}
-								</span>
-							</div>
+								</div>
+								<div>
+									<span class="block text-sm font-semibold">Ganti Foto</span>
+								</div>
+							{:else}
+								<div
+									class="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20"
+								>
+									{#if mengompres || memindai}
+										<LoaderCircleIcon
+											class="size-5 animate-spin text-emerald-600 dark:text-emerald-400"
+										/>
+									{:else}
+										<CameraIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
+									{/if}
+								</div>
+								<div>
+									<span class="block text-sm font-semibold">Unggah Foto</span>
+									<span class="text-xs text-muted-foreground">
+										{#if mengompres}
+											Mengompres foto…
+										{:else if memindai}
+											Memindai foto…
+										{:else if ukuranFotoKb !== null}
+											Terkompresi otomatis · {ukuranFotoKb} KB
+										{:else}
+											JPG / PNG / WEBP — dikompresi otomatis, ambil dari kamera langsung
+										{/if}
+									</span>
+								</div>
+							{/if}
 						</Label.Root>
 						<input
 							bind:this={fotoInput}

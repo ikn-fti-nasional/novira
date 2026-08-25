@@ -18,7 +18,7 @@
 	import { toast } from "svelte-sonner";
 	import { onMount } from "svelte";
 	import { SvelteMap, SvelteSet } from "svelte/reactivity";
-	import { downloadCsvReport, triggerPdfReportPrint } from "$lib/utils/export-report.js";
+	import { triggerPdfReportPrint } from "$lib/utils/export-report.js";
 
 	type TemuanManual = {
 		key: string;
@@ -114,7 +114,9 @@
 		sedangDiproses.clear();
 
 		const cameraParam = semuaTerpilih ? "all" : [...selectedCameraIds].join(",");
-		const source = new EventSource(`/api/analisa-manual?cameras=${encodeURIComponent(cameraParam)}`);
+		const source = new EventSource(
+			`/api/analisa-manual?cameras=${encodeURIComponent(cameraParam)}`
+		);
 
 		source.addEventListener("progress", (e) => {
 			const p = JSON.parse((e as MessageEvent).data) as ProgresAnalisaManual;
@@ -162,7 +164,7 @@
 		}
 	});
 
-	function unduhCsv() {
+	function cetakPdf() {
 		const headers = [
 			"ID",
 			"Lokasi",
@@ -189,7 +191,7 @@
 			new Date(i.pertamaDilihat).toLocaleString(),
 			new Date(i.terakhirDilihat).toLocaleString(),
 		]);
-		downloadCsvReport("Laporan_Insiden_Sampah", headers, rows);
+		triggerPdfReportPrint("Laporan Insiden Sampah", "Administrator", headers, rows);
 	}
 
 	async function kirimAksi(
@@ -272,15 +274,11 @@
 		</div>
 
 		<div class="flex flex-wrap items-center gap-2 print:hidden">
-			<Button variant="outline" size="sm" class="h-9 text-xs font-semibold" onclick={unduhCsv}>
-				<DownloadIcon class="mr-1.5 size-3.5" />
-				Unduh CSV
-			</Button>
 			<Button
 				variant="default"
 				size="sm"
 				class="h-9 bg-emerald-700 text-xs font-semibold text-white hover:bg-emerald-800"
-				onclick={triggerPdfReportPrint}
+				onclick={cetakPdf}
 			>
 				<PrinterIcon class="mr-1.5 size-3.5" />
 				Cetak PDF Laporan
@@ -307,8 +305,27 @@
 								? 'fill-emerald-600 text-emerald-600'
 								: 'fill-muted-foreground text-muted-foreground'}"
 					/>
-					Server ML: {mlOnline === false ? "Offline" : mlOnline === true ? "Online" : "Memeriksa..."}
+					Server ML: {mlOnline === false
+						? "Offline"
+						: mlOnline === true
+							? "Online"
+							: "Memeriksa..."}
 				</Badge>
+				<Button
+					type="button"
+					size="sm"
+					disabled={analising || mlOnline === false}
+					onclick={() => (pilihKameraOpen = true)}
+					class="bg-emerald-600 text-white hover:bg-emerald-700"
+				>
+					{#if analising}
+						<Loader2Icon class="mr-2 size-4 animate-spin" />
+						Menganalisa...
+					{:else}
+						<PlayIcon class="mr-2 size-4" />
+						Jalankan Analisa Manual
+					{/if}
+				</Button>
 			</div>
 			<Card.Description>
 				Jalankan siklus deteksi yang sama seperti jadwal otomatis (12:00 &amp; 15:00 WIB) kapan saja
@@ -317,20 +334,6 @@
 			</Card.Description>
 		</Card.Header>
 		<Card.Content class="space-y-4">
-			<Button
-				type="button"
-				disabled={analising || mlOnline === false}
-				onclick={() => (pilihKameraOpen = true)}
-				class="bg-emerald-600 text-white hover:bg-emerald-700"
-			>
-				{#if analising}
-					<Loader2Icon class="mr-2 size-4 animate-spin" />
-					Menganalisa...
-				{:else}
-					<PlayIcon class="mr-2 size-4" />
-					Jalankan Analisa Manual
-				{/if}
-			</Button>
 			{#if mlOnline === false && !analising}
 				<p class="text-xs text-red-600">
 					Server ML (pLitter) sedang tidak bisa diakses — analisa tidak bisa dijalankan.
@@ -377,7 +380,9 @@
 				</div>
 
 				{#if manualResult.temuan.length === 0}
-					<div class="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+					<div
+						class="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground"
+					>
 						<CheckCircleIcon class="size-4 text-emerald-600" />
 						Tidak ada temuan sampah dari analisa ini.
 					</div>
@@ -460,10 +465,16 @@
 		<div class="space-y-3">
 			<div class="relative">
 				<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-				<Input placeholder="Cari nama kamera atau kecamatan..." class="pl-9" bind:value={cameraSearch} />
+				<Input
+					placeholder="Cari nama kamera atau kecamatan..."
+					class="pl-9"
+					bind:value={cameraSearch}
+				/>
 			</div>
 
-			<label class="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">
+			<label
+				class="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium"
+			>
 				<input
 					type="checkbox"
 					checked={semuaTerpilih}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
 	import { enhance } from "$app/forms";
+	import { toast } from "svelte-sonner";
 
 	type Props = {
 		open: boolean;
@@ -26,9 +27,15 @@
 				method="POST"
 				{action}
 				use:enhance={() => {
-					return async ({ update }) => {
+					return async ({ update, result }) => {
 						await update();
 						open = false;
+						if (result.type === "failure") {
+							const data = result.data as { message?: string } | undefined;
+							toast.error(data?.message ?? `Gagal menghapus ${itemName}`);
+						} else if (result.type === "success") {
+							toast.success(`${itemName} berhasil dihapus`);
+						}
 					};
 				}}
 			>

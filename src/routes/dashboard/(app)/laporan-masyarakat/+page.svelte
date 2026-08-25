@@ -180,11 +180,31 @@
 							{tanggal(rep.createdAt)}
 						</p>
 					</div>
-					<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-						<MapPinIcon class="size-3.5" />
-						{rep.kota ?? "Lokasi GPS"}
-						{rep.latitude && rep.longitude ? ` (${rep.latitude}, ${rep.longitude})` : ""}
-					</div>
+					{#if rep.latitude && rep.longitude}
+						<a
+							href={`https://www.google.com/maps?q=${rep.latitude},${rep.longitude}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400 group"
+							title="Buka di Google Maps"
+						>
+							<div class="flex flex-col items-end text-right">
+								<span class="flex items-center gap-1 font-medium">
+									<MapPinIcon class="size-3.5" />
+									{rep.kota ?? "Lokasi GPS"}
+									<ExternalLinkIcon class="size-3" />
+								</span>
+								<span class="text-[10px] text-muted-foreground"
+									>({rep.latitude}, {rep.longitude})</span
+								>
+							</div>
+						</a>
+					{:else}
+						<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+							<MapPinIcon class="size-3.5" />
+							{rep.kota ?? "Lokasi GPS"}
+						</div>
+					{/if}
 				</div>
 
 				{#if rep.deskripsi}
