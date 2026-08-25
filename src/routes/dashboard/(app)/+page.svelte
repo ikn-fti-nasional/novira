@@ -9,7 +9,7 @@
 	import { mode } from "mode-watcher";
 	import { invalidateAll } from "$app/navigation";
 	import { toast } from "svelte-sonner";
-	import { downloadCsvReport } from "$lib/utils/export-report.js";
+	import { triggerPdfReportPrint } from "$lib/utils/export-report.js";
 
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import VideoIcon from "@lucide/svelte/icons/video";
@@ -18,7 +18,7 @@
 	import ActivityIcon from "@lucide/svelte/icons/activity";
 	import GlobeIcon from "@lucide/svelte/icons/globe";
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
-	import DownloadIcon from "@lucide/svelte/icons/download";
+	import PrinterIcon from "@lucide/svelte/icons/printer";
 	import FilterIcon from "@lucide/svelte/icons/filter";
 
 	import CctvPlayer from "$lib/components/novira/cctv-player.svelte";
@@ -262,10 +262,10 @@
 		);
 	}
 
-	// --- Unduh ringkasan ----------------------------------------------------
-	function unduhRingkasan() {
+	// --- Cetak ringkasan ----------------------------------------------------
+	function cetakRingkasan() {
 		if (insidenTersaring.length === 0) {
-			toast.error("Tidak ada insiden pada cakupan wilayah ini untuk diunduh.");
+			toast.error("Tidak ada insiden pada cakupan wilayah ini untuk dicetak.");
 			return;
 		}
 		const headers = [
@@ -304,8 +304,9 @@
 				: provinsiDipilih !== "SEMUA"
 					? provinsiDipilih
 					: "Nasional";
-		downloadCsvReport(`Ringkasan_Dashboard_${cakupan.replace(/\s+/g, "_")}`, headers, rows);
-		toast.success(`${rows.length} insiden diunduh sebagai CSV`);
+		
+		const title = `Ringkasan Pemantauan Sampah ${cakupan}`;
+		triggerPdfReportPrint(title, data.user.name, headers, rows);
 	}
 </script>
 
@@ -396,13 +397,13 @@
 			</div>
 
 			<Button
-				variant="outline"
+				variant="default"
 				size="sm"
-				class="h-9 text-xs font-semibold"
-				onclick={unduhRingkasan}
+				class="h-9 text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800"
+				onclick={cetakRingkasan}
 			>
-				<DownloadIcon class="mr-1.5 size-3.5" />
-				Unduh Ringkasan CSV
+				<PrinterIcon class="mr-1.5 size-3.5" />
+				Cetak Laporan PDF
 			</Button>
 		</div>
 	</div>
@@ -453,12 +454,12 @@
 	</div>
 
 	<!-- Baris 2: Tayangan CCTV langsung + tren deteksi -->
-	<div class="grid items-start gap-6 lg:grid-cols-12">
-		<div class="min-w-0 lg:col-span-5">
+	<div class="grid items-stretch gap-6 lg:grid-cols-12">
+		<div class="min-w-0 lg:col-span-5 h-full flex flex-col">
 			<CctvPlayer kameraList={kameraTersaring} />
 		</div>
 
-		<Card.Root class="border-border/80 min-w-0 shadow-md lg:col-span-7">
+		<Card.Root class="border-border/80 min-w-0 shadow-md lg:col-span-7 h-full flex flex-col">
 			<Card.Header class="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0 pb-2">
 				<div class="min-w-0">
 					<div class="flex items-center gap-2">
@@ -473,7 +474,7 @@
 				</div>
 			</Card.Header>
 
-			<Card.Content>
+			<Card.Content class="flex-1 flex flex-col justify-center">
 				<!-- Satu titik data tidak membentuk garis: AreaChart hanya menggambar
 				     satu dot di kanvas kosong, yang terbaca seperti grafik rusak.
 				     Di bawah 2 titik, tampilkan angkanya langsung. -->

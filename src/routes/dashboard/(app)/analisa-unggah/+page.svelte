@@ -146,11 +146,15 @@
 						<Input
 							id="confThres"
 							name="confThres"
-							type="number"
-							min="0.05"
-							max="1"
-							step="0.05"
-							bind:value={confThres}
+							type="text"
+							inputmode="numeric"
+							value={`${Math.round(confThres * 100)}%`}
+							oninput={(e) => {
+								const value = e.currentTarget.value.replace(/[^0-9]/g, "");
+								const percent = Math.min(100, Math.max(5, Number(value || 5)));
+								confThres = percent / 100;
+								e.currentTarget.value = `${percent}%`;
+							}}
 						/>
 					</div>
 				</div>
@@ -186,7 +190,7 @@
 				<Card.Description>
 					Model <strong>{labelModel[hasil.modelType] ?? hasil.modelType}</strong>, ambang
 					kepercayaan
-					{hasil.confThres}
+					{Math.round(hasil.confThres * 100)}%
 				</Card.Description>
 			</Card.Header>
 			<Card.Content class="space-y-6">

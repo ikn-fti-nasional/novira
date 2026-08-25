@@ -22,7 +22,6 @@ import {
 import type { Actions, PageServerLoad } from "./$types.js";
 
 /**
- * Halaman analitik lanjutan — semuanya turunan statistik dari riwayat insiden
  * dan laporan warga, tanpa model tambahan.
  *
  * Aksesnya dibuka juga untuk peran eksekutif karena isinya persis yang

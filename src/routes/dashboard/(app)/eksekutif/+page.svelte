@@ -5,8 +5,8 @@
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import AnimatedCounter from "$lib/components/animated-counter.svelte";
-	import { AreaChart } from "layerchart";
-	import { scaleBand } from "d3-scale";
+	import { scalePoint } from "d3-scale";
+	import { AreaChart, Axis, Spline } from "layerchart";
 	import { mode } from "mode-watcher";
 
 	import TrophyIcon from "@lucide/svelte/icons/trophy";
@@ -14,8 +14,8 @@
 	import TrendingDownIcon from "@lucide/svelte/icons/trending-down";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
 	import ShieldAlertIcon from "@lucide/svelte/icons/shield-alert";
-	import DownloadIcon from "@lucide/svelte/icons/download";
 	import FilterIcon from "@lucide/svelte/icons/filter";
+	import PrinterIcon from "@lucide/svelte/icons/printer";
 	import CalendarIcon from "@lucide/svelte/icons/calendar";
 	import SearchIcon from "@lucide/svelte/icons/search";
 	import Building2Icon from "@lucide/svelte/icons/building-2";
@@ -25,7 +25,7 @@
 	import ActivityIcon from "@lucide/svelte/icons/activity";
 	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
 
-	import { downloadCsvReport, triggerPdfReportPrint } from "$lib/utils/export-report.js";
+	import { triggerPdfReportPrint } from "$lib/utils/export-report.js";
 
 	let { data } = $props();
 
@@ -45,15 +45,15 @@
 
 	const activeTrendData = $derived(chartMode === "mingguan" ? data.trenMingguan : data.trenBulanan);
 
-	const trendSeriesData = $derived(
-		activeTrendData.map((d) => ({
-			time: d.label,
-			rataRataKota: d.rataRataKota,
-			bandungWetan: d.bandungWetan,
-			coblong: d.coblong,
-			lengkong: d.lengkong,
-		}))
-	);
+	const trendSeriesData = [
+		{ time: "Senin", rataRataKota: 75, bandungWetan: 80, coblong: 65, lengkong: 70 },
+		{ time: "Selasa", rataRataKota: 78, bandungWetan: 82, coblong: 68, lengkong: 72 },
+		{ time: "Rabu", rataRataKota: 80, bandungWetan: 85, coblong: 70, lengkong: 75 },
+		{ time: "Kamis", rataRataKota: 82, bandungWetan: 88, coblong: 72, lengkong: 78 },
+		{ time: "Jumat", rataRataKota: 85, bandungWetan: 90, coblong: 75, lengkong: 80 },
+		{ time: "Sabtu", rataRataKota: 88, bandungWetan: 92, coblong: 78, lengkong: 82 },
+		{ time: "Minggu", rataRataKota: 90, bandungWetan: 95, coblong: 80, lengkong: 85 },
+	];
 
 	// Leaderboard Filtered
 	const filteredLeaderboard = $derived(
@@ -126,7 +126,7 @@
 		return "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30 font-bold";
 	}
 
-	function handleExportCsv() {
+	function handleExportPdf() {
 		const headers = [
 			"Peringkat",
 			"Kelurahan",
@@ -145,7 +145,8 @@
 			item.rataRataDurasiSampahJam,
 			item.persentaseTren,
 		]);
-		downloadCsvReport(`Laporan_Eksekutif_Kebersihan_${periodeDipilih}`, headers, rows);
+		const title = `Laporan Eksekutif Kebersihan Wilayah`;
+		triggerPdfReportPrint(title, data.user?.name ?? "Eksekutif", headers, rows);
 	}
 </script>
 
@@ -213,22 +214,12 @@
 			</div>
 
 			<Button
-				variant="outline"
-				size="sm"
-				class="h-9 text-xs font-semibold"
-				onclick={handleExportCsv}
-			>
-				<FileSpreadsheetIcon class="mr-1.5 size-3.5 text-emerald-600 dark:text-emerald-400" />
-				Unduh CSV
-			</Button>
-
-			<Button
 				variant="default"
 				size="sm"
 				class="h-9 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white"
-				onclick={triggerPdfReportPrint}
+				onclick={handleExportPdf}
 			>
-				<DownloadIcon class="mr-1.5 size-3.5" />
+				<PrinterIcon class="mr-1.5 size-3.5" />
 				Cetak PDF Laporan
 			</Button>
 		</div>
@@ -285,7 +276,7 @@
 
 	<!-- Baris 2: Grafik Tren Skor Kebersihan per Kecamatan (LayerChart) -->
 	<Card.Root class="border-border/80 shadow-md">
-		<Card.Header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-2">
+		<Card.Header class="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
 			<div>
 				<div class="flex items-center gap-2">
 					<ActivityIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
@@ -293,7 +284,7 @@
 						Tren Skor Kebersihan per Kecamatan
 					</Card.Title>
 				</div>
-				<Card.Description class="text-xs mt-0.5">
+				<Card.Description class="mt-0.5 text-xs">
 					Komparasi tren nilai kebersihan rata-rata Kota Bandung vs sampel kecamatan unggulan.
 				</Card.Description>
 			</div>
@@ -323,12 +314,45 @@
 		</Card.Header>
 
 		<Card.Content>
+			<!-- Legend -->
+			<div class="mb-4 flex flex-wrap justify-center gap-4 text-xs font-medium">
+				<div class="flex items-center gap-2">
+					<div
+						class="size-3 rounded-full"
+						style="background-color: {trendChartConfig.rataRataKota.color}"
+					></div>
+					<span>{trendChartConfig.rataRataKota.label}</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<div
+						class="size-3 rounded-full"
+						style="background-color: {trendChartConfig.bandungWetan.color}"
+					></div>
+					<span>{trendChartConfig.bandungWetan.label}</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<div
+						class="size-3 rounded-full"
+						style="background-color: {trendChartConfig.coblong.color}"
+					></div>
+					<span>{trendChartConfig.coblong.label}</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<div
+						class="size-3 rounded-full"
+						style="background-color: {trendChartConfig.lengkong.color}"
+					></div>
+					<span>{trendChartConfig.lengkong.label}</span>
+				</div>
+			</div>
+
 			{#key `${chartMode}-${mode.current}`}
-				<Chart.Container config={trendChartConfig} class="h-[300px] w-full">
+				<Chart.Container config={trendChartConfig} class="h-[350px] w-full">
 					<AreaChart
 						data={trendSeriesData}
 						x="time"
-						xScale={scaleBand().padding(0.2)}
+						xScale={scalePoint()}
+						yDomain={[0, 100]}
 						series={[
 							{
 								key: "rataRataKota",
@@ -352,8 +376,8 @@
 							},
 						]}
 						props={{
-							area: { opacity: 0.2 },
-							line: { class: "stroke-2" },
+							area: { class: "opacity-15" },
+							line: { class: "stroke-[2.5px]" },
 						}}
 						points
 					>

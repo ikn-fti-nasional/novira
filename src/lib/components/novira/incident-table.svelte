@@ -241,6 +241,7 @@
 		<Table.Root class="min-w-[1040px]">
 			<Table.Header>
 				<Table.Row class="bg-muted/50 text-xs">
+					<Table.Head class="w-[190px]">Tindakan</Table.Head>
 					<Table.Head class="w-[80px]">Prioritas</Table.Head>
 					<Table.Head class="w-[100px]">Keparahan</Table.Head>
 					<Table.Head class="min-w-[190px]">Lokasi &amp; Kamera</Table.Head>
@@ -249,12 +250,68 @@
 					<Table.Head class="w-[80px]">Durasi</Table.Head>
 					<Table.Head class="w-[100px]">Status</Table.Head>
 					<Table.Head class="w-[130px]">Petugas</Table.Head>
-					<Table.Head class="w-[190px] text-right">Tindakan</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each insidenTampil as insiden (insiden.id)}
 					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
+						<!-- Tindakan Super Admin -->
+						<Table.Cell>
+							<div class="flex items-center gap-1">
+								<Button
+									variant="ghost"
+									size="sm"
+									class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
+									title="Lihat Detail & Riwayat"
+									aria-label="Lihat detail insiden"
+									href="/dashboard/incidents/{insiden.id}"
+								>
+									<EyeIcon class="size-3.5" />
+								</Button>
+								{#if insiden.status === "AKTIF" || insiden.status === "PERINGATAN"}
+									{#if insiden.petugasDitugaskan}
+										<Button
+											variant="outline"
+											size="sm"
+											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
+											onclick={() => bukaDialogSelesai(insiden)}
+										>
+											<CheckCircle2Icon class="mr-1 size-3" />
+											Selesaikan Tugas
+										</Button>
+									{:else}
+										<Button
+											variant="outline"
+											size="sm"
+											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
+											onclick={() => bukaDialogTugaskan(insiden)}
+										>
+											<UserPlusIcon class="mr-1 size-3" />
+											Tugaskan
+										</Button>
+									{/if}
+									<Button
+										variant="ghost"
+										size="sm"
+										class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
+										title="Tandai Positif Palsu"
+										onclick={() => tandaiPositifPalsu(insiden)}
+									>
+										<XCircleIcon class="size-3.5" />
+									</Button>
+								{:else if insiden.status === "SELESAI"}
+									<span
+										class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
+									>
+										<CheckCircle2Icon class="size-3.5" />
+										Terangkut
+									</span>
+								{:else}
+									<span class="text-[11px] text-muted-foreground font-medium">Diverifikasi</span>
+								{/if}
+							</div>
+						</Table.Cell>
+
 						<!--
 							Skor prioritas + penjelasannya. Angka tanpa alasan tidak
 							membantu siapa pun memutuskan, jadi rinciannya tampil di
@@ -379,63 +436,6 @@
 									Belum Ditugaskan
 								</span>
 							{/if}
-						</Table.Cell>
-
-						<!-- Tindakan Super Admin -->
-						<Table.Cell class="text-right">
-							<div class="flex items-center justify-end gap-1">
-								<Button
-									variant="ghost"
-									size="sm"
-									class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
-									title="Lihat Detail & Riwayat"
-									aria-label="Lihat detail insiden"
-									href="/dashboard/incidents/{insiden.id}"
-								>
-									<EyeIcon class="size-3.5" />
-								</Button>
-								{#if insiden.status === "AKTIF" || insiden.status === "PERINGATAN"}
-									{#if insiden.petugasDitugaskan}
-										<Button
-											variant="outline"
-											size="sm"
-											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
-											onclick={() => bukaDialogSelesai(insiden)}
-										>
-											<CheckCircle2Icon class="mr-1 size-3" />
-											Selesaikan Tugas
-										</Button>
-									{:else}
-										<Button
-											variant="outline"
-											size="sm"
-											class="h-7 text-[11px] hover:bg-emerald-500/10 hover:text-emerald-700"
-											onclick={() => bukaDialogTugaskan(insiden)}
-										>
-											<UserPlusIcon class="mr-1 size-3" />
-											Tugaskan
-										</Button>
-									{/if}
-									<Button
-										variant="ghost"
-										size="sm"
-										class="h-7 text-[11px] text-slate-500 hover:text-slate-900"
-										title="Tandai Positif Palsu"
-										onclick={() => tandaiPositifPalsu(insiden)}
-									>
-										<XCircleIcon class="size-3.5" />
-									</Button>
-								{:else if insiden.status === "SELESAI"}
-									<span
-										class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
-									>
-										<CheckCircle2Icon class="size-3.5" />
-										Terangkut
-									</span>
-								{:else}
-									<span class="text-[11px] text-muted-foreground font-medium">Diverifikasi</span>
-								{/if}
-							</div>
 						</Table.Cell>
 					</Table.Row>
 				{:else}
