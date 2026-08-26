@@ -236,6 +236,7 @@
 		<Table.Root>
 			<Table.Header>
 				<Table.Row>
+					<Table.Head class="w-[100px]">Tindakan</Table.Head>
 					<Table.Head class="w-[40px]">
 						<input
 							type="checkbox"
@@ -244,7 +245,6 @@
 							class="accent-primary size-4"
 						/>
 					</Table.Head>
-					<Table.Head class="w-[100px]">Tindakan</Table.Head>
 					{#each columns as col (col.key)}
 						{@const SortIcon = sortIcon(col.key)}
 						<Table.Head>
@@ -262,14 +262,6 @@
 			<Table.Body>
 				{#each paginated as user (user.id)}
 					<Table.Row class={selectedIds.has(user.id) ? "bg-muted/50" : ""}>
-						<Table.Cell>
-							<input
-								type="checkbox"
-								checked={selectedIds.has(user.id)}
-								onchange={() => toggleSelect(user.id)}
-								class="accent-primary size-4"
-							/>
-						</Table.Cell>
 						<Table.Cell>
 							<div class="flex items-center gap-1">
 								<Button
@@ -295,6 +287,14 @@
 									</Button>
 								{/if}
 							</div>
+						</Table.Cell>
+						<Table.Cell>
+							<input
+								type="checkbox"
+								checked={selectedIds.has(user.id)}
+								onchange={() => toggleSelect(user.id)}
+								class="accent-primary size-4"
+							/>
 						</Table.Cell>
 						<Table.Cell class="font-medium">{user.name}</Table.Cell>
 						<Table.Cell class="text-muted-foreground">{user.username}</Table.Cell>

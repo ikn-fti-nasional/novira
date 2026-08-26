@@ -16,10 +16,11 @@
 	import { toast } from "svelte-sonner";
 	import { enhance } from "$app/forms";
 	import type { ActionResult } from "@sveltejs/kit";
+	import CameraFormDialog from "$lib/components/camera-form-dialog.svelte";
 
 	let { data, form } = $props();
 
-	let showForm = $state(false);
+	let tambahOpen = $state(false);
 	let search = $state("");
 	let pageSize = $state(10);
 	let currentPage = $state(1);
@@ -99,85 +100,14 @@
 			variant="default"
 			size="sm"
 			class="h-9 bg-emerald-700 text-xs font-semibold text-white hover:bg-emerald-800"
-			onclick={() => (showForm = !showForm)}
+			onclick={() => (tambahOpen = true)}
 		>
 			<PlusIcon class="mr-1.5 size-4" />
-			{showForm ? "Tutup Form" : "Tambah Kamera CCTV"}
+			Tambah Kamera CCTV
 		</Button>
 	</div>
 
-	<!-- FORM TAMBAH KAMERA -->
-	{#if showForm}
-		<Card.Root class="border-emerald-800/20 shadow-md">
-			<Card.Header class="bg-emerald-50/60 dark:bg-emerald-950/30">
-				<Card.Title class="text-base font-bold text-emerald-950 dark:text-emerald-100">
-					Tambah Kamera CCTV Baru
-				</Card.Title>
-				<Card.Description>
-					Isi nama, kota, dan link umpan (HLS/MP4) atau snapshot dari CCTV publik.
-				</Card.Description>
-			</Card.Header>
-			<Card.Content class="pt-4">
-				<form
-						method="POST"
-						action="?/tambah"
-						use:enhance={() => {
-							return async ({ update, result }) => {
-								await update();
-								toastHasilAksi(result, "Kamera baru berhasil disimpan", "Gagal menyimpan kamera");
-							};
-						}}
-					>
-					<div class="grid gap-4 md:grid-cols-2">
-						<div class="space-y-2">
-							<Label.Root>Nama Kamera</Label.Root>
-							<Input.Root name="nama" placeholder="CCTV Sudirman 1" required />
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Kota</Label.Root>
-							<Input.Root name="kota" placeholder="Bandung" required list="kota-options" />
-							<datalist id="kota-options">
-								{#each data.kotaList as kota}
-									<option value={kota}></option>
-								{/each}
-							</datalist>
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Kecamatan / Lokasi</Label.Root>
-							<Input.Root name="kecamatan" placeholder="Bandung Wetan" />
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Status</Label.Root>
-							<Select.Root type="single" name="status" bind:value={statusBaru}>
-								<Select.Trigger class="w-full"><span>{statusBaru}</span></Select.Trigger>
-								<Select.Content>
-									{#each statusOptions as opt}
-										<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						</div>
-						<div class="space-y-2 md:col-span-2">
-							<Label.Root>URL Stream (HLS/MP4)</Label.Root>
-							<Input.Root name="urlStream" placeholder="https://.../stream.m3u8" />
-						</div>
-						<div class="space-y-2 md:col-span-2">
-							<Label.Root>URL Snapshot (gambar)</Label.Root>
-							<Input.Root name="urlSnapshot" placeholder="https://.../snapshot.jpg" />
-						</div>
-					</div>
-					{#if form?.message}
-						<p class="mt-3 text-sm text-red-600">{form.message}</p>
-					{/if}
-					<div class="mt-4">
-						<Button type="submit" class="bg-emerald-700 text-white hover:bg-emerald-800">
-							Simpan Kamera
-						</Button>
-					</div>
-				</form>
-			</Card.Content>
-		</Card.Root>
-	{/if}
+	<CameraFormDialog bind:open={tambahOpen} kotaList={data.kotaList} />
 
 	<!-- FITUR PENCARIAN -->
 	<div class="relative max-w-sm">

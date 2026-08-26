@@ -29,7 +29,7 @@
 	let { data } = $props();
 
 	/** Jumlah baris insiden & log audit yang digambar di dashboard. */
-	const BATAS_INSIDEN = 8;
+	const BATAS_INSIDEN = 10;
 	const BATAS_AUDIT = 6;
 
 	// Sapaan berdasarkan waktu setempat
@@ -537,6 +537,27 @@
 							</AreaChart>
 						</Chart.Container>
 					{/key}
+				{/if}
+				{#if insidenTersaring.length > 0}
+					<div class="border-t px-4 py-3 space-y-2">
+						<p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">10 Alert Terbaru (prioritas tertinggi)</p>
+						<div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+							{#each insidenTersaring.slice(0, 10) as ins (ins.id)}
+								<a href="/dashboard/incidents/{ins.id}" class="flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted/60 transition">
+									<span class="flex items-center gap-2 min-w-0">
+										<span class="size-2 rounded-full shrink-0 {ins.keparahan==='KRITIS' ? 'bg-red-600' : ins.keparahan==='TINGGI' ? 'bg-amber-500' : 'bg-blue-500'}"></span>
+										<span class="font-semibold truncate">{ins.lokasi}</span>
+										<span class="text-muted-foreground truncate hidden sm:inline">· {ins.labelSampah}</span>
+									</span>
+									<span class="flex items-center gap-2 shrink-0">
+										<span class="font-mono font-bold {ins.skorPrioritas>=75 ? 'text-red-600' : ins.skorPrioritas>=55 ? 'text-amber-600' : 'text-muted-foreground'}">{ins.skorPrioritas}</span>
+										<Badge variant="outline" class="text-[10px] px-1 py-0">{ins.statusSla === 'MELANGGAR_SLA' ? 'SLA' : ins.keparahan}</Badge>
+									</span>
+								</a>
+							{/each}
+						</div>
+						<a href="/dashboard/incidents" class="text-xs font-semibold text-emerald-600 hover:underline">Lihat semua insiden →</a>
+					</div>
 				{/if}
 			</Card.Content>
 		</Card.Root>

@@ -345,19 +345,24 @@
 								</div>
 
 								<div class="grid gap-2">
-									<Label for="confThres">Ambang Kepercayaan</Label>
+									<Label for="confThresDisplay">Ambang Kepercayaan</Label>
 									<Input
-										id="confThres"
-										name="confThres"
-										type="number"
-										min="0.05"
-										max="1"
-										step="0.05"
-										value={data.pengaturanModel.confThres}
+										id="confThresDisplay"
+										type="text"
+										inputmode="numeric"
+										value={`${Math.round((Number(data.pengaturanModel.confThres) || 0.3) * 100)}%`}
+										oninput={(e) => {
+											const raw = e.currentTarget.value.replace(/[^0-9]/g, "");
+											const n = Number(raw);
+											const v = Math.min(100, Math.max(5, isNaN(n) ? 30 : n));
+											(e.currentTarget.nextElementSibling as HTMLInputElement).value = String(v / 100);
+											e.currentTarget.value = `${v}%`;
+										}}
 									/>
+									<input type="hidden" name="confThres" value={data.pengaturanModel.confThres} />
 									<p class="text-muted-foreground text-xs">
-										Deteksi di bawah ambang ini diabaikan. Semakin rendah, semakin banyak deteksi
-										tapi makin banyak kemungkinan salah tangkap (mis. 0.2–0.4).
+										Deteksi di bawah ambang ini diabaikan ({Math.round((Number(data.pengaturanModel.confThres)||0.3)*100)}%).
+										Semakin rendah, semakin banyak deteksi tapi makin banyak salah tangkap.
 									</p>
 								</div>
 

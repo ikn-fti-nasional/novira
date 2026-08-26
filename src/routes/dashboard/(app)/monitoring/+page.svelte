@@ -84,9 +84,9 @@
 	</div>
 
 	<!-- TAMPILAN SIDE-BY-SIDE (CCTV & MAPS) -->
-	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 items-stretch">
 		<!-- KOLOM KIRI: PEMANTAUAN CCTV -->
-		<div class="space-y-4">
+		<div class="flex h-full flex-col space-y-4">
 			<!-- FILTER KOTA & CCTV -->
 			<div class="flex flex-wrap items-end gap-3 rounded-xl border bg-muted/30 p-4">
 				<div class="space-y-1.5 flex-1 min-w-[140px]">
@@ -167,7 +167,7 @@
 
 			<!-- GRID TAMPILAN STREAM -->
 			{#if slotTayang.size > 0}
-				<div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+				<div class="grid flex-1 gap-4 grid-cols-1 sm:grid-cols-2 content-start">
 					{#each [...slotTayang.values()] as kam (kam.id)}
 						<Card.Root class="overflow-hidden border-border/80 shadow-md">
 							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -226,7 +226,7 @@
 		</div>
 
 		<!-- KOLOM KANAN: PETA TITIK RAWAN SAMPAH -->
-		<Card.Root class="shadow-sm h-full flex flex-col min-h-[480px]">
+		<Card.Root class="shadow-sm flex h-full flex-col min-h-[520px] xl:min-h-[600px] 2xl:min-h-[680px]">
 			<Card.Header class="pb-3">
 				<div class="flex items-center gap-2">
 					<MapPinIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
@@ -239,8 +239,8 @@
 				</div>
 			</Card.Header>
 
-			<Card.Content class="p-0 flex-1 min-h-[400px] rounded-b-xl overflow-hidden">
-				<div class="h-full w-full min-h-[400px]">
+			<Card.Content class="p-0 flex flex-1 min-h-[520px] flex-col rounded-b-xl overflow-hidden">
+				<div class="h-full w-full flex-1 min-h-[520px]">
 					<!-- MENGGUNAKAN FALLBACK (data.insidenList ?? []) AGAR TIDAK ERROR -->
 					<HotspotMap kameraList={data.kameraList} insidenList={data.insidenList ?? []} />
 				</div>

@@ -23,6 +23,7 @@
 	let lapisanKamera: MarkerClusterGroup | null = null;
 	let lapisanInsiden: LayerGroup | null = null;
 	let siap = $state(false);
+	let scrollHint = $state(false);
 
 	/**
 	 * Hanya insiden yang benar-benar punya koordinat yang bisa dipetakan.
@@ -46,7 +47,9 @@
 		).length
 	);
 	const kameraTerpetakan = $derived(
-		kameraList.filter((k) => Number.isFinite(k.latitude) && Number.isFinite(k.longitude) && k.latitude !== 0)
+		kameraList.filter(
+			(k) => Number.isFinite(k.latitude) && Number.isFinite(k.longitude) && k.latitude !== 0
+		)
 	);
 
 	/** Ubin gelap/terang dari CARTO — dipilih supaya penanda berwarna tetap terbaca di kedua tema. */
@@ -107,10 +110,9 @@
 			await import("leaflet.markercluster/dist/MarkerCluster.Default.css");
 			if (dibatalkan || !wadah) return;
 
-			// scrollWheelZoom aktif: peta ini alat kerja utama halaman, dan operator
-			// mengharapkan gulir = zoom seperti peta lain. Halaman induk tetap bisa
-			// digulir karena kartu peta tidak setinggi viewport penuh.
-			const m = L.map(wadah, { scrollWheelZoom: true, attributionControl: true });
+			// scrollWheelZoom dimatikan default agar scroll halaman tidak curi zoom.
+			// Aktif hanya saat Ctrl/Cmd ditekan atau peta difokuskan klik.
+			const m = L.map(wadah, { scrollWheelZoom: false, attributionControl: true });
 			peta = m;
 
 			// Pane khusus insiden di atas pane penanda. Tanpa ini, cluster kamera
@@ -144,6 +146,20 @@
 			const titik = kameraTerpetakan.map((k) => [k.latitude, k.longitude] as [number, number]);
 			if (titik.length > 0) m.fitBounds(L.latLngBounds(titik).pad(0.08));
 			else m.setView([-6.9175, 107.6191], 13);
+
+			// Aktifkan zoom hanya saat Ctrl/Cmd ditekan atau peta difokuskan
+			m.getContainer().addEventListener("wheel", (e: WheelEvent) => {
+				if (e.ctrlKey || e.metaKey) {
+					e.preventDefault();
+					m.scrollWheelZoom.enable();
+				} else {
+					m.scrollWheelZoom.disable();
+					scrollHint = true;
+					setTimeout(() => (scrollHint = false), 1800);
+				}
+			});
+			m.on("click", () => m.scrollWheelZoom.enable());
+			m.on("mouseout", () => m.scrollWheelZoom.disable());
 
 			siap = true;
 			bersihkan = () => {
@@ -282,10 +298,18 @@
 		<div class="relative">
 			<div
 				bind:this={wadah}
-				class="h-[520px] w-full bg-muted lg:h-[620px]"
+				class="h-[520px] w-full bg-muted xl:h-[600px] 2xl:h-[680px]"
 				role="application"
 				aria-label="Peta sebaran kamera CCTV dan titik rawan sampah"
+				tabindex="0"
 			></div>
+			{#if scrollHint}
+				<div
+					class="pointer-events-none absolute top-3 left-1/2 z-[500] -translate-x-1/2 rounded-full bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm"
+				>
+					Tekan Ctrl/Cmd + scroll untuk zoom peta
+				</div>
+			{/if}
 
 			{#if !siap}
 				<div
@@ -326,8 +350,8 @@
 
 		{#if insidenTanpaKoordinat > 0}
 			<p class="border-t px-4 py-2 text-xs text-muted-foreground">
-				{insidenTanpaKoordinat} insiden terbuka tidak ditampilkan karena tidak memiliki koordinat —
-				sengaja tidak digambar di titik perkiraan agar petugas tidak dikirim ke lokasi yang keliru.
+				{insidenTanpaKoordinat} insiden terbuka tidak ditampilkan karena tidak memiliki koordinat — sengaja
+				tidak digambar di titik perkiraan agar petugas tidak dikirim ke lokasi yang keliru.
 			</p>
 		{:else if siap && insidenTerpetakan.length === 0}
 			<p class="border-t px-4 py-2 text-xs text-muted-foreground">

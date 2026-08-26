@@ -16,10 +16,14 @@
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 	import CopyCheckIcon from "@lucide/svelte/icons/copy-check";
 	import RefreshCwIcon from "@lucide/svelte/icons/refresh-cw";
+	import Loader2Icon from "@lucide/svelte/icons/loader-2";
 	import { MODEL_TYPES_UI } from "$lib/model-deteksi.js";
 	import type { ActionData, PageData } from "./$types.js";
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	let verifikasiPending = $state<Record<string, boolean>>({});
+	let pindaiPending = $state<Record<string, boolean>>({});
 
 	// Pilihan dropdown per laporan. Tanpa state lokal + `bind:value`, label pada
 	// pemicu Select tetap menampilkan nilai dari server walau operator sudah
@@ -343,8 +347,19 @@
 					</div>
 				{:else}
 					<div class="grid gap-4 border-t pt-4 lg:grid-cols-2">
-						<!-- Verifikasi -->
-						<form method="POST" action="?/verifikasi" use:enhance class="space-y-3">
+						<!-- Verifikasi — dipisah dari pindai, masing-masing ada loading -->
+						<form
+							method="POST"
+							action="?/verifikasi"
+							use:enhance={() => {
+								verifikasiPending[rep.id] = true;
+								return async ({ update }) => {
+									await update();
+									verifikasiPending[rep.id] = false;
+								};
+							}}
+							class="space-y-3"
+						>
 							<input type="hidden" name="id" value={rep.id} />
 							<div class="space-y-1.5">
 								<Label.Root class="text-xs">Jenis sampah (koreksi bila perlu)</Label.Root>
@@ -367,16 +382,34 @@
 									placeholder="Mis. konfirmasi lokasi dengan pelapor…"
 								/>
 							</div>
-							<div class="flex flex-wrap items-center gap-2">
-								<Button
-									type="submit"
-									size="sm"
-									class="bg-emerald-600 text-white hover:bg-emerald-700"
-								>
-									Verifikasi → jadikan insiden
-								</Button>
+							<Button
+								type="submit"
+								size="sm"
+								disabled={!!verifikasiPending[rep.id] || !!pindaiPending[rep.id]}
+								class="bg-emerald-600 text-white hover:bg-emerald-700"
+							>
+								{#if verifikasiPending[rep.id]}<Loader2Icon class="mr-1 size-3 animate-spin" />Memverifikasi...{:else}Verifikasi → jadikan insiden{/if}
+							</Button>
+						</form>
+
+						<!-- Pindai ulang — form terpisah biar tidak double-submit -->
+						<form
+							method="POST"
+							action="?/pindaiUlang"
+							use:enhance={() => {
+								pindaiPending[rep.id] = true;
+								return async ({ update }) => {
+									await update();
+									pindaiPending[rep.id] = false;
+								};
+							}}
+							class="space-y-3"
+						>
+							<input type="hidden" name="id" value={rep.id} />
+							<div class="space-y-1.5">
+								<Label.Root class="text-xs">Model untuk pindai ulang</Label.Root>
 								<Select.Root type="single" name="modelType" bind:value={pilihanModel[rep.id]}>
-									<Select.Trigger class="h-8 w-[9.5rem] text-xs">
+									<Select.Trigger class="w-full text-xs">
 										<span>{modelLabel[pilihanModel[rep.id]] ?? pilihanModel[rep.id]}</span>
 									</Select.Trigger>
 									<Select.Content>
@@ -385,21 +418,31 @@
 										{/each}
 									</Select.Content>
 								</Select.Root>
-								<Button
-									type="submit"
-									size="sm"
-									variant="outline"
-									formaction="?/pindaiUlang"
-									title="Pindai ulang foto dengan model yang dipilih"
-								>
-									<RefreshCwIcon class="size-3.5" />
-									Pindai ulang
-								</Button>
 							</div>
+							<Button
+								type="submit"
+								size="sm"
+								variant="outline"
+								disabled={!!pindaiPending[rep.id] || !!verifikasiPending[rep.id]}
+								title="Pindai ulang foto dengan model yang dipilih"
+							>
+								{#if pindaiPending[rep.id]}<Loader2Icon class="mr-1 size-3 animate-spin" />Memindai...{:else}<RefreshCwIcon class="mr-1 size-3.5" />Pindai ulang{/if}
+							</Button>
 						</form>
 
 						<!-- Penolakan -->
-						<form method="POST" action="?/tolak" use:enhance class="space-y-3">
+						<form
+							method="POST"
+							action="?/tolak"
+							use:enhance={() => {
+								verifikasiPending[rep.id] = true;
+								return async ({ update }) => {
+									await update();
+									verifikasiPending[rep.id] = false;
+								};
+							}}
+							class="space-y-3"
+						>
 							<input type="hidden" name="id" value={rep.id} />
 							<div class="space-y-1.5">
 								<Label.Root class="text-xs">Alasan penolakan (wajib)</Label.Root>

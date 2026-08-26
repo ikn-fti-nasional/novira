@@ -106,7 +106,11 @@
 			toast.error("Pilih minimal satu CCTV untuk dianalisa.");
 			return;
 		}
-		pilihKameraOpen = false;
+		if (selectedCameraIds.size > 10) {
+			toast.error("Maksimal 10 CCTV per analisa. Kurangi pilihan.");
+			return;
+		}
+		// Tetap di dalam modal yang sama — tidak bisa kemana-mana saat analising
 		analising = true;
 		manualResult = null;
 		progresTotal = 0;
@@ -286,134 +290,136 @@
 		</div>
 	</div>
 
-	<Card.Root class="print:hidden">
+	<Card.Root class="print:hidden border-emerald-800/20 shadow-sm">
 		<Card.Header>
 			<div class="flex flex-wrap items-center justify-between gap-2">
-				<Card.Title class="text-base">Analisa Manual CCTV</Card.Title>
-				<Badge
-					variant="outline"
-					class={mlOnline === false
-						? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
-						: mlOnline === true
-							? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-							: "text-muted-foreground"}
-				>
-					<CircleIcon
-						class="mr-1.5 size-2 {mlOnline === false
-							? 'fill-red-600 text-red-600'
+				<div>
+					<Card.Title class="text-base">Analisa Manual CCTV</Card.Title>
+					<Card.Description>
+						Jalankan siklus deteksi kapan saja (12:00 &amp; 15:00 WIB otomatis) — hasil tidak langsung tersimpan.
+					</Card.Description>
+				</div>
+				<div class="flex items-center gap-2">
+					<Badge
+						variant="outline"
+						class={mlOnline === false
+							? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
 							: mlOnline === true
-								? 'fill-emerald-600 text-emerald-600'
-								: 'fill-muted-foreground text-muted-foreground'}"
-					/>
-					Server ML: {mlOnline === false
-						? "Offline"
-						: mlOnline === true
-							? "Online"
-							: "Memeriksa..."}
-				</Badge>
-				<Button
-					type="button"
-					size="sm"
-					disabled={analising || mlOnline === false}
-					onclick={() => (pilihKameraOpen = true)}
-					class="bg-emerald-600 text-white hover:bg-emerald-700"
-				>
-					{#if analising}
-						<Loader2Icon class="mr-2 size-4 animate-spin" />
-						Menganalisa...
-					{:else}
-						<PlayIcon class="mr-2 size-4" />
-						Jalankan Analisa Manual
-					{/if}
-				</Button>
+								? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+								: "text-muted-foreground"}
+					>
+						<CircleIcon
+							class="mr-1.5 size-2 {mlOnline === false
+								? 'fill-red-600 text-red-600'
+								: mlOnline === true
+									? 'fill-emerald-600 text-emerald-600'
+									: 'fill-muted-foreground text-muted-foreground'}"
+						/>
+						Server ML: {mlOnline === false ? "Offline" : mlOnline === true ? "Online" : "Memeriksa..."}
+					</Badge>
+					<Button
+						type="button"
+						size="sm"
+						disabled={analising || mlOnline === false}
+						onclick={() => (pilihKameraOpen = true)}
+						class="bg-emerald-600 text-white hover:bg-emerald-700"
+					>
+						{#if analising}
+							<Loader2Icon class="mr-2 size-4 animate-spin" />
+							Menganalisa...
+						{:else}
+							<PlayIcon class="mr-2 size-4" />
+							Jalankan Analisa Manual
+						{/if}
+					</Button>
+				</div>
 			</div>
-			<Card.Description>
-				Jalankan siklus deteksi yang sama seperti jadwal otomatis (12:00 &amp; 15:00 WIB) kapan saja
-				— ambil satu cuplikan dari tiap kamera Bandung dan cari sampah liar. Hasilnya tidak langsung
-				tersimpan; tinjau tiap temuan lalu tekan "Verifikasi" untuk menyimpannya sebagai insiden.
-			</Card.Description>
 		</Card.Header>
-		<Card.Content class="space-y-4">
-			{#if mlOnline === false && !analising}
-				<p class="text-xs text-red-600">
-					Server ML (pLitter) sedang tidak bisa diakses — analisa tidak bisa dijalankan.
-				</p>
-			{/if}
+		{#if mlOnline === false}
+			<Card.Content>
+				<p class="text-xs text-red-600">Server ML (pLitter) offline — analisa tidak bisa dijalankan.</p>
+			</Card.Content>
+		{/if}
+	</Card.Root>
 
-			{#if analising}
+	<IncidentTable
+		insidenList={data.insidenList}
+		petugasList={data.petugasList}
+		onSelesaikanTugas={handleSelesaikanTugas}
+		onTugaskanPetugas={handleTugaskanPetugas}
+		onTandaiPositifPalsu={handleTandaiPositifPalsu}
+	/>
+</div>
+
+<Dialog.Root
+	open={pilihKameraOpen}
+	onOpenChange={(o) => {
+		if (analising && !o) {
+			toast.error("Analisa sedang berjalan — tunggu selesai");
+			return;
+		}
+		pilihKameraOpen = o;
+	}}
+>
+	<Dialog.Content
+		class="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden"
+		showCloseButton={!analising}
+	>
+		{#if analising}
+			<Dialog.Header>
+				<Dialog.Title>Sedang Menganalisa...</Dialog.Title>
+				<Dialog.Description>Jangan tutup halaman. Progres {progresSelesai}/{progresTotal || "?"} kamera</Dialog.Description>
+			</Dialog.Header>
+			<div class="flex-1 overflow-y-auto space-y-3 py-2">
 				<div class="space-y-2 rounded-md border bg-muted/30 p-3">
 					<div class="flex items-center justify-between text-xs text-muted-foreground">
 						<span>Progres: {progresSelesai} / {progresTotal || "?"} kamera</span>
-						{#if progresTotal > 0}
-							<span>{Math.round((progresSelesai / progresTotal) * 100)}%</span>
-						{/if}
+						{#if progresTotal > 0}<span>{Math.round((progresSelesai / progresTotal) * 100)}%</span>{/if}
 					</div>
 					{#if progresTotal > 0}
-						<div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-							<div
-								class="h-full rounded-full bg-emerald-600 transition-all"
-								style="width: {(progresSelesai / progresTotal) * 100}%"
-							></div>
+						<div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+							<div class="h-full rounded-full bg-emerald-600 transition-all" style="width: {(progresSelesai / progresTotal) * 100}%"></div>
 						</div>
 					{/if}
 					{#if sedangDiproses.size > 0}
 						<div class="flex flex-wrap gap-1.5">
 							{#each [...sedangDiproses.values()] as nama (nama)}
-								<Badge variant="secondary" class="text-xs font-normal">
-									<Loader2Icon class="mr-1 size-3 animate-spin" />
-									{nama}
-								</Badge>
+								<Badge variant="secondary" class="text-xs font-normal"><Loader2Icon class="mr-1 size-3 animate-spin" />{nama}</Badge>
 							{/each}
 						</div>
 					{/if}
 				</div>
-			{/if}
-
-			{#if manualResult}
-				<div class="text-sm text-muted-foreground">
-					{manualResult.camerasProcessed} kamera diproses, {manualResult.camerasFailed} gagal.
-					{#if manualResult.errors.length > 0}
-						<span class="text-red-600">
-							({manualResult.errors.map((e) => e.nama).join(", ")} tidak bisa diakses)
-						</span>
-					{/if}
+				<p class="text-xs text-muted-foreground text-center">Modal terkunci sampai analisa selesai.</p>
+			</div>
+		{:else if manualResult}
+			<Dialog.Header>
+				<Dialog.Title>Hasil Analisa — {manualResult.camerasProcessed} kamera, {manualResult.temuan.length} temuan</Dialog.Title>
+				<Dialog.Description>Tinjau temuan, klik foto untuk preview, lalu verifikasi. Maks 10 CCTV per analisa.</Dialog.Description>
+			</Dialog.Header>
+			<div class="flex-1 overflow-y-auto space-y-3 py-1">
+				<div class="text-xs text-muted-foreground">
+					{manualResult.camerasProcessed} diproses, {manualResult.camerasFailed} gagal.
+					{#if manualResult.errors.length > 0}<span class="text-red-600">({manualResult.errors.map((e) => e.nama).join(", ")})</span>{/if}
 				</div>
-
 				{#if manualResult.temuan.length === 0}
-					<div
-						class="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground"
-					>
-						<CheckCircleIcon class="size-4 text-emerald-600" />
-						Tidak ada temuan sampah dari analisa ini.
+					<div class="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+						<CheckCircleIcon class="size-4 text-emerald-600" />Tidak ada temuan sampah dari analisa ini.
 					</div>
 				{:else}
-					<div class="divide-y rounded-md border">
+					<div class="divide-y rounded-md border max-h-[45vh] overflow-y-auto">
 						{#each manualResult.temuan as temuan (temuan.key)}
 							<div class="flex flex-wrap items-center gap-3 p-3 text-sm">
 								{#if temuan.urlSnapshot}
-									<button
-										type="button"
-										onclick={() => (previewUrl = temuan.urlSnapshot)}
-										class="shrink-0 cursor-zoom-in overflow-hidden rounded ring-offset-2 transition hover:ring-2 hover:ring-emerald-600"
-										title="Lihat foto hasil analisa"
-									>
-										<img
-											src={temuan.urlSnapshot}
-											alt="Cuplikan {temuan.cameraNama} dengan kotak deteksi"
-											class="h-14 w-24 object-cover"
-										/>
+									<button type="button" onclick={() => (previewUrl = temuan.urlSnapshot)} class="shrink-0 cursor-zoom-in overflow-hidden rounded ring-offset-2 transition hover:ring-2 hover:ring-emerald-600" title="Lihat foto">
+										<img src={temuan.urlSnapshot} alt="Cuplikan {temuan.cameraNama}" class="h-14 w-24 object-cover" />
 									</button>
 								{/if}
 								<div class="min-w-0 flex-1">
 									<p class="font-medium">{temuan.cameraNama}</p>
-									<p class="text-xs text-muted-foreground">
-										{temuan.kota}{temuan.kecamatan ? `, ${temuan.kecamatan}` : ""}
-									</p>
+									<p class="text-xs text-muted-foreground">{temuan.kota}{temuan.kecamatan ? `, ${temuan.kecamatan}` : ""}</p>
 								</div>
 								<Badge variant="secondary">{temuan.labelSampah}</Badge>
-								<span class="text-xs text-muted-foreground">
-									Keyakinan {Math.round(temuan.skor * 100)}%
-								</span>
+								<span class="text-xs text-muted-foreground">Keyakinan {Math.round(temuan.skor * 100)}%</span>
 								<form
 									method="POST"
 									action="?/verifikasiTemuan"
@@ -426,95 +432,53 @@
 									}}
 								>
 									<input type="hidden" name="temuan" value={JSON.stringify(temuan)} />
-									<Button
-										type="submit"
-										size="sm"
-										disabled={verifyingKey === temuan.key}
-										class="bg-emerald-600 text-white hover:bg-emerald-700"
-									>
-										{verifyingKey === temuan.key ? "Menyimpan..." : "Verifikasi"}
+									<Button type="submit" size="sm" disabled={verifyingKey !== null} class="bg-emerald-600 text-white hover:bg-emerald-700">
+										{#if verifyingKey === temuan.key}<Loader2Icon class="mr-1 size-3 animate-spin" />Menyimpan...{:else}Verifikasi{/if}
 									</Button>
 								</form>
 							</div>
 						{/each}
 					</div>
 				{/if}
-			{/if}
-		</Card.Content>
-	</Card.Root>
-
-	<IncidentTable
-		insidenList={data.insidenList}
-		petugasList={data.petugasList}
-		onSelesaikanTugas={handleSelesaikanTugas}
-		onTugaskanPetugas={handleTugaskanPetugas}
-		onTandaiPositifPalsu={handleTandaiPositifPalsu}
-	/>
-</div>
-
-<Dialog.Root bind:open={pilihKameraOpen}>
-	<Dialog.Content class="max-w-lg">
-		<Dialog.Header>
-			<Dialog.Title>Pilih CCTV untuk Dianalisa</Dialog.Title>
-			<Dialog.Description>
-				Pilih kamera tertentu atau centang semua untuk menganalisa seluruh {data.kameraBandung
-					.length} kamera Bandung.
-			</Dialog.Description>
-		</Dialog.Header>
-
-		<div class="space-y-3">
-			<div class="relative">
-				<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-				<Input
-					placeholder="Cari nama kamera atau kecamatan..."
-					class="pl-9"
-					bind:value={cameraSearch}
-				/>
 			</div>
-
-			<label
-				class="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium"
-			>
-				<input
-					type="checkbox"
-					checked={semuaTerpilih}
-					onchange={toggleSemuaKamera}
-					class="accent-primary size-4"
-				/>
-				Pilih Semua ({selectedCameraIds.size} / {data.kameraBandung.length})
-			</label>
-
-			<div class="max-h-72 space-y-0.5 overflow-y-auto rounded-md border p-1.5">
-				{#each kameraTerfilter as kamera (kamera.id)}
-					<label class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
-						<input
-							type="checkbox"
-							checked={selectedCameraIds.has(kamera.id)}
-							onchange={() => toggleKamera(kamera.id)}
-							class="accent-primary size-4"
-						/>
-						<span class="min-w-0 flex-1 truncate">{kamera.nama}</span>
-						{#if kamera.kecamatan}
-							<span class="text-xs text-muted-foreground">{kamera.kecamatan}</span>
-						{/if}
-					</label>
-				{:else}
-					<p class="p-2 text-sm text-muted-foreground">Tidak ada kamera yang cocok.</p>
-				{/each}
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (pilihKameraOpen = false)}>Tutup</Button>
+				<Button onclick={() => { manualResult = null; }} variant="secondary">Analisa Lagi</Button>
+			</Dialog.Footer>
+		{:else}
+			<Dialog.Header>
+				<Dialog.Title>Pilih CCTV untuk Dianalisa</Dialog.Title>
+				<Dialog.Description>Maks 10 CCTV per analisa. Pilih kamera Bandung.</Dialog.Description>
+			</Dialog.Header>
+			<div class="space-y-3 py-1">
+				<div class="relative">
+					<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+					<Input placeholder="Cari nama kamera atau kecamatan..." class="pl-9" bind:value={cameraSearch} />
+				</div>
+				<label class="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">
+					<input type="checkbox" checked={semuaTerpilih} onchange={toggleSemuaKamera} class="accent-primary size-4" />
+					Pilih Semua ({selectedCameraIds.size} / {data.kameraBandung.length}) {selectedCameraIds.size > 10 ? "(kelebihan!)" : ""}
+				</label>
+				{#if selectedCameraIds.size > 10}<p class="text-xs text-red-600">Maksimal 10 — kurangi pilihan sebelum mulai.</p>{/if}
+				<div class="max-h-64 space-y-0.5 overflow-y-auto rounded-md border p-1.5">
+					{#each kameraTerfilter as kamera (kamera.id)}
+						<label class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
+							<input type="checkbox" checked={selectedCameraIds.has(kamera.id)} onchange={() => toggleKamera(kamera.id)} class="accent-primary size-4" />
+							<span class="min-w-0 flex-1 truncate">{kamera.nama}</span>
+							{#if kamera.kecamatan}<span class="text-xs text-muted-foreground">{kamera.kecamatan}</span>{/if}
+						</label>
+					{:else}
+						<p class="p-2 text-sm text-muted-foreground">Tidak ada kamera yang cocok.</p>
+					{/each}
+				</div>
 			</div>
-		</div>
-
-		<Dialog.Footer>
-			<Button variant="outline" onclick={() => (pilihKameraOpen = false)}>Batal</Button>
-			<Button
-				onclick={mulaiAnalisa}
-				disabled={selectedCameraIds.size === 0}
-				class="bg-emerald-600 text-white hover:bg-emerald-700"
-			>
-				<PlayIcon class="mr-2 size-4" />
-				Mulai Analisa ({selectedCameraIds.size} kamera)
-			</Button>
-		</Dialog.Footer>
+			<Dialog.Footer>
+				<Button variant="outline" onclick={() => (pilihKameraOpen = false)}>Batal</Button>
+				<Button onclick={mulaiAnalisa} disabled={selectedCameraIds.size === 0 || selectedCameraIds.size > 10} class="bg-emerald-600 text-white hover:bg-emerald-700">
+					<PlayIcon class="mr-2 size-4" />Mulai Analisa ({selectedCameraIds.size} kamera)
+				</Button>
+			</Dialog.Footer>
+		{/if}
 	</Dialog.Content>
 </Dialog.Root>
 

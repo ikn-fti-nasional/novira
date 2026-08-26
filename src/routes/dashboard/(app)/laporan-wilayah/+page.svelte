@@ -7,6 +7,7 @@
 	import GlobeIcon from "@lucide/svelte/icons/globe";
 	import FilterIcon from "@lucide/svelte/icons/filter";
 	import PrinterIcon from "@lucide/svelte/icons/printer";
+	import { triggerPdfReportPrint } from "$lib/utils/export-report.js";
 
 	let { data } = $props();
 
@@ -38,11 +39,10 @@
 	});
 
 	function cetakPDF() {
-		// Panggil terapkanFilter agar dropdown pilihan langsung tersinkron sebelum window.print
 		terapkanFilter();
-		setTimeout(() => {
-			window.print();
-		}, 100);
+		const headers = ["Provinsi", "Kabupaten/Kota", "Kecamatan", "Kelurahan", "Jumlah Insiden", "Durasi SLA (jam)", "Skor Kebersihan"];
+		const rows = skorWilayahTersaring.map((r) => [r.provinsi, r.kabupatenKota, r.kecamatan, r.kelurahan, r.jumlahInsiden, r.rataRataDurasiSampahJam, `${r.skorKebersihan}/100`]);
+		triggerPdfReportPrint("Laporan Wilayah & Audit Kebersihan", "Operator", headers, rows);
 	}
 </script>
 

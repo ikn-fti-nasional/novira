@@ -4,7 +4,12 @@ import {
 	jalankanAnalisaManual,
 	type ProgresAnalisaManual,
 } from "$lib/server/novira/deteksi.js";
+import { db } from "$lib/server/db/index.js";
+import { cameras } from "$lib/server/db/schema.js";
+import { eq, inArray, and } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
+
+const BANDUNG_KOTA = "Bandung";
 
 /**
  * Progress stream untuk "Analisa Manual CCTV" di halaman Insiden & Alert.
@@ -21,6 +26,23 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const camerasParam = url.searchParams.get("cameras");
 	const cameraIds =
 		camerasParam && camerasParam !== "all" ? camerasParam.split(",").filter(Boolean) : undefined;
+
+	// Resolve effective camera count server-side before checking limit
+	const effectiveCameras =
+		cameraIds && cameraIds.length > 0
+			? await db
+					.select({ id: cameras.id })
+					.from(cameras)
+					.where(and(eq(cameras.kota, BANDUNG_KOTA), inArray(cameras.id, cameraIds)))
+			: await db.select({ id: cameras.id }).from(cameras).where(eq(cameras.kota, BANDUNG_KOTA));
+
+	// Batasi 10 per analisa — cegah beban ML & race verifikasi
+	if (effectiveCameras.length > 10) {
+		return new Response(JSON.stringify({ message: "Maksimal 10 CCTV per analisa" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
 
 	const encoder = new TextEncoder();
 	let closed = false;

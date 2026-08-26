@@ -74,14 +74,14 @@
 			dt.items.add(dikirim);
 			input.files = dt.files;
 			ukuranFotoKb = Math.round(dikirim.size / 1024);
-			
+
 			if (previewUrl) URL.revokeObjectURL(previewUrl);
 			previewUrl = URL.createObjectURL(dikirim);
 		} catch {
 			// Resize gagal (mis. format tidak didukung createImageBitmap) --
 			// kirim berkas asli apa adanya daripada memblokir laporan warga.
 			ukuranFotoKb = Math.round(file.size / 1024);
-			
+
 			if (previewUrl) URL.revokeObjectURL(previewUrl);
 			previewUrl = URL.createObjectURL(file);
 		} finally {
@@ -157,7 +157,21 @@
 			await import("leaflet/dist/leaflet.css");
 			if (dibatalkan || !petaWadah) return;
 
-			const m = L.map(petaWadah, { scrollWheelZoom: false }).setView(DEFAULT_CENTER, 13);
+			const m = L.map(petaWadah, { scrollWheelZoom: false, dragging: true }).setView(
+				DEFAULT_CENTER,
+				13
+			);
+			// Hint untuk desktop: ctrl+scroll. Mobile tetap drag.
+			m.getContainer().addEventListener("wheel", (e: WheelEvent) => {
+				if (e.ctrlKey || e.metaKey) {
+					e.preventDefault();
+					m.scrollWheelZoom.enable();
+				} else {
+					m.scrollWheelZoom.disable();
+				}
+			});
+			m.on("click", () => m.scrollWheelZoom.enable());
+			m.on("mouseout", () => m.scrollWheelZoom.disable());
 			peta = m;
 			L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 				attribution:
@@ -264,11 +278,17 @@
 							class="flex cursor-pointer flex-col items-center gap-2 text-center"
 						>
 							{#if previewUrl}
-								<div class="relative w-full aspect-video rounded-lg overflow-hidden border border-border/80">
+								<div
+									class="relative w-full aspect-video rounded-lg overflow-hidden border border-border/80"
+								>
 									<img src={previewUrl} alt="Preview Foto" class="w-full h-full object-cover" />
 									{#if mengompres || memindai}
-										<div class="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm">
-											<LoaderCircleIcon class="size-8 animate-spin text-emerald-600 dark:text-emerald-400" />
+										<div
+											class="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm"
+										>
+											<LoaderCircleIcon
+												class="size-8 animate-spin text-emerald-600 dark:text-emerald-400"
+											/>
 										</div>
 									{/if}
 								</div>
