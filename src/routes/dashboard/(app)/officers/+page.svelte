@@ -15,11 +15,14 @@
 	import PhoneIcon from "@lucide/svelte/icons/phone";
 	import MapPinIcon from "@lucide/svelte/icons/map-pin";
 	import { enhance } from "$app/forms";
+	import { toast } from "svelte-sonner";
+	import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
+	import OfficerFormDialog from "$lib/components/officer-form-dialog.svelte";
 	import type { PetugasLapangan } from "$lib/types/novira.js";
 
 	let { data, form } = $props();
 
-	let showForm = $state(false);
+	let tambahOpen = $state(false);
 	let dialogEditTerbuka = $state(false);
 	let petugasDiedit = $state<PetugasLapangan | null>(null);
 
@@ -28,6 +31,10 @@
 		{ value: "SEDANG_BERTUGAS", label: "SEDANG BERTUGAS" },
 		{ value: "OFFLINE", label: "OFFLINE" }
 	];
+
+	let hapusOpen = $state(false);
+	let hapusId = $state("");
+	let hapusNama = $state("");
 
 	let akunTersedia = $derived(
 		data.akunPetugas.filter(
@@ -48,8 +55,6 @@
 			.toUpperCase();
 	}
 
-	let statusBaru = $state("SIAP_TUGAS");
-	let akunBaru = $state("");
 	let statusEdit = $state("SIAP_TUGAS");
 	let akunEdit = $state("");
 
@@ -92,93 +97,18 @@
 			variant="default"
 			size="sm"
 			class="h-9 bg-emerald-600 text-xs font-semibold text-white shadow-md hover:bg-emerald-700"
-			onclick={() => (showForm = !showForm)}
+			onclick={() => (tambahOpen = true)}
 		>
 			<PlusIcon class="mr-1.5 size-4" />
-			{showForm ? "Tutup Form" : "Tambah Petugas Lapangan Baru"}
+			Tambah Petugas Lapangan Baru
 		</Button>
 	</div>
 
-	<!-- FORM TAMBAH PETUGAS -->
-	{#if showForm}
-		<Card.Root class="border-emerald-600/40 shadow-md">
-			<Card.Header class="bg-emerald-50/80 pb-4 dark:bg-emerald-950/30">
-				<Card.Title class="text-base text-emerald-950 dark:text-emerald-100">
-					Tambah Petugas Lapangan Baru
-				</Card.Title>
-				<Card.Description class="text-xs">
-					Isi data petugas atau kru armada yang akan ditugaskan ke lapangan.
-				</Card.Description>
-			</Card.Header>
-			<Card.Content class="pt-4">
-				<form method="POST" action="?/tambah" use:enhance>
-					<div class="grid gap-4 md:grid-cols-2">
-						<div class="space-y-2">
-							<Label.Root>Nama Lengkap</Label.Root>
-							<Input.Root name="nama" placeholder="Budi Santoso" required />
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Peran / Unit Tugas</Label.Root>
-							<Input.Root name="peran" placeholder="Satpol PP / Driver TPS" required />
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Nomor WhatsApp</Label.Root>
-							<Input.Root name="telepon" placeholder="081234567890" required />
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Wilayah Tugas</Label.Root>
-							<Input.Root name="wilayahTugas" placeholder="Kiaracondong" required />
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Status</Label.Root>
-							<Select.Root type="single" name="status" bind:value={statusBaru}>
-								<Select.Trigger class="w-full">
-									<span>{labelStatus(statusBaru)}</span>
-								</Select.Trigger>
-								<Select.Content>
-									{#each statusOptions as opt}
-										<Select.Item value={opt.value} label={opt.label}>{opt.label}</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						</div>
-						<div class="space-y-2">
-							<Label.Root>Akun Login (opsional)</Label.Root>
-							<Select.Root type="single" name="userId" bind:value={akunBaru}>
-								<Select.Trigger class="w-full">
-									<span>{namaAkun(akunBaru) ?? "Tidak dihubungkan"}</span>
-								</Select.Trigger>
-								<Select.Content>
-									<Select.Item value="" label="Tidak dihubungkan">Tidak dihubungkan</Select.Item>
-									{#each akunTersedia as akun (akun.id)}
-										<Select.Item value={akun.id} label={akun.name}>
-											{akun.name} (@{akun.username})
-										</Select.Item>
-									{/each}
-								</Select.Content>
-							</Select.Root>
-						</div>
-					</div>
-					{#if form?.message}
-						<p class="mt-3 text-sm font-medium text-red-600">{form.message}</p>
-					{/if}
-					<div class="mt-4 flex justify-end gap-2">
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							onclick={() => (showForm = false)}
-						>
-							Batal
-						</Button>
-						<Button type="submit" size="sm" class="bg-emerald-600 text-white hover:bg-emerald-700">
-							Simpan Petugas
-						</Button>
-					</div>
-				</form>
-			</Card.Content>
-		</Card.Root>
-	{/if}
+	<OfficerFormDialog
+		bind:open={tambahOpen}
+		akunList={data.akunPetugas}
+		akunTerpakai={new Set(data.petugasList.map((p) => p.userId).filter(Boolean) as string[])}
+	/>
 
 	<!-- TABEL BERWARNA & BERKONTRAST -->
 	<Card.Root class="overflow-hidden border-emerald-800/20 shadow-md">
@@ -216,18 +146,20 @@
 										</Button>
 
 										<!-- TOMBOL DELETE (MERAH TEGAS) -->
-										<form method="POST" action="?/hapus" use:enhance>
-											<input type="hidden" name="id" value={officer.id} />
-											<Button
-												type="submit"
-												variant="ghost"
-												size="icon"
-												class="size-7 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/60 dark:text-red-300 dark:hover:bg-red-900"
-												title="Hapus Petugas"
-											>
-												<TrashIcon class="size-3.5" />
-											</Button>
-										</form>
+										<Button
+											variant="ghost"
+											size="icon"
+											class="size-7 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950/60 dark:text-red-300 dark:hover:bg-red-900"
+											title="Hapus Petugas"
+											aria-label={`Hapus petugas ${officer.nama}`}
+											onclick={() => {
+												hapusId = officer.id;
+												hapusNama = officer.nama;
+												hapusOpen = true;
+											}}
+										>
+											<TrashIcon class="size-3.5" />
+										</Button>
 									</div>
 								</Table.Cell>
 
@@ -313,6 +245,8 @@
 		</Card.Content>
 	</Card.Root>
 </div>
+
+<DeleteConfirmDialog bind:open={hapusOpen} action="?/hapus" id={hapusId} itemName={`petugas ${hapusNama}`} />
 
 <!-- DIALOG EDIT -->
 <Dialog.Root bind:open={dialogEditTerbuka}>
