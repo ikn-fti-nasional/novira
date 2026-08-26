@@ -157,7 +157,14 @@
 			await import("leaflet/dist/leaflet.css");
 			if (dibatalkan || !petaWadah) return;
 
-			const m = L.map(petaWadah, { scrollWheelZoom: false }).setView(DEFAULT_CENTER, 13);
+			const m = L.map(petaWadah, { scrollWheelZoom: false, dragging: !L.Browser.mobile }).setView(DEFAULT_CENTER, 13);
+			// Hint untuk desktop: ctrl+scroll. Mobile tetap drag.
+			m.getContainer().addEventListener("wheel", (e: WheelEvent) => {
+				if (e.ctrlKey || e.metaKey) m.scrollWheelZoom.enable();
+				else m.scrollWheelZoom.disable();
+			});
+			m.on("click", () => m.scrollWheelZoom.enable());
+			m.on("mouseout", () => m.scrollWheelZoom.disable());
 			peta = m;
 			L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 				attribution:
