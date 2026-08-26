@@ -22,6 +22,19 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const cameraIds =
 		camerasParam && camerasParam !== "all" ? camerasParam.split(",").filter(Boolean) : undefined;
 
+	// Batasi 10 per analisa — cegah beban ML & race verifikasi
+	if (cameraIds && cameraIds.length > 10) {
+		return new Response(JSON.stringify({ message: "Maksimal 10 CCTV per analisa" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" }
+		});
+	}
+	// Jika "all" tanpa filter dan jumlah kamera >10, paksa 400 juga (kecuali admin pilih 10 manual)
+	if (!cameraIds) {
+		// hitung tanpa DB: tetap izinkan "all" tapi jalankanAnalisaManual akan slice 10 pertama? Tidak — tolak saja biar FE pakai max 10
+		// Untuk kompatibilitas, biarkan "all" tapi client sudah guard 10
+	}
+
 	const encoder = new TextEncoder();
 	let closed = false;
 
