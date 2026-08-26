@@ -89,10 +89,12 @@
 			</div>
 		</header>
 
-		<main class="min-w-0 flex-1 p-4 md:p-6">
-			{@render children()}
+		<main class="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+			<div class="mx-auto w-full max-w-[1600px] 2xl:max-w-[1800px]">
+				{@render children()}
+			</div>
 		</main>
 	</Sidebar.Inset>
 </Sidebar.Provider>
 
-<Toaster />
+<Toaster position="top-right" richColors expand closeButton />
