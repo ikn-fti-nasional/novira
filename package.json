@@ -75,6 +75,8 @@
 		"clsx": "^2.1.1",
 		"drizzle-orm": "^0.45.2",
 		"hls.js": "^1.7.0",
+		"jspdf": "^4.2.1",
+		"jspdf-autotable": "^5.0.8",
 		"leaflet": "^1.9.4",
 		"leaflet.markercluster": "^1.5.3",
 		"node-cron": "^4.6.0",
