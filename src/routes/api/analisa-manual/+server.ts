@@ -4,7 +4,12 @@ import {
 	jalankanAnalisaManual,
 	type ProgresAnalisaManual,
 } from "$lib/server/novira/deteksi.js";
+import { db } from "$lib/server/db/index.js";
+import { cameras } from "$lib/server/db/schema.js";
+import { eq, inArray, and } from "drizzle-orm";
 import type { RequestHandler } from "./$types.js";
+
+const BANDUNG_KOTA = "Bandung";
 
 /**
  * Progress stream untuk "Analisa Manual CCTV" di halaman Insiden & Alert.
@@ -22,17 +27,21 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const cameraIds =
 		camerasParam && camerasParam !== "all" ? camerasParam.split(",").filter(Boolean) : undefined;
 
+	// Resolve effective camera count server-side before checking limit
+	const effectiveCameras =
+		cameraIds && cameraIds.length > 0
+			? await db
+					.select({ id: cameras.id })
+					.from(cameras)
+					.where(and(eq(cameras.kota, BANDUNG_KOTA), inArray(cameras.id, cameraIds)))
+			: await db.select({ id: cameras.id }).from(cameras).where(eq(cameras.kota, BANDUNG_KOTA));
+
 	// Batasi 10 per analisa — cegah beban ML & race verifikasi
-	if (cameraIds && cameraIds.length > 10) {
+	if (effectiveCameras.length > 10) {
 		return new Response(JSON.stringify({ message: "Maksimal 10 CCTV per analisa" }), {
 			status: 400,
-			headers: { "Content-Type": "application/json" }
+			headers: { "Content-Type": "application/json" },
 		});
-	}
-	// Jika "all" tanpa filter dan jumlah kamera >10, paksa 400 juga (kecuali admin pilih 10 manual)
-	if (!cameraIds) {
-		// hitung tanpa DB: tetap izinkan "all" tapi jalankanAnalisaManual akan slice 10 pertama? Tidak — tolak saja biar FE pakai max 10
-		// Untuk kompatibilitas, biarkan "all" tapi client sudah guard 10
 	}
 
 	const encoder = new TextEncoder();

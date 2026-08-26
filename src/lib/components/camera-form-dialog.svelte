@@ -16,10 +16,11 @@
 	let { open = $bindable(false), kotaList }: Props = $props();
 
 	let statusBaru = $state("OFFLINE");
+	let sedangMengirim = $state(false);
 	const statusOptions = [
 		{ value: "ONLINE", label: "ONLINE" },
 		{ value: "OFFLINE", label: "OFFLINE" },
-		{ value: "PERBAIKAN", label: "PERBAIKAN" }
+		{ value: "PERBAIKAN", label: "PERBAIKAN" },
 	];
 
 	function onResult(result: ActionResult) {
@@ -42,9 +43,13 @@
 		<form
 			method="POST"
 			action="?/tambah"
-			use:enhance={() => async ({ result, update }) => {
-				await update();
-				onResult(result);
+			use:enhance={() => {
+				sedangMengirim = true;
+				return async ({ result, update }) => {
+					await update();
+					sedangMengirim = false;
+					onResult(result);
+				};
 			}}
 			class="space-y-4"
 		>
@@ -87,8 +92,17 @@
 				</div>
 			</div>
 			<Dialog.Footer>
-				<Button type="button" variant="outline" onclick={() => (open = false)}>Batal</Button>
-				<Button type="submit" class="bg-emerald-700 text-white hover:bg-emerald-800">Simpan Kamera</Button>
+				<Button
+					type="button"
+					variant="outline"
+					onclick={() => (open = false)}
+					disabled={sedangMengirim}>Batal</Button
+				>
+				<Button
+					type="submit"
+					class="bg-emerald-700 text-white hover:bg-emerald-800"
+					disabled={sedangMengirim}>Simpan Kamera</Button
+				>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>

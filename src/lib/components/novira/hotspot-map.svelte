@@ -47,7 +47,9 @@
 		).length
 	);
 	const kameraTerpetakan = $derived(
-		kameraList.filter((k) => Number.isFinite(k.latitude) && Number.isFinite(k.longitude) && k.latitude !== 0)
+		kameraList.filter(
+			(k) => Number.isFinite(k.latitude) && Number.isFinite(k.longitude) && k.latitude !== 0
+		)
 	);
 
 	/** Ubin gelap/terang dari CARTO — dipilih supaya penanda berwarna tetap terbaca di kedua tema. */
@@ -148,6 +150,7 @@
 			// Aktifkan zoom hanya saat Ctrl/Cmd ditekan atau peta difokuskan
 			m.getContainer().addEventListener("wheel", (e: WheelEvent) => {
 				if (e.ctrlKey || e.metaKey) {
+					e.preventDefault();
 					m.scrollWheelZoom.enable();
 				} else {
 					m.scrollWheelZoom.disable();
@@ -304,7 +307,7 @@
 				<div
 					class="pointer-events-none absolute top-3 left-1/2 z-[500] -translate-x-1/2 rounded-full bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm"
 				>
-					Tekan Ctrl + scroll untuk zoom peta
+					Tekan Ctrl/Cmd + scroll untuk zoom peta
 				</div>
 			{/if}
 
@@ -347,8 +350,8 @@
 
 		{#if insidenTanpaKoordinat > 0}
 			<p class="border-t px-4 py-2 text-xs text-muted-foreground">
-				{insidenTanpaKoordinat} insiden terbuka tidak ditampilkan karena tidak memiliki koordinat —
-				sengaja tidak digambar di titik perkiraan agar petugas tidak dikirim ke lokasi yang keliru.
+				{insidenTanpaKoordinat} insiden terbuka tidak ditampilkan karena tidak memiliki koordinat — sengaja
+				tidak digambar di titik perkiraan agar petugas tidak dikirim ke lokasi yang keliru.
 			</p>
 		{:else if siap && insidenTerpetakan.length === 0}
 			<p class="border-t px-4 py-2 text-xs text-muted-foreground">

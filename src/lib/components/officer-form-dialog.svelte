@@ -19,10 +19,11 @@
 
 	let statusBaru = $state("SIAP_TUGAS");
 	let akunBaru = $state("");
+	let sedangMengirim = $state(false);
 	const statusOptions = [
 		{ value: "SIAP_TUGAS", label: "SIAP TUGAS" },
 		{ value: "SEDANG_BERTUGAS", label: "SEDANG BERTUGAS" },
-		{ value: "OFFLINE", label: "OFFLINE" }
+		{ value: "OFFLINE", label: "OFFLINE" },
 	];
 	function labelStatus(v: string) {
 		return statusOptions.find((o) => o.value === v)?.label ?? v;
@@ -43,14 +44,19 @@
 	<Dialog.Content class="sm:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title>Tambah Petugas Lapangan Baru</Dialog.Title>
-			<Dialog.Description>Isi data petugas atau kru armada yang akan ditugaskan.</Dialog.Description>
+			<Dialog.Description>Isi data petugas atau kru armada yang akan ditugaskan.</Dialog.Description
+			>
 		</Dialog.Header>
 		<form
 			method="POST"
 			action="?/tambah"
-			use:enhance={() => async ({ result, update }) => {
-				await update();
-				onResult(result);
+			use:enhance={() => {
+				sedangMengirim = true;
+				return async ({ result, update }) => {
+					await update();
+					sedangMengirim = false;
+					onResult(result);
+				};
 			}}
 			class="space-y-4"
 		>
@@ -85,19 +91,34 @@
 				<div class="space-y-2">
 					<Label.Root>Akun Login (opsional)</Label.Root>
 					<Select.Root type="single" name="userId" bind:value={akunBaru}>
-						<Select.Trigger class="w-full"><span>{akunTersedia.find((a) => a.id === akunBaru)?.name ?? "Tidak dihubungkan"}</span></Select.Trigger>
+						<Select.Trigger class="w-full"
+							><span
+								>{akunTersedia.find((a) => a.id === akunBaru)?.name ?? "Tidak dihubungkan"}</span
+							></Select.Trigger
+						>
 						<Select.Content>
 							<Select.Item value="" label="Tidak dihubungkan">Tidak dihubungkan</Select.Item>
 							{#each akunTersedia as akun (akun.id)}
-								<Select.Item value={akun.id} label={akun.name}>{akun.name} (@{akun.username})</Select.Item>
+								<Select.Item value={akun.id} label={akun.name}
+									>{akun.name} (@{akun.username})</Select.Item
+								>
 							{/each}
 						</Select.Content>
 					</Select.Root>
 				</div>
 			</div>
 			<Dialog.Footer>
-				<Button type="button" variant="outline" onclick={() => (open = false)}>Batal</Button>
-				<Button type="submit" class="bg-emerald-600 text-white hover:bg-emerald-700">Simpan Petugas</Button>
+				<Button
+					type="button"
+					variant="outline"
+					onclick={() => (open = false)}
+					disabled={sedangMengirim}>Batal</Button
+				>
+				<Button
+					type="submit"
+					class="bg-emerald-600 text-white hover:bg-emerald-700"
+					disabled={sedangMengirim}>Simpan Petugas</Button
+				>
 			</Dialog.Footer>
 		</form>
 	</Dialog.Content>
