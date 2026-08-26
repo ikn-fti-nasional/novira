@@ -23,6 +23,7 @@
 		{ value: "PERBAIKAN", label: "PERBAIKAN" },
 	];
 
+	/** Menangani hasil submit form tambah kamera: tampilkan toast dan tutup dialog saat sukses. */
 	function onResult(result: ActionResult) {
 		if (result.type === "failure") {
 			const d = result.data as { message?: string } | undefined;

@@ -29,6 +29,7 @@
 		return statusOptions.find((o) => o.value === v)?.label ?? v;
 	}
 	const akunTersedia = $derived(akunList.filter((a) => !akunTerpakai.has(a.id)));
+	/** Menangani hasil submit form tambah petugas: toast dan tutup dialog saat sukses. */
 	function onResult(result: ActionResult) {
 		if (result.type === "failure") {
 			const d = result.data as { message?: string } | undefined;

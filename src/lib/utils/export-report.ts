@@ -1,3 +1,6 @@
+/**
+ * Escapes HTML special chars for safe insertion in fallback HTML.
+ */
 function escapeHtml(str: string | number | null | undefined): string {
 	if (str === null || str === undefined) return "";
 	return String(str)
