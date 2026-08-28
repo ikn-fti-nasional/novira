@@ -280,7 +280,7 @@
 			</Card.Description>
 		</div>
 
-		<div class="flex items-center gap-1 rounded-lg border bg-muted/40 p-1 text-xs">
+		<div class="bg-muted/40 flex items-center gap-1 rounded-lg border p-1 text-xs">
 			{#each TOMBOL as t (t.nilai)}
 				<Button
 					variant={lapisanAktif === t.nilai ? "secondary" : "ghost"}
@@ -298,7 +298,7 @@
 		<div class="relative">
 			<div
 				bind:this={wadah}
-				class="h-[520px] w-full bg-muted xl:h-[600px] 2xl:h-[680px]"
+				class="bg-muted h-[520px] w-full xl:h-[600px] 2xl:h-[680px]"
 				role="application"
 				aria-label="Peta sebaran kamera CCTV dan titik rawan sampah"
 				tabindex="0"
@@ -313,7 +313,7 @@
 
 			{#if !siap}
 				<div
-					class="pointer-events-none absolute inset-0 flex items-center justify-center bg-muted/70 text-sm text-muted-foreground"
+					class="bg-muted/70 text-muted-foreground pointer-events-none absolute inset-0 flex items-center justify-center text-sm"
 				>
 					Memuat peta…
 				</div>
@@ -321,9 +321,9 @@
 
 			<!-- Legenda -->
 			<div
-				class="pointer-events-none absolute bottom-3 left-3 z-[400] rounded-lg border bg-background/92 p-2.5 text-[10px] shadow-md backdrop-blur-sm"
+				class="bg-background/92 pointer-events-none absolute bottom-3 left-3 z-[400] rounded-lg border p-2.5 text-[10px] shadow-md backdrop-blur-sm"
 			>
-				<p class="mb-1.5 font-bold uppercase tracking-wider text-muted-foreground">Keterangan</p>
+				<p class="text-muted-foreground mb-1.5 font-bold tracking-wider uppercase">Keterangan</p>
 				<div class="flex flex-col gap-1">
 					<span class="flex items-center gap-1.5">
 						<span class="size-2.5 rounded-full" style="background:#dc2626"></span>
@@ -341,7 +341,7 @@
 						<span class="size-2.5 rounded-full" style="background:#059669"></span>
 						Kamera normal
 					</span>
-					<span class="mt-1 border-t pt-1 text-muted-foreground">
+					<span class="text-muted-foreground mt-1 border-t pt-1">
 						Ukuran lingkaran = skor prioritas
 					</span>
 				</div>
@@ -349,12 +349,12 @@
 		</div>
 
 		{#if insidenTanpaKoordinat > 0}
-			<p class="border-t px-4 py-2 text-xs text-muted-foreground">
+			<p class="text-muted-foreground border-t px-4 py-2 text-xs">
 				{insidenTanpaKoordinat} insiden terbuka tidak ditampilkan karena tidak memiliki koordinat — sengaja
 				tidak digambar di titik perkiraan agar petugas tidak dikirim ke lokasi yang keliru.
 			</p>
 		{:else if siap && insidenTerpetakan.length === 0}
-			<p class="border-t px-4 py-2 text-xs text-muted-foreground">
+			<p class="text-muted-foreground border-t px-4 py-2 text-xs">
 				Belum ada insiden terbuka. Penanda kamera menunjukkan cakupan pemantauan saat ini.
 			</p>
 		{/if}

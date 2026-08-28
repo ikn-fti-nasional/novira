@@ -69,7 +69,7 @@ export function triggerPdfReportPrint(
 
 			// Table — per-page fitting via fontSize & cellPadding
 			const fontSize = colCount > 10 ? 6 : colCount > 7 ? 7 : 8;
-			 
+
 			(autoTable as any)(doc, {
 				startY: 34,
 				head: [headers],

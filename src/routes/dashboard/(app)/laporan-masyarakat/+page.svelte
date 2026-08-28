@@ -1,5 +1,11 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import StatCard from "$lib/components/novira/stat-card.svelte";
+	import ClockIcon from "@lucide/svelte/icons/clock";
+	import CheckCircle2Icon from "@lucide/svelte/icons/check-circle-2";
+	import XCircleIcon from "@lucide/svelte/icons/x-circle";
+	import TargetIcon from "@lucide/svelte/icons/target";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Select from "$lib/components/ui/select/index.js";
@@ -108,27 +114,43 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-1 border-b border-border/60 pb-4">
-		<div class="flex items-center gap-2">
-			<ClipboardListIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-			<h1 class="text-3xl font-extrabold tracking-tight">Triase Laporan Masyarakat</h1>
-		</div>
-		<p class="text-sm text-muted-foreground">
-			Laporan warga dipindai AI sebagai bahan pertimbangan, lalu <strong>Anda</strong> yang memutuskan.
-			Laporan yang diverifikasi langsung menjadi insiden resmi dengan timer SLA berjalan.
-		</p>
-	</div>
+	<PageHeader
+		title="Triase Laporan Masyarakat"
+		eyebrow="Kanal Partisipasi Warga"
+		description="Laporan warga dipindai AI sebagai bahan pertimbangan, lalu Anda yang memutuskan. Laporan yang diverifikasi langsung menjadi insiden resmi dengan timer SLA berjalan."
+		icon={ClipboardListIcon}
+	/>
 
 	<!-- Ringkasan triase -->
-	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-		{#each [{ label: "Menunggu triase", nilai: data.ringkasan.menunggu, warna: "text-amber-600" }, { label: "Jadi insiden", nilai: data.ringkasan.diproses + data.ringkasan.selesai, warna: "text-emerald-600" }, { label: "Ditolak", nilai: data.ringkasan.ditolak, warna: "text-rose-600" }, { label: "Akurasi laporan warga", nilai: `${data.ringkasan.persenValid}%`, warna: "text-blue-600" }] as kartu (kartu.label)}
-			<Card.Root>
-				<Card.Content class="pt-6">
-					<p class="text-xs font-medium text-muted-foreground">{kartu.label}</p>
-					<p class="mt-1 text-2xl font-bold {kartu.warna}">{kartu.nilai}</p>
-				</Card.Content>
-			</Card.Root>
-		{/each}
+	<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+		<StatCard
+			title="Menunggu triase"
+			value={data.ringkasan.menunggu}
+			subtitle="Perlu keputusan operator"
+			icon={ClockIcon}
+			tone="amber"
+		/>
+		<StatCard
+			title="Jadi insiden"
+			value={data.ringkasan.diproses + data.ringkasan.selesai}
+			subtitle="Terverifikasi &amp; ditangani"
+			icon={CheckCircle2Icon}
+			tone="emerald"
+		/>
+		<StatCard
+			title="Ditolak"
+			value={data.ringkasan.ditolak}
+			subtitle="Tidak memenuhi kriteria"
+			icon={XCircleIcon}
+			tone="red"
+		/>
+		<StatCard
+			title="Akurasi laporan warga"
+			value={`${data.ringkasan.persenValid}%`}
+			subtitle="Laporan valid dari total"
+			icon={TargetIcon}
+			tone="blue"
+		/>
 	</div>
 
 	<div class="flex flex-wrap gap-2">
@@ -146,7 +168,7 @@
 
 	{#if data.reports.length === 0}
 		<div
-			class="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground"
+			class="text-muted-foreground flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed"
 		>
 			<p class="text-sm">Tidak ada laporan dengan status ini.</p>
 		</div>
@@ -158,7 +180,7 @@
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div>
 						<div class="flex flex-wrap items-center gap-2">
-							<span class="font-mono text-xs text-muted-foreground">{rep.kodeTracking}</span>
+							<span class="text-muted-foreground font-mono text-xs">{rep.kodeTracking}</span>
 							<h2 class="font-bold">{labelJenis(rep.jenisSampah)}</h2>
 							<Badge class={statusBadge[rep.status].class}>{statusBadge[rep.status].label}</Badge>
 							{#if rep.aiRekomendasi}
@@ -179,7 +201,7 @@
 								</Badge>
 							{/if}
 						</div>
-						<p class="mt-1 text-xs text-muted-foreground">
+						<p class="text-muted-foreground mt-1 text-xs">
 							{rep.pelaporNama ?? "Anonim"}{rep.pelaporTelepon ? ` · ${rep.pelaporTelepon}` : ""} ·
 							{tanggal(rep.createdAt)}
 						</p>
@@ -189,7 +211,7 @@
 							href={`https://www.google.com/maps?q=${rep.latitude},${rep.longitude}`}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400 group"
+							class="group flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
 							title="Buka di Google Maps"
 						>
 							<div class="flex flex-col items-end text-right">
@@ -198,13 +220,13 @@
 									{rep.kota ?? "Lokasi GPS"}
 									<ExternalLinkIcon class="size-3" />
 								</span>
-								<span class="text-[10px] text-muted-foreground"
+								<span class="text-muted-foreground text-[10px]"
 									>({rep.latitude}, {rep.longitude})</span
 								>
 							</div>
 						</a>
 					{:else}
-						<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+						<div class="text-muted-foreground flex items-center gap-1.5 text-xs">
 							<MapPinIcon class="size-3.5" />
 							{rep.kota ?? "Lokasi GPS"}
 						</div>
@@ -222,7 +244,7 @@
 								href={rep.urlFoto}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="group overflow-hidden rounded-lg border border-border/60"
+								class="group border-border/60 overflow-hidden rounded-lg border"
 							>
 								<img
 									src={rep.urlFoto}
@@ -230,7 +252,7 @@
 									class="aspect-video w-full object-cover"
 								/>
 								<span
-									class="flex items-center gap-1 border-t border-border/60 bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground group-hover:text-emerald-600"
+									class="border-border/60 bg-muted/40 text-muted-foreground flex items-center gap-1 border-t px-2 py-1 text-[11px] group-hover:text-emerald-600"
 								>
 									<CameraIcon class="size-3" /> Foto asli <ExternalLinkIcon class="size-2.5" />
 								</span>
@@ -241,7 +263,7 @@
 								href={rep.aiAnnotatedUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="group overflow-hidden rounded-lg border border-border/60"
+								class="group border-border/60 overflow-hidden rounded-lg border"
 							>
 								<img
 									src={rep.aiAnnotatedUrl}
@@ -249,7 +271,7 @@
 									class="aspect-video w-full object-cover"
 								/>
 								<span
-									class="flex items-center gap-1 border-t border-border/60 bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground group-hover:text-emerald-600"
+									class="border-border/60 bg-muted/40 text-muted-foreground flex items-center gap-1 border-t px-2 py-1 text-[11px] group-hover:text-emerald-600"
 								>
 									<SparklesIcon class="size-3" /> Hasil analisa AI · model {modelLabel[
 										rep.aiModelType ?? "street"
@@ -273,7 +295,7 @@
 
 				<!-- Penjelasan rekomendasi AI, faktor per faktor -->
 				{#if rep.faktorAi.length > 0}
-					<div class="rounded-lg border bg-muted/40 p-3">
+					<div class="bg-muted/40 rounded-lg border p-3">
 						<p class="flex items-center gap-1.5 text-xs font-semibold">
 							<SparklesIcon class="size-3.5" />
 							Dasar rekomendasi
@@ -282,7 +304,7 @@
 							{#each rep.faktorAi as f (f.label)}
 								<li class="flex items-start justify-between gap-3 text-xs">
 									<span class="text-muted-foreground">
-										<span class="font-medium text-foreground">{f.label}</span> — {f.keterangan}
+										<span class="text-foreground font-medium">{f.label}</span> — {f.keterangan}
 									</span>
 									<span
 										class="shrink-0 font-mono {f.poin > 0
@@ -332,7 +354,7 @@
 				{/if}
 
 				{#if rep.catatanPetugas}
-					<p class="rounded-md bg-muted px-3 py-2 text-xs">Catatan: {rep.catatanPetugas}</p>
+					<p class="bg-muted rounded-md px-3 py-2 text-xs">Catatan: {rep.catatanPetugas}</p>
 				{/if}
 
 				{#if rep.insidenId}
@@ -388,7 +410,9 @@
 								disabled={!!verifikasiPending[rep.id] || !!pindaiPending[rep.id]}
 								class="bg-emerald-600 text-white hover:bg-emerald-700"
 							>
-								{#if verifikasiPending[rep.id]}<Loader2Icon class="mr-1 size-3 animate-spin" />Memverifikasi...{:else}Verifikasi → jadikan insiden{/if}
+								{#if verifikasiPending[rep.id]}<Loader2Icon
+										class="mr-1 size-3 animate-spin"
+									/>Memverifikasi...{:else}Verifikasi → jadikan insiden{/if}
 							</Button>
 						</form>
 
@@ -426,7 +450,9 @@
 								disabled={!!pindaiPending[rep.id] || !!verifikasiPending[rep.id]}
 								title="Pindai ulang foto dengan model yang dipilih"
 							>
-								{#if pindaiPending[rep.id]}<Loader2Icon class="mr-1 size-3 animate-spin" />Memindai...{:else}<RefreshCwIcon class="mr-1 size-3.5" />Pindai ulang{/if}
+								{#if pindaiPending[rep.id]}<Loader2Icon
+										class="mr-1 size-3 animate-spin"
+									/>Memindai...{:else}<RefreshCwIcon class="mr-1 size-3.5" />Pindai ulang{/if}
 							</Button>
 						</form>
 
@@ -451,7 +477,7 @@
 									rows={2}
 									placeholder="Mis. foto bukan sampah / lokasi di luar wilayah kerja…"
 								/>
-								<p class="text-[11px] text-muted-foreground">
+								<p class="text-muted-foreground text-[11px]">
 									Alasan ini ditampilkan ke pelapor di halaman pelacakan dan menurunkan reputasinya.
 								</p>
 							</div>

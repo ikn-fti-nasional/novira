@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import * as Select from "$lib/components/ui/select/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
@@ -91,17 +92,12 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-1 border-b border-border/60 pb-4">
-		<div class="flex items-center gap-2">
-			<UploadCloudIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-			<h1 class="text-3xl font-extrabold tracking-tight">Unggah & Analisa</h1>
-		</div>
-		<p class="text-sm text-muted-foreground">
-			Unggah foto atau video dari perangkat Anda untuk langsung dianalisa model deteksi sampah
-			pLitter -- tanpa harus melalui kamera CCTV terdaftar. Hasilnya hanya untuk dilihat, tidak
-			otomatis tersimpan sebagai insiden.
-		</p>
-	</div>
+	<PageHeader
+		title="Unggah &amp; Analisa"
+		eyebrow="Deteksi Manual"
+		description="Unggah foto atau video dari perangkat Anda untuk langsung dianalisa model deteksi sampah — tanpa harus melalui kamera CCTV terdaftar. Hasilnya hanya untuk dilihat, tidak otomatis tersimpan sebagai insiden."
+		icon={UploadCloudIcon}
+	/>
 
 	<Card.Root>
 		<Card.Header>
@@ -126,7 +122,7 @@
 				</div>
 
 				{#if previewUrl && file}
-					<div class="overflow-hidden rounded-lg border max-w-md">
+					<div class="max-w-md overflow-hidden rounded-lg border">
 						{#if file.type.startsWith("video/")}
 							<video src={previewUrl} controls class="w-full">
 								<track kind="captions" />
@@ -158,15 +154,15 @@
 
 					<div class="grid gap-2">
 						<Label for="confThres">Ambang Kepercayaan</Label>
-					<Input
-						id="confThres"
-						name="confThres"
-						type="text"
-						inputmode="numeric"
-						value={confThresKetikan ?? `${Math.round(confThres * 100)}%`}
-						oninput={(e) => (confThresKetikan = e.currentTarget.value)}
-						onblur={terapkanConfThres}
-					/>
+						<Input
+							id="confThres"
+							name="confThres"
+							type="text"
+							inputmode="numeric"
+							value={confThresKetikan ?? `${Math.round(confThres * 100)}%`}
+							oninput={(e) => (confThresKetikan = e.currentTarget.value)}
+							onblur={terapkanConfThres}
+						/>
 					</div>
 				</div>
 
@@ -206,7 +202,7 @@
 			</Card.Header>
 			<Card.Content class="space-y-6">
 				{#if hasil.kind === "foto"}
-					<div class="overflow-hidden rounded-lg border max-w-2xl">
+					<div class="max-w-2xl overflow-hidden rounded-lg border">
 						<img src={hasil.annotatedDataUrl} alt="Hasil deteksi" class="w-full" />
 					</div>
 
@@ -252,7 +248,7 @@
 					</div>
 
 					{#if hasil.truncated}
-						<p class="text-amber-600 dark:text-amber-400 text-xs">
+						<p class="text-xs text-amber-600 dark:text-amber-400">
 							Video dipotong pada batas jumlah frame demi kecepatan analisa -- bagian akhir video
 							belum diperiksa.
 						</p>

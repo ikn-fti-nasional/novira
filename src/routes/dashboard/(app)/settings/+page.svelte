@@ -1,5 +1,7 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
+	import SettingsIcon from "@lucide/svelte/icons/settings";
 	import * as Tabs from "$lib/components/ui/tabs/index.js";
 	import * as Select from "$lib/components/ui/select/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -116,13 +118,15 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Pengaturan</h1>
-		<p class="text-muted-foreground">Kelola profil dan preferensi aplikasi Anda.</p>
-	</div>
+	<PageHeader
+		title="Pengaturan Sistem"
+		eyebrow="Konfigurasi"
+		description="Kelola profil, sesi aktif, preferensi notifikasi, dan konfigurasi model deteksi."
+		icon={SettingsIcon}
+	/>
 
 	<Tabs.Root value="profile">
-		<Tabs.List>
+		<Tabs.List class="h-auto flex-wrap justify-start gap-1 p-1">
 			<Tabs.Trigger value="profile">Profil</Tabs.Trigger>
 			<Tabs.Trigger value="sessions">Sesi</Tabs.Trigger>
 			<Tabs.Trigger value="notifications">Notifikasi</Tabs.Trigger>
@@ -355,14 +359,17 @@
 											const raw = e.currentTarget.value.replace(/[^0-9]/g, "");
 											const n = Number(raw);
 											const v = Math.min(100, Math.max(5, isNaN(n) ? 30 : n));
-											(e.currentTarget.nextElementSibling as HTMLInputElement).value = String(v / 100);
+											(e.currentTarget.nextElementSibling as HTMLInputElement).value = String(
+												v / 100
+											);
 											e.currentTarget.value = `${v}%`;
 										}}
 									/>
 									<input type="hidden" name="confThres" value={data.pengaturanModel.confThres} />
 									<p class="text-muted-foreground text-xs">
-										Deteksi di bawah ambang ini diabaikan ({Math.round((Number(data.pengaturanModel.confThres)||0.3)*100)}%).
-										Semakin rendah, semakin banyak deteksi tapi makin banyak salah tangkap.
+										Deteksi di bawah ambang ini diabaikan ({Math.round(
+											(Number(data.pengaturanModel.confThres) || 0.3) * 100
+										)}%). Semakin rendah, semakin banyak deteksi tapi makin banyak salah tangkap.
 									</p>
 								</div>
 

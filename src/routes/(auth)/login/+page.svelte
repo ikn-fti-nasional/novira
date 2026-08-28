@@ -70,17 +70,21 @@
 	<title>Masuk Sistem - NOVIRA Environmental Monitoring</title>
 </svelte:head>
 
-<div class="bg-background flex min-h-screen items-center justify-center p-4">
-	<Card.Root class="w-full max-w-md border-border/80 shadow-lg">
+<div class="flex min-h-svh items-center justify-center p-4 py-10">
+	<Card.Root class="shadow-elevate-3 w-full max-w-md">
 		<Card.Header class="space-y-2 text-center">
 			<div class="flex justify-center">
-				<div class="size-20">
+				<div
+					class="bg-primary/10 ring-primary/15 flex size-20 items-center justify-center rounded-2xl p-3 ring-1 ring-inset"
+				>
 					<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
 				</div>
 			</div>
 			<div>
-				<Card.Title class="text-2xl font-extrabold text-foreground">NOVIRA</Card.Title>
-				<p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+				<Card.Title class="text-foreground text-2xl font-extrabold tracking-tight">
+					NOVIRA
+				</Card.Title>
+				<p class="text-primary mt-0.5 text-xs font-semibold tracking-wide">
 					Detect Today, Keep Tomorrow
 				</p>
 			</div>

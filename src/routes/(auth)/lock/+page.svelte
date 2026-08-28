@@ -23,8 +23,8 @@
 	<title>Terkunci - Novira</title>
 </svelte:head>
 
-<div class="bg-background flex min-h-screen items-center justify-center p-4">
-	<Card.Root class="w-full max-w-md border-border/80 shadow-lg">
+<div class="flex min-h-svh items-center justify-center p-4 py-10">
+	<Card.Root class="shadow-elevate-3 w-full max-w-md">
 		<Card.Header class="space-y-4 text-center">
 			<div class="flex justify-center">
 				<Avatar.Root class="size-20">
@@ -32,7 +32,7 @@
 				</Avatar.Root>
 			</div>
 			<div>
-				<Card.Title class="text-2xl font-extrabold text-foreground">{data.user.name}</Card.Title>
+				<Card.Title class="text-foreground text-2xl font-extrabold">{data.user.name}</Card.Title>
 				<Card.Description>{data.user.email}</Card.Description>
 			</div>
 		</Card.Header>

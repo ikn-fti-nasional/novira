@@ -8,15 +8,21 @@
 	import { Toaster as Sonner, type ToasterProps as SonnerProps } from "svelte-sonner";
 	import { mode } from "mode-watcher";
 
-	let { position = "top-right", richColors = true, expand = true, closeButton = true, ...restProps }: SonnerProps = $props();
+	let {
+		position = "top-right",
+		richColors = true,
+		expand = true,
+		closeButton = true,
+		...restProps
+	}: SonnerProps = $props();
 </script>
 
 <Sonner
 	theme={mode.current}
-	position={position}
-	richColors={richColors}
-	expand={expand}
-	closeButton={closeButton}
+	{position}
+	{richColors}
+	{expand}
+	{closeButton}
 	class="toaster group"
 	style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border);"
 	{...restProps}

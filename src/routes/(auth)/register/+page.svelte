@@ -12,15 +12,15 @@
 	<title>Daftar Akun - NOVIRA Environmental Monitoring</title>
 </svelte:head>
 
-<div class="bg-background flex min-h-screen items-center justify-center p-4">
-	<Card.Root class="w-full max-w-md border-border/80 shadow-lg">
+<div class="flex min-h-svh items-center justify-center p-4 py-10">
+	<Card.Root class="shadow-elevate-3 w-full max-w-md">
 		<Card.Header class="space-y-2 text-center">
 			<div class="flex justify-center">
 				<div class="size-20">
 					<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-full w-full object-contain" />
 				</div>
 			</div>
-			<Card.Title class="text-2xl font-extrabold text-foreground">Buat Akun Baru</Card.Title>
+			<Card.Title class="text-foreground text-2xl font-extrabold">Buat Akun Baru</Card.Title>
 			<Card.Description>Mulai gunakan Novira</Card.Description>
 		</Card.Header>
 		<Card.Content>

@@ -1,11 +1,6 @@
 /** Kategori baris audit. `LAPORAN_WARGA` dan `ESKALASI` menyusul fitur triase laporan & tangga SLA. */
 export type TipeAudit =
-	| "DETEKSI_AI"
-	| "TUGAS_PETUGAS"
-	| "UBAH_STATUS"
-	| "KONFIGURASI"
-	| "LAPORAN_WARGA"
-	| "ESKALASI";
+	"DETEKSI_AI" | "TUGAS_PETUGAS" | "UBAH_STATUS" | "KONFIGURASI" | "LAPORAN_WARGA" | "ESKALASI";
 
 export type TingkatTingkatKeparahan = "KRITIS" | "TINGGI" | "SEDANG" | "RENDAH";
 

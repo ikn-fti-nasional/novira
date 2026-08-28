@@ -32,7 +32,7 @@
 	}
 </script>
 
-<Card.Root class="border-border/80 shadow-md">
+<Card.Root class="overflow-hidden">
 	<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 		<div>
 			<div class="flex items-center gap-2">
@@ -58,7 +58,7 @@
 	<Card.Content class="p-0">
 		<Table.Root>
 			<Table.Header>
-				<Table.Row class="bg-muted/50 text-xs">
+				<Table.Row class="bg-muted/50 hover:bg-muted/50 text-xs">
 					<Table.Head class="w-[70px] text-center">Peringkat</Table.Head>
 					<Table.Head>Kecamatan</Table.Head>
 					<Table.Head class="text-center">Skor Kebersihan</Table.Head>
@@ -69,16 +69,16 @@
 			</Table.Header>
 			<Table.Body>
 				{#each wilayahTampil as area (area.kecamatan + "|" + area.kabupatenKota)}
-					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
+					<Table.Row class="hover:bg-muted/40 text-xs transition-colors">
 						<Table.Cell class="text-center font-bold">
 							<span
 								class={`inline-flex size-6 items-center justify-center rounded-full text-xs ${
 									area.peringkat === 1
-										? "bg-amber-400 text-slate-950 font-bold"
+										? "bg-amber-400 font-bold text-slate-950"
 										: area.peringkat === 2
-											? "bg-slate-300 text-slate-900 font-bold"
+											? "bg-slate-300 font-bold text-slate-900"
 											: area.peringkat === 3
-												? "bg-amber-700/40 text-amber-200 font-bold"
+												? "bg-amber-700/40 font-bold text-amber-200"
 												: "bg-muted text-muted-foreground"
 								}`}
 							>

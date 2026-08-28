@@ -112,7 +112,9 @@ describe("jalankanAnalisaManual / verifikasiTemuanManual", () => {
 		(globalThis as any).__testDb = db;
 		await siapkanKamera(db, "CAM-1");
 
-		fetchMock.mockResolvedValue(snapshotResponse([{ class_name: "Trash bin", score: 0.9 }], fotoAsli));
+		fetchMock.mockResolvedValue(
+			snapshotResponse([{ class_name: "Trash bin", score: 0.9 }], fotoAsli)
+		);
 
 		const ringkasan = await jalankanAnalisaManual({ nama: "Operator Uji", peran: "operator" });
 		expect(ringkasan.temuan).toHaveLength(0);
@@ -187,7 +189,9 @@ describe("jalankanAnalisaManual / verifikasiTemuanManual", () => {
 		const db = await createTestDb();
 		(globalThis as any).__testDb = db;
 		await siapkanKamera(db, "CAM-1");
-		fetchMock.mockResolvedValue(snapshotResponse([{ class_name: "Trash bin", score: 0.9 }], fotoAsli));
+		fetchMock.mockResolvedValue(
+			snapshotResponse([{ class_name: "Trash bin", score: 0.9 }], fotoAsli)
+		);
 
 		await jalankanAnalisaManual({ nama: "Op", peran: "operator" });
 

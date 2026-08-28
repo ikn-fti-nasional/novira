@@ -27,16 +27,16 @@
 <div class="mx-auto max-w-xl px-4 py-20 text-center">
 	<CheckCircleIcon class="mx-auto size-14 text-emerald-600" />
 	<h1 class="mt-4 text-3xl font-extrabold tracking-tight">Laporan Terkirim</h1>
-	<p class="mt-3 text-muted-foreground">
+	<p class="text-muted-foreground mt-3">
 		Terima kasih sudah melapor. Foto Anda sedang diperiksa otomatis, lalu diverifikasi petugas
 		sebelum ditindaklanjuti ke lapangan.
 	</p>
 
 	{#if kode}
-		<div class="mt-8 rounded-xl border bg-muted/40 p-6">
-			<p class="text-sm font-medium text-muted-foreground">Kode laporan Anda</p>
+		<div class="bg-muted/40 mt-8 rounded-xl border p-6">
+			<p class="text-muted-foreground text-sm font-medium">Kode laporan Anda</p>
 			<p class="mt-2 font-mono text-3xl font-bold tracking-widest">{kode}</p>
-			<p class="mt-3 text-sm text-muted-foreground">
+			<p class="text-muted-foreground mt-3 text-sm">
 				Simpan kode ini untuk memantau perkembangan penanganan. Tidak perlu membuat akun.
 			</p>
 			<div class="mt-4 flex flex-wrap justify-center gap-2">

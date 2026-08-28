@@ -1,5 +1,7 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import StatCard from "$lib/components/novira/stat-card.svelte";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import DatabaseIcon from "@lucide/svelte/icons/database";
@@ -23,55 +25,42 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Basis Data</h1>
-		<p class="text-muted-foreground">Pantau status basis data dan statistik tabel.</p>
-	</div>
+	<PageHeader
+		title="Basis Data"
+		eyebrow="Administrasi Sistem"
+		description="Pantau ukuran basis data Postgres, tingkat write-ahead log, dan statistik per tabel."
+		icon={DatabaseIcon}
+	/>
 
-	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-		<Card.Root>
-			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Ukuran Basis Data</Card.Title>
-				<HardDriveIcon class="text-muted-foreground size-4" />
-			</Card.Header>
-			<Card.Content>
-				<div class="text-2xl font-bold">{formatBytes(data.dbSize)}</div>
-				<p class="text-muted-foreground text-xs">Ukuran basis data Postgres</p>
-			</Card.Content>
-		</Card.Root>
-
-		<Card.Root>
-			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">WAL Level</Card.Title>
-				<DatabaseIcon class="text-muted-foreground size-4" />
-			</Card.Header>
-			<Card.Content>
-				<div class="text-2xl font-bold uppercase">{data.walLevel}</div>
-				<p class="text-muted-foreground text-xs">Tingkat write-ahead log Postgres</p>
-			</Card.Content>
-		</Card.Root>
-
-		<Card.Root>
-			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Jumlah Tabel</Card.Title>
-				<TableIcon class="text-muted-foreground size-4" />
-			</Card.Header>
-			<Card.Content>
-				<div class="text-2xl font-bold">{data.tables.length}</div>
-				<p class="text-muted-foreground text-xs">Tabel aktif</p>
-			</Card.Content>
-		</Card.Root>
-
-		<Card.Root>
-			<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Card.Title class="text-sm font-medium">Total Baris</Card.Title>
-				<RowsIcon class="text-muted-foreground size-4" />
-			</Card.Header>
-			<Card.Content>
-				<div class="text-2xl font-bold">{data.totalRows.toLocaleString()}</div>
-				<p class="text-muted-foreground text-xs">Di seluruh tabel</p>
-			</Card.Content>
-		</Card.Root>
+	<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+		<StatCard
+			title="Ukuran Basis Data"
+			value={formatBytes(data.dbSize)}
+			subtitle="Postgres"
+			icon={HardDriveIcon}
+			tone="emerald"
+		/>
+		<StatCard
+			title="WAL Level"
+			value={data.walLevel.toUpperCase()}
+			subtitle="Write-ahead log"
+			icon={DatabaseIcon}
+			tone="blue"
+		/>
+		<StatCard
+			title="Jumlah Tabel"
+			value={data.tables.length}
+			subtitle="Tabel aktif"
+			icon={TableIcon}
+			tone="slate"
+		/>
+		<StatCard
+			title="Total Baris"
+			value={data.totalRows}
+			subtitle="Di seluruh tabel"
+			icon={RowsIcon}
+			tone="amber"
+		/>
 	</div>
 
 	<Card.Root>
@@ -82,7 +71,7 @@
 		<Card.Content>
 			<Table.Root>
 				<Table.Header>
-					<Table.Row>
+					<Table.Row class="hover:bg-transparent">
 						<Table.Head>Nama Tabel</Table.Head>
 						<Table.Head class="text-right">Baris</Table.Head>
 						<Table.Head class="text-right">% dari Total</Table.Head>

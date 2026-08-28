@@ -221,7 +221,7 @@
 			<LeafIcon class="size-7 text-white" />
 		</div>
 		<h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Lapor Sampah Jalanan</h1>
-		<p class="mx-auto mt-3 max-w-md text-muted-foreground">
+		<p class="text-muted-foreground mx-auto mt-3 max-w-md">
 			Foto penumpukan sampah liar, sertakan lokasi, dan kirim. Tim kebersihan kota akan
 			menindaklanjutinya.
 		</p>
@@ -235,14 +235,14 @@
 				class="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center"
 			>
 				<TipIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
-				<span class="text-[11px] font-medium leading-tight text-muted-foreground">{tip.label}</span>
+				<span class="text-muted-foreground text-[11px] leading-tight font-medium">{tip.label}</span>
 			</div>
 		{/each}
 	</div>
 
 	<!-- Card Form -->
 	<Card.Root
-		class="rounded-2xl border-border/60 bg-card/80 shadow-xl shadow-emerald-500/5 backdrop-blur-sm"
+		class="border-border/60 bg-card/80 rounded-2xl shadow-xl shadow-emerald-500/5 backdrop-blur-sm"
 	>
 		<Card.Content class="p-6 md:p-8">
 			<form
@@ -268,10 +268,10 @@
 				<div class="space-y-3">
 					<Label.Root class="text-sm font-semibold">
 						Foto bukti
-						<span class="ml-1 font-normal text-muted-foreground">(wajib)</span>
+						<span class="text-muted-foreground ml-1 font-normal">(wajib)</span>
 					</Label.Root>
 					<div
-						class="group rounded-xl border border-dashed border-border/80 bg-muted/30 p-5 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
+						class="group border-border/80 bg-muted/30 rounded-xl border border-dashed p-5 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
 					>
 						<Label.Root
 							for="foto"
@@ -279,12 +279,12 @@
 						>
 							{#if previewUrl}
 								<div
-									class="relative w-full aspect-video rounded-lg overflow-hidden border border-border/80"
+									class="border-border/80 relative aspect-video w-full overflow-hidden rounded-lg border"
 								>
-									<img src={previewUrl} alt="Preview Foto" class="w-full h-full object-cover" />
+									<img src={previewUrl} alt="Preview Foto" class="h-full w-full object-cover" />
 									{#if mengompres || memindai}
 										<div
-											class="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm"
+											class="bg-background/50 absolute inset-0 flex items-center justify-center backdrop-blur-sm"
 										>
 											<LoaderCircleIcon
 												class="size-8 animate-spin text-emerald-600 dark:text-emerald-400"
@@ -309,7 +309,7 @@
 								</div>
 								<div>
 									<span class="block text-sm font-semibold">Unggah Foto</span>
-									<span class="text-xs text-muted-foreground">
+									<span class="text-muted-foreground text-xs">
 										{#if mengompres}
 											Mengompres foto…
 										{:else if memindai}
@@ -337,7 +337,7 @@
 				</div>
 
 				<!-- Divider -->
-				<div class="border-t border-dashed border-border/60"></div>
+				<div class="border-border/60 border-t border-dashed"></div>
 
 				<!-- Lokasi -->
 				<div class="space-y-3">
@@ -364,13 +364,13 @@
 							{/if}
 						</Button>
 					</div>
-					<p class="text-xs text-muted-foreground">
+					<p class="text-muted-foreground text-xs">
 						Peta otomatis mengarah ke lokasi GPS Anda. Geser pin atau ketuk peta untuk mengoreksi
 						titik sampah.
 					</p>
 					<div
 						bind:this={petaWadah}
-						class="h-64 w-full rounded-xl border border-border/60 bg-muted"
+						class="border-border/60 bg-muted h-64 w-full rounded-xl border"
 						role="application"
 						aria-label="Peta pemilih lokasi laporan"
 					></div>
@@ -395,7 +395,7 @@
 				</div>
 
 				<!-- Divider -->
-				<div class="border-t border-dashed border-border/60"></div>
+				<div class="border-border/60 border-t border-dashed"></div>
 
 				<!-- Jenis sampah -->
 				<div class="space-y-3">
@@ -419,7 +419,7 @@
 				<div class="space-y-3">
 					<Label.Root class="text-sm font-semibold">
 						Deskripsi
-						<span class="ml-1 font-normal text-muted-foreground">(opsional)</span>
+						<span class="text-muted-foreground ml-1 font-normal">(opsional)</span>
 					</Label.Root>
 					<div class="space-y-1.5">
 						<Label.Root for="deskripsi" class="text-xs font-medium"
@@ -436,13 +436,13 @@
 				</div>
 
 				<!-- Divider -->
-				<div class="border-t border-dashed border-border/60"></div>
+				<div class="border-border/60 border-t border-dashed"></div>
 
 				<!-- Identitas pelapor -->
 				<div class="space-y-3">
 					<Label.Root class="text-sm font-semibold">
 						Identitas pelapor
-						<span class="ml-1 font-normal text-muted-foreground">(opsional, untuk follow-up)</span>
+						<span class="text-muted-foreground ml-1 font-normal">(opsional, untuk follow-up)</span>
 					</Label.Root>
 					<div class="grid gap-3 sm:grid-cols-2">
 						<div class="space-y-1.5">

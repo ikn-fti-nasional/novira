@@ -130,7 +130,9 @@
 									{/if}
 								</button>
 							{:else}
-								<p class="text-muted-foreground px-2 py-1.5 text-sm">Tidak ada kamera yang cocok.</p>
+								<p class="text-muted-foreground px-2 py-1.5 text-sm">
+									Tidak ada kamera yang cocok.
+								</p>
 							{/each}
 						</div>
 					</Popover.Content>
@@ -152,7 +154,9 @@
 			<!-- Tayangan langsung CCTV — apa adanya, tanpa lapisan deteksi.
 			     Hasil deteksi sampah punya tempatnya sendiri (tabel insiden dan
 			     halaman Analisa Manual), jadi frame di sini tidak diberi anotasi. -->
-			<div class="relative aspect-video w-full overflow-hidden bg-slate-950 text-white shadow-inner">
+			<div
+				class="relative aspect-video w-full overflow-hidden bg-slate-950 text-white shadow-inner"
+			>
 				{#key kameraAktif.id}
 					<CctvStream kamera={kameraAktif} />
 				{/key}

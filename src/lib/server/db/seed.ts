@@ -1433,11 +1433,7 @@ export async function seedDemo() {
 		aiLabel: string | null;
 		aiJumlahDeteksi: number | null;
 		aiRekomendasi:
-			| "SANGAT_MUNGKIN_VALID"
-			| "PERLU_TINJAUAN"
-			| "KEMUNGKINAN_SPAM"
-			| "GAGAL_PINDAI"
-			| null;
+			"SANGAT_MUNGKIN_VALID" | "PERLU_TINJAUAN" | "KEMUNGKINAN_SPAM" | "GAGAL_PINDAI" | null;
 		/** Faktor rekomendasi AI — diserialisasi ke `aiRincian` supaya tabel triase punya baris alasan. */
 		faktorAi?: { label: string; poin: number; keterangan: string }[];
 		/** Username petugas/operator yang menangani (untuk status selain MENUNGGU). */
@@ -1655,9 +1651,7 @@ export async function seedDemo() {
 			aiLabel: null,
 			aiJumlahDeteksi: null,
 			aiRekomendasi: "GAGAL_PINDAI" as const,
-			faktorAi: [
-				{ label: "Pindai AI", poin: 0, keterangan: "Layanan deteksi tidak merespons" },
-			],
+			faktorAi: [{ label: "Pindai AI", poin: 0, keterangan: "Layanan deteksi tidak merespons" }],
 			hariLalu: 0,
 		},
 		{

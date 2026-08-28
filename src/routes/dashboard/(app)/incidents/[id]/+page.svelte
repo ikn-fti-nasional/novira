@@ -53,8 +53,8 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-3 border-b border-border/60 pb-4">
-		<Button variant="ghost" size="sm" class="w-fit h-8 text-xs" href="/dashboard/incidents">
+	<div class="border-border/60 flex flex-col gap-3 border-b pb-4">
+		<Button variant="ghost" size="sm" class="h-8 w-fit text-xs" href="/dashboard/incidents">
 			<ArrowLeftIcon class="mr-1.5 size-3.5" />
 			Kembali ke Daftar Insiden
 		</Button>
@@ -68,7 +68,7 @@
 				</Badge>
 			{/if}
 		</div>
-		<p class="flex items-center gap-1.5 text-sm text-muted-foreground">
+		<p class="text-muted-foreground flex items-center gap-1.5 text-sm">
 			<MapPinIcon class="size-3.5" />
 			{insiden.namaKamera} — {insiden.lokasi}
 		</p>
@@ -84,40 +84,40 @@
 			</Card.Header>
 			<Card.Content class="grid gap-4 sm:grid-cols-2">
 				<div class="space-y-1.5">
-					<p class="text-xs font-semibold text-muted-foreground">Pertama Terdeteksi</p>
+					<p class="text-muted-foreground text-xs font-semibold">Pertama Terdeteksi</p>
 					{#if insiden.urlSnapshotPertama}
 						<img
 							src={insiden.urlSnapshotPertama}
 							alt="Snapshot pertama terdeteksi"
-							class="aspect-video w-full rounded-md border border-border/60 object-cover"
+							class="border-border/60 aspect-video w-full rounded-md border object-cover"
 						/>
 					{:else}
 						<div
-							class="flex aspect-video w-full items-center justify-center rounded-md border border-dashed border-border/60 text-muted-foreground"
+							class="border-border/60 text-muted-foreground flex aspect-video w-full items-center justify-center rounded-md border border-dashed"
 						>
 							<ImageOffIcon class="size-6" />
 						</div>
 					{/if}
 				</div>
 				<div class="space-y-1.5">
-					<p class="text-xs font-semibold text-muted-foreground">
+					<p class="text-muted-foreground text-xs font-semibold">
 						{insiden.status === "SELESAI" ? "Bukti Penanganan" : "Kondisi Terakhir"}
 					</p>
 					{#if insiden.status === "SELESAI" && insiden.buktiFotoUrl}
 						<img
 							src={insiden.buktiFotoUrl}
 							alt="Bukti foto penanganan"
-							class="aspect-video w-full rounded-md border border-border/60 object-cover"
+							class="border-border/60 aspect-video w-full rounded-md border object-cover"
 						/>
 					{:else if insiden.urlSnapshot}
 						<img
 							src={insiden.urlSnapshot}
 							alt="Snapshot terakhir"
-							class="aspect-video w-full rounded-md border border-border/60 object-cover"
+							class="border-border/60 aspect-video w-full rounded-md border object-cover"
 						/>
 					{:else}
 						<div
-							class="flex aspect-video w-full items-center justify-center rounded-md border border-dashed border-border/60 text-muted-foreground"
+							class="border-border/60 text-muted-foreground flex aspect-video w-full items-center justify-center rounded-md border border-dashed"
 						>
 							<ImageOffIcon class="size-6" />
 						</div>
@@ -161,9 +161,9 @@
 					<span class="font-semibold">{insiden.petugasDitugaskan ?? "Belum ditugaskan"}</span>
 				</div>
 				{#if insiden.catatanPenyelesaian}
-					<div class="border-t border-border/60 pt-3">
-						<p class="mb-1 text-muted-foreground">Catatan Hasil Petugas</p>
-						<p class="rounded-md bg-muted/50 p-2 text-xs italic">
+					<div class="border-border/60 border-t pt-3">
+						<p class="text-muted-foreground mb-1">Catatan Hasil Petugas</p>
+						<p class="bg-muted/50 rounded-md p-2 text-xs italic">
 							"{insiden.catatanPenyelesaian}"
 						</p>
 					</div>
@@ -180,7 +180,7 @@
 			</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<ol class="space-y-4 border-l border-border/60 pl-4">
+			<ol class="border-border/60 space-y-4 border-l pl-4">
 				{#each riwayat as entry (entry.id)}
 					{@const Icon = iconForEntry(entry)}
 					<li class="relative">
@@ -191,12 +191,12 @@
 						</span>
 						<div class="flex flex-wrap items-baseline gap-2">
 							<span class="text-sm font-bold">{entry.tindakan}</span>
-							<span class="text-[11px] font-mono text-muted-foreground">
+							<span class="text-muted-foreground font-mono text-[11px]">
 								{new Date(entry.waktu).toLocaleString()}
 							</span>
 						</div>
-						<p class="text-xs text-muted-foreground">{entry.rincian}</p>
-						<p class="text-[10px] text-muted-foreground/80">
+						<p class="text-muted-foreground text-xs">{entry.rincian}</p>
+						<p class="text-muted-foreground/80 text-[10px]">
 							{entry.pengguna} · {entry.peran}
 						</p>
 					</li>

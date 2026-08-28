@@ -54,7 +54,7 @@
 
 <div class="mx-auto max-w-2xl px-4 py-16">
 	<h1 class="text-3xl font-extrabold tracking-tight">Lacak Laporan</h1>
-	<p class="mt-2 text-muted-foreground">
+	<p class="text-muted-foreground mt-2">
 		Masukkan kode laporan yang Anda terima setelah melapor untuk melihat perkembangan penanganannya.
 	</p>
 
@@ -80,7 +80,7 @@
 		<Card.Root class="mt-8 border-amber-300 dark:border-amber-800">
 			<Card.Content class="pt-6">
 				<p class="font-medium">Kode laporan tidak ditemukan.</p>
-				<p class="mt-1 text-sm text-muted-foreground">
+				<p class="text-muted-foreground mt-1 text-sm">
 					Periksa kembali penulisannya — kode terdiri dari awalan <span class="font-mono">LPR-</span
 					>
 					diikuti 6 karakter. Kode tidak memakai angka 0, 1, huruf O, I, atau L.
@@ -122,24 +122,24 @@
 								{langkah.judul}
 							</p>
 							{#if langkah.waktu}
-								<p class="text-xs text-muted-foreground">{formatWaktu(langkah.waktu)}</p>
+								<p class="text-muted-foreground text-xs">{formatWaktu(langkah.waktu)}</p>
 							{/if}
-							<p class="mt-1 text-sm text-muted-foreground">{langkah.keterangan}</p>
+							<p class="text-muted-foreground mt-1 text-sm">{langkah.keterangan}</p>
 						</li>
 					{/each}
 				</ol>
 
 				{#if hasil.catatanPetugas}
-					<div class="mt-6 rounded-lg border bg-muted/40 p-4">
+					<div class="bg-muted/40 mt-6 rounded-lg border p-4">
 						<p class="text-sm font-medium">Catatan petugas</p>
-						<p class="mt-1 text-sm text-muted-foreground">{hasil.catatanPetugas}</p>
+						<p class="text-muted-foreground mt-1 text-sm">{hasil.catatanPetugas}</p>
 					</div>
 				{/if}
 			</Card.Content>
 		</Card.Root>
 	{/if}
 
-	<p class="mt-8 text-center text-sm text-muted-foreground">
+	<p class="text-muted-foreground mt-8 text-center text-sm">
 		Belum pernah melapor? <a href="/lapor" class="font-medium underline">Kirim laporan sampah</a>
 	</p>
 </div>

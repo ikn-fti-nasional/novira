@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -13,7 +14,6 @@
 	import TrashIcon from "@lucide/svelte/icons/trash";
 	import ExternalLinkIcon from "@lucide/svelte/icons/external-link";
 	import SearchIcon from "@lucide/svelte/icons/search";
-	import ListFilterIcon from "@lucide/svelte/icons/list-filter";
 	import { toast } from "svelte-sonner";
 	import { enhance } from "$app/forms";
 	import type { ActionResult } from "@sveltejs/kit";
@@ -41,19 +41,26 @@
 		}
 	}
 
-	const statusFilterOptions = [
-		{ value: "SEMUA", label: "Semua Status" },
-		{ value: "ONLINE", label: "Online" },
-		{ value: "OFFLINE", label: "Offline" },
-		{ value: "PERBAIKAN", label: "Perbaikan" }
-	];
-
 	const statusCounts = $derived({
 		semua: data.kameraList.length,
 		online: data.kameraList.filter((c) => c.status === "ONLINE").length,
 		offline: data.kameraList.filter((c) => c.status === "OFFLINE").length,
-		perbaikan: data.kameraList.filter((c) => c.status === "PERBAIKAN").length
+		perbaikan: data.kameraList.filter((c) => c.status === "PERBAIKAN").length,
 	});
+
+	/** Pill filter status. `dot` diberi kelas penuh (bukan rakitan runtime)
+	 *  supaya Tailwind ikut memindainya. */
+	const statusFilterOptions = $derived([
+		{ value: "SEMUA", label: "Semua", jumlah: statusCounts.semua, dot: "bg-muted-foreground" },
+		{ value: "ONLINE", label: "Online", jumlah: statusCounts.online, dot: "bg-emerald-500" },
+		{ value: "OFFLINE", label: "Offline", jumlah: statusCounts.offline, dot: "bg-slate-400" },
+		{
+			value: "PERBAIKAN",
+			label: "Perbaikan",
+			jumlah: statusCounts.perbaikan,
+			dot: "bg-amber-500",
+		},
+	]);
 
 	const filtered = $derived(
 		data.kameraList.filter((cam) => {
@@ -79,20 +86,31 @@
 	const statusOptions = [
 		{ value: "ONLINE", label: "ONLINE" },
 		{ value: "OFFLINE", label: "OFFLINE" },
-		{ value: "PERBAIKAN", label: "PERBAIKAN" }
+		{ value: "PERBAIKAN", label: "PERBAIKAN" },
 	];
 
 	// State lokal supaya label pemicu Select ikut berubah saat item dipilih.
 	let statusBaru = $state("OFFLINE");
 
-	function statusBadge(status: string): { variant: "default" | "secondary"; class: string } {
+	/** Badge status kamera — nada lembut yang sama dipakai di seluruh dasbor,
+	 *  bukan blok warna solid yang menenggelamkan isi tabel. */
+	function statusBadge(status: string): { variant: "outline"; class: string } {
 		switch (status) {
 			case "ONLINE":
-				return { variant: "default", class: "bg-emerald-600 text-white border-none" };
+				return {
+					variant: "outline",
+					class: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+				};
 			case "PERBAIKAN":
-				return { variant: "secondary", class: "bg-amber-500 text-white border-none" };
+				return {
+					variant: "outline",
+					class: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+				};
 			default:
-				return { variant: "secondary", class: "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200" };
+				return {
+					variant: "outline",
+					class: "border-slate-400/30 bg-slate-500/10 text-slate-600 dark:text-slate-300",
+				};
 		}
 	}
 </script>
@@ -102,163 +120,100 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- HEADER HALAMAN -->
-	<div
-		class="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between"
+	<PageHeader
+		title="Manajemen Kamera CCTV"
+		eyebrow="Infrastruktur Pemantauan"
+		description="Kelola umpan CCTV publik dari berbagai kota — tambah link stream, pantau status, dan atur wilayah."
+		icon={CameraIcon}
 	>
-		<div class="flex flex-col gap-1">
-			<div class="flex items-center gap-2">
-				<CameraIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-				<h1 class="text-3xl font-extrabold tracking-tight">Manajemen Kamera CCTV</h1>
-			</div>
-			<p class="text-sm text-muted-foreground">
-				Kelola umpan CCTV publik dari berbagai kota — tambah link stream, pantau status, dan atur
-				wilayah.
-			</p>
-		</div>
-
-		<Button
-			variant="default"
-			size="sm"
-			class="h-9 bg-emerald-700 text-xs font-semibold text-white hover:bg-emerald-800"
-			onclick={() => (tambahOpen = true)}
-		>
-			<PlusIcon class="mr-1.5 size-4" />
-			Tambah Kamera CCTV
-		</Button>
-	</div>
+		{#snippet actions()}
+			<Button size="sm" class="h-9 text-xs font-semibold" onclick={() => (tambahOpen = true)}>
+				<PlusIcon class="mr-1.5 size-4" />
+				Tambah Kamera CCTV
+			</Button>
+		{/snippet}
+	</PageHeader>
 
 	<CameraFormDialog bind:open={tambahOpen} kotaList={data.kotaList} />
 
 	<!-- FILTER & PENCARIAN -->
-	<div class="flex flex-col gap-3">
+	<div class="bg-card flex flex-col gap-3 rounded-xl border p-3 sm:p-4">
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<div class="relative w-full max-w-sm">
-				<SearchIcon class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+			<div class="relative w-full sm:max-w-sm">
+				<SearchIcon
+					class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+				/>
 				<Input.Root
 					placeholder="Cari nama kamera, kota, atau kecamatan..."
-					class="pl-9"
+					class="h-9 pl-9"
 					bind:value={search}
 				/>
 			</div>
 
-			<div class="flex items-center gap-2">
-				<div class="flex items-center gap-1.5 rounded-lg border bg-muted/30 p-1">
-					<ListFilterIcon class="ml-1.5 size-3.5 text-muted-foreground" />
-					<select
-						bind:value={statusFilter}
-						aria-label="Filter status kamera"
-						class="h-7 rounded-md border border-input bg-background px-2 pr-6 text-xs font-medium focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
-					>
-						{#each statusFilterOptions as opt (opt.value)}
-							<option value={opt.value}>
-								{opt.label}{opt.value === "SEMUA"
-									? ` (${statusCounts.semua})`
-									: opt.value === "ONLINE"
-										? ` (${statusCounts.online})`
-										: opt.value === "OFFLINE"
-											? ` (${statusCounts.offline})`
-											: ` (${statusCounts.perbaikan})`}
-							</option>
-						{/each}
-					</select>
-				</div>
-
+			<div class="text-muted-foreground flex items-center gap-3 text-xs">
+				<span class="font-medium">
+					Menampilkan <strong class="text-foreground">{filtered.length}</strong> dari
+					{statusCounts.semua} kamera
+				</span>
 				{#if statusFilter !== "SEMUA" || search.trim()}
 					<Button
 						variant="ghost"
 						size="sm"
-						class="h-7 px-2 text-xs"
+						class="h-8 px-2 text-xs"
 						onclick={() => {
 							search = "";
 							statusFilter = "SEMUA";
 						}}
 					>
-						Reset
+						Reset filter
 					</Button>
 				{/if}
 			</div>
 		</div>
 
-		<!-- PILL FILTER STATUS -->
-		<div class="flex flex-wrap items-center gap-1.5">
-			<button
-				type="button"
-				onclick={() => (statusFilter = "SEMUA")}
-				class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors {statusFilter ===
-				'SEMUA'
-					? 'border-emerald-700 bg-emerald-700 text-white shadow-sm'
-					: 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground'}"
-			>
-				Semua
-				<span class="rounded-full px-1.5 py-0 text-[10px] leading-none {statusFilter === 'SEMUA' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'}">{statusCounts.semua}</span>
-			</button>
-			<button
-				type="button"
-				onclick={() => (statusFilter = "ONLINE")}
-				class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors {statusFilter ===
-				'ONLINE'
-					? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-					: 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300'}"
-			>
-				<span class="size-2 rounded-full {statusFilter === 'ONLINE' ? 'bg-white' : 'bg-emerald-500'}"></span>
-				Online
-				<span class="rounded-full px-1.5 py-0 text-[10px] leading-none {statusFilter === 'ONLINE' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'}">{statusCounts.online}</span>
-			</button>
-			<button
-				type="button"
-				onclick={() => (statusFilter = "OFFLINE")}
-				class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors {statusFilter ===
-				'OFFLINE'
-					? 'border-slate-700 bg-slate-700 text-white shadow-sm'
-					: 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300'}"
-			>
-				<span class="size-2 rounded-full {statusFilter === 'OFFLINE' ? 'bg-white' : 'bg-slate-400'}"></span>
-				Offline
-				<span class="rounded-full px-1.5 py-0 text-[10px] leading-none {statusFilter === 'OFFLINE' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}">{statusCounts.offline}</span>
-			</button>
-			<button
-				type="button"
-				onclick={() => (statusFilter = "PERBAIKAN")}
-				class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors {statusFilter ===
-				'PERBAIKAN'
-					? 'border-amber-600 bg-amber-500 text-white shadow-sm'
-					: 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300'}"
-			>
-				<span class="size-2 rounded-full {statusFilter === 'PERBAIKAN' ? 'bg-white' : 'bg-amber-500'}"></span>
-				Perbaikan
-				<span class="rounded-full px-1.5 py-0 text-[10px] leading-none {statusFilter === 'PERBAIKAN' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'}">{statusCounts.perbaikan}</span>
-			</button>
-			<span class="ml-2 text-xs text-muted-foreground">
-				{filtered.length} dari {statusCounts.semua} kamera
-				{#if statusFilter !== "SEMUA"}• filter: {statusFilter}{/if}
-			</span>
+		<div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter status kamera">
+			{#each statusFilterOptions as opt (opt.value)}
+				{@const aktif = statusFilter === opt.value}
+				<button
+					type="button"
+					aria-pressed={aktif}
+					onclick={() => (statusFilter = opt.value)}
+					class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors {aktif
+						? 'border-primary bg-primary text-primary-foreground shadow-sm'
+						: 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
+				>
+					<span class="size-2 rounded-full {aktif ? 'bg-current opacity-70' : opt.dot}"></span>
+					{opt.label}
+					<span
+						class="rounded-full px-1.5 text-[10px] leading-4 {aktif
+							? 'bg-black/15'
+							: 'bg-muted text-muted-foreground'}"
+					>
+						{opt.jumlah}
+					</span>
+				</button>
+			{/each}
 		</div>
 	</div>
 
 	<!-- TABEL MANAJEMEN KAMERA -->
-	<Card.Root class="overflow-hidden border-emerald-800/20 shadow-md">
+	<Card.Root class="overflow-hidden py-0">
 		<Card.Content class="!p-0">
 			<div class="relative w-full overflow-x-auto">
 				<Table.Root class="w-full min-w-[750px] border-collapse text-left">
-					<!-- HEADER TEGAS EMERALD -->
 					<Table.Header>
-						<Table.Row class="border-none bg-emerald-800 hover:bg-emerald-800">
-							<Table.Head class="py-3.5 pl-4 text-xs font-bold uppercase tracking-wider text-emerald-50">Tindakan</Table.Head>
-							<Table.Head class="py-3.5 text-xs font-bold uppercase tracking-wider text-emerald-50">Nama Kamera</Table.Head>
-							<Table.Head class="py-3.5 text-xs font-bold uppercase tracking-wider text-emerald-50">Kota / Kecamatan</Table.Head>
-							<Table.Head class="py-3.5 text-xs font-bold uppercase tracking-wider text-emerald-50">Status</Table.Head>
-							<Table.Head class="py-3.5 pr-4 text-xs font-bold uppercase tracking-wider text-emerald-50">Stream</Table.Head>
+						<Table.Row class="bg-muted/60 hover:bg-muted/60">
+							<Table.Head class="py-3.5 pl-4">Tindakan</Table.Head>
+							<Table.Head class="py-3.5">Nama Kamera</Table.Head>
+							<Table.Head class="py-3.5">Kota / Kecamatan</Table.Head>
+							<Table.Head class="py-3.5">Status</Table.Head>
+							<Table.Head class="py-3.5 pr-4">Stream</Table.Head>
 						</Table.Row>
 					</Table.Header>
 
 					<Table.Body>
-						{#each paginated as cam, idx (cam.id)}
-							<Table.Row
-								class="border-b border-border/50 text-xs transition-colors {idx % 2 === 0
-									? 'bg-white dark:bg-background'
-									: 'bg-emerald-50/30 dark:bg-emerald-950/10'} hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30"
-							>
+						{#each paginated as cam (cam.id)}
+							<Table.Row class="border-border/50 hover:bg-muted/50 border-b text-xs">
 								<!-- TINDAKAN (KEMBALI DI SEBELAH KIRI) -->
 								<Table.Cell class="py-3 pl-4 whitespace-nowrap">
 									<div class="flex items-center gap-1.5">
@@ -280,7 +235,7 @@
 											<input type="hidden" name="id" value={cam.id} />
 											<select
 												name="status"
-												class="h-7 rounded border border-input bg-background px-2 text-[11px] font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-600"
+												class="border-input bg-background h-8 rounded-md border px-2 text-[11px] font-medium"
 												onchange={(e) => e.currentTarget.form?.requestSubmit()}
 											>
 												{#each statusOptions as opt}
@@ -310,12 +265,12 @@
 								</Table.Cell>
 
 								<!-- NAMA KAMERA -->
-								<Table.Cell class="py-3 font-bold text-foreground">
+								<Table.Cell class="text-foreground py-3 font-bold">
 									{cam.nama}
 								</Table.Cell>
 
 								<!-- KOTA / KECAMATAN -->
-								<Table.Cell class="py-3 text-muted-foreground">
+								<Table.Cell class="text-muted-foreground py-3">
 									{cam.kota}{cam.kecamatan ? `, ${cam.kecamatan}` : ""}
 								</Table.Cell>
 
@@ -323,7 +278,7 @@
 								<Table.Cell class="py-3">
 									<Badge
 										variant={statusBadge(cam.status).variant}
-										class="{statusBadge(cam.status).class} font-semibold text-[10px]"
+										class="{statusBadge(cam.status).class} text-[10px] font-semibold"
 									>
 										{cam.status}
 									</Badge>
@@ -347,7 +302,7 @@
 							</Table.Row>
 						{:else}
 							<Table.Row>
-								<Table.Cell colspan={5} class="h-24 text-center text-xs text-muted-foreground">
+								<Table.Cell colspan={5} class="text-muted-foreground h-24 text-center text-xs">
 									{#if data.kameraList.length === 0}
 										Belum ada kamera CCTV.
 									{:else if search.trim() && statusFilter !== "SEMUA"}

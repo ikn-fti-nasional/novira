@@ -180,7 +180,7 @@
 	}
 </script>
 
-<Card.Root class="border-border/80 shadow-md">
+<Card.Root class="overflow-hidden">
 	<Card.Header class="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 pb-3">
 		<div class="min-w-0">
 			<div class="flex flex-wrap items-center gap-2">
@@ -197,7 +197,7 @@
 		</div>
 
 		<!-- Filter Cepat -->
-		<div class="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+		<div class="bg-muted/40 flex shrink-0 flex-wrap items-center gap-1 rounded-lg border p-1">
 			<Button
 				variant={filterStatus === "SEMUA" ? "secondary" : "ghost"}
 				size="sm"
@@ -209,7 +209,7 @@
 			<Button
 				variant={filterStatus === "AKTIF" ? "secondary" : "ghost"}
 				size="sm"
-				class="h-7 px-2.5 text-xs text-red-600 dark:text-red-400 font-semibold"
+				class="h-7 px-2.5 text-xs font-semibold text-red-600 dark:text-red-400"
 				onclick={() => (filterStatus = "AKTIF")}
 			>
 				Aktif ({insidenList.filter((i) => i.status === "AKTIF").length})
@@ -217,7 +217,7 @@
 			<Button
 				variant={filterStatus === "MELANGGAR_SLA" ? "secondary" : "ghost"}
 				size="sm"
-				class="h-7 px-2.5 text-xs text-amber-600 dark:text-amber-400 font-semibold"
+				class="h-7 px-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400"
 				onclick={() => (filterStatus = "MELANGGAR_SLA")}
 			>
 				Melanggar SLA ({insidenList.filter((i) => i.statusSla === "MELANGGAR_SLA").length})
@@ -225,7 +225,7 @@
 			<Button
 				variant={filterStatus === "SELESAI" ? "secondary" : "ghost"}
 				size="sm"
-				class="h-7 px-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold"
+				class="h-7 px-2.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
 				onclick={() => (filterStatus = "SELESAI")}
 			>
 				Riwayat ({insidenList.filter((i) => i.status === "SELESAI").length})
@@ -240,7 +240,7 @@
 		     overflow-x-auto sehingga tabel menggulir, bukan terpotong. -->
 		<Table.Root class="min-w-[1040px]">
 			<Table.Header>
-				<Table.Row class="bg-muted/50 text-xs">
+				<Table.Row class="bg-muted/50 hover:bg-muted/50 text-xs">
 					<Table.Head class="w-[190px]">Tindakan</Table.Head>
 					<Table.Head class="w-[80px]">Prioritas</Table.Head>
 					<Table.Head class="w-[100px]">Keparahan</Table.Head>
@@ -254,7 +254,7 @@
 			</Table.Header>
 			<Table.Body>
 				{#each insidenTampil as insiden (insiden.id)}
-					<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
+					<Table.Row class="hover:bg-muted/40 text-xs transition-colors">
 						<!-- Tindakan Super Admin -->
 						<Table.Cell>
 							<div class="flex items-center gap-1">
@@ -307,7 +307,7 @@
 										Terangkut
 									</span>
 								{:else}
-									<span class="text-[11px] text-muted-foreground font-medium">Diverifikasi</span>
+									<span class="text-muted-foreground text-[11px] font-medium">Diverifikasi</span>
 								{/if}
 							</div>
 						</Table.Cell>
@@ -388,8 +388,8 @@
 						<!-- Lokasi -->
 						<Table.Cell>
 							<div class="flex flex-col">
-								<span class="font-bold text-foreground">{insiden.lokasi}</span>
-								<span class="text-[11px] text-muted-foreground"
+								<span class="text-foreground font-bold">{insiden.lokasi}</span>
+								<span class="text-muted-foreground text-[11px]"
 									>{insiden.namaKamera}{insiden.kelurahan ? ` (${insiden.kelurahan})` : ""}</span
 								>
 							</div>
@@ -412,8 +412,8 @@
 
 						<!-- Durasi -->
 						<Table.Cell>
-							<div class="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-medium">
-								<ClockIcon class="size-3.5 text-muted-foreground" />
+							<div class="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
+								<ClockIcon class="text-muted-foreground size-3.5" />
 								{formatDurasi(insiden.durasiMenit)}
 							</div>
 						</Table.Cell>
@@ -432,7 +432,7 @@
 									{insiden.petugasDitugaskan}
 								</span>
 							{:else}
-								<span class="text-xs italic text-amber-600 dark:text-amber-400 font-medium">
+								<span class="text-xs font-medium text-amber-600 italic dark:text-amber-400">
 									Belum Ditugaskan
 								</span>
 							{/if}
@@ -485,10 +485,10 @@
 			<Label for="bukti-foto" class="text-xs font-semibold">Foto Bukti Penanganan *</Label>
 			<label
 				for="bukti-foto"
-				class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/60 p-6 text-center hover:border-emerald-500/50 hover:bg-emerald-500/5"
+				class="border-border/60 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center hover:border-emerald-500/50 hover:bg-emerald-500/5"
 			>
-				<UploadIcon class="size-6 text-muted-foreground" />
-				<span class="text-xs text-muted-foreground">
+				<UploadIcon class="text-muted-foreground size-6" />
+				<span class="text-muted-foreground text-xs">
 					{buktiFile ? buktiFile.name : "Klik untuk pilih foto (JPG/PNG)"}
 				</span>
 			</label>
@@ -510,18 +510,13 @@
 				bind:value={catatanPenyelesaian}
 				rows="3"
 				placeholder="Contoh: sampah sudah diangkut 2 karung, area dibersihkan."
-				class="w-full rounded-md border border-border/60 bg-transparent p-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500"
+				class="border-border/60 placeholder:text-muted-foreground w-full rounded-md border bg-transparent p-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
 			></textarea>
 		</div>
 
 		<Dialog.Footer>
 			<Button variant="outline" size="sm" onclick={() => (dialogTerbuka = false)}>Batal</Button>
-			<Button
-				size="sm"
-				class="bg-emerald-600 text-white hover:bg-emerald-700"
-				disabled={!buktiFile}
-				onclick={konfirmasiSelesai}
-			>
+			<Button size="sm" class="font-semibold" disabled={!buktiFile} onclick={konfirmasiSelesai}>
 				<CheckCircle2Icon class="mr-1.5 size-3.5" />
 				Tandai Selesai
 			</Button>
@@ -544,7 +539,7 @@
 		<div class="space-y-2 py-2">
 			<Label class="text-xs font-semibold">Petugas Lapangan *</Label>
 			{#if petugasList.length === 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-muted-foreground text-xs">
 					Belum ada petugas terdaftar. Tambahkan lewat halaman Petugas Lapangan.
 				</p>
 			{:else}
@@ -573,7 +568,7 @@
 			>
 			<Button
 				size="sm"
-				class="bg-emerald-600 text-white hover:bg-emerald-700"
+				class="font-semibold"
 				disabled={!petugasDipilih}
 				onclick={konfirmasiTugaskan}
 			>

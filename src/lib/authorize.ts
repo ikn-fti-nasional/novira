@@ -3,12 +3,7 @@ import type { ActionFailure } from "@sveltejs/kit";
 import type { SessionUser } from "$lib/server/auth.js";
 
 export type Role =
-	| "admin"
-	| "operator"
-	| "kepala_seksi"
-	| "kepala_dinas"
-	| "walikota"
-	| "petugas_lapangan";
+	"admin" | "operator" | "kepala_seksi" | "kepala_dinas" | "walikota" | "petugas_lapangan";
 
 export const ALL_ROLES: readonly Role[] = [
 	"admin",

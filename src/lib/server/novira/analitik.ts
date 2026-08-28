@@ -18,10 +18,7 @@ import { parseTitik, selGrid } from "./geo.js";
 const AMBANG_KRONIS = 3;
 
 export type RekomendasiIntervensi =
-	| "TAMBAH_TPS"
-	| "PENJADWALAN_ULANG"
-	| "PENGAWASAN_CCTV"
-	| "SOSIALISASI_WARGA";
+	"TAMBAH_TPS" | "PENJADWALAN_ULANG" | "PENGAWASAN_CCTV" | "SOSIALISASI_WARGA";
 
 export interface TitikKronis {
 	kunci: string;

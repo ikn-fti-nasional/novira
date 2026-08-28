@@ -47,10 +47,7 @@ const SKOR_AI_TINGGI = 0.45;
 const SKOR_AI_RENDAH = 0.2;
 
 export type RekomendasiAi =
-	| "SANGAT_MUNGKIN_VALID"
-	| "PERLU_TINJAUAN"
-	| "KEMUNGKINAN_SPAM"
-	| "GAGAL_PINDAI";
+	"SANGAT_MUNGKIN_VALID" | "PERLU_TINJAUAN" | "KEMUNGKINAN_SPAM" | "GAGAL_PINDAI";
 
 const JENIS_VALID: readonly JenisSampah[] = [
 	"tumpukan_sampah",

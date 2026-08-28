@@ -28,5 +28,3 @@ export async function petaTerbatas<T, R>(
 	await Promise.all(Array.from({ length: Math.min(batas, items.length) }, () => pekerja()));
 	return hasil;
 }
-
-

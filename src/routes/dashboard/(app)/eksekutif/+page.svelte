@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import * as Chart from "$lib/components/ui/chart/index.js";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
@@ -156,38 +157,29 @@
 
 <div class="space-y-6 print:p-0">
 	<!-- Header Eksekutif + Controls Bar -->
-	<div
-		class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-border/60 pb-4"
+	<PageHeader
+		title="Dashboard Eksekutif Kebersihan Lingkungan"
+		eyebrow="Ringkasan Pimpinan"
+		description="Pemantauan skor kebersihan wilayah, evaluasi SLA armada, dan peringkat kelurahan Kota Bandung untuk Kepala Dinas dan Wali Kota."
+		icon={TrophyIcon}
 	>
-		<div>
-			<div class="flex items-center gap-2">
-				<h1 class="text-3xl font-extrabold tracking-tight text-foreground">
-					Dashboard Eksekutif Kebersihan Lingkungan
-				</h1>
-				<Badge
-					variant="outline"
-					class="border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold px-2.5 py-1 text-xs"
-				>
-					<ShieldCheckIcon class="mr-1 size-3.5" />
-					Akses Executive (Read-Only)
-				</Badge>
-			</div>
-			<p class="text-muted-foreground text-sm mt-1">
-				Pemantauan skor kebersihan wilayah, evaluasi SLA armada, dan peringkat kelurahan Kota
-				Bandung untuk Kepala Dinas &amp; Wali Kota.
-			</p>
-		</div>
-
-		<!-- Context Controls (Periode, Kecamatan Filter, Unduh PDF/CSV) -->
-		<div class="flex flex-wrap items-center gap-2 print:hidden">
-			<div
-				class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs"
+		{#snippet badges()}
+			<Badge
+				variant="outline"
+				class="border-emerald-600/40 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
 			>
+				<ShieldCheckIcon class="mr-1 size-3.5" />
+				Akses Executive (Read-Only)
+			</Badge>
+		{/snippet}
+
+		{#snippet actions()}
+			<div class="bg-card flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs shadow-xs">
 				<CalendarIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
-				<span class="font-semibold text-muted-foreground">Periode:</span>
+				<span class="text-muted-foreground font-semibold">Periode:</span>
 				<select
 					bind:value={periodeDipilih}
-					class="bg-transparent font-bold text-foreground focus:outline-hidden text-xs cursor-pointer"
+					class="text-foreground cursor-pointer bg-transparent text-xs font-bold focus:outline-hidden"
 				>
 					<option value="hari_ini">Hari Ini</option>
 					<option value="7_hari">7 Hari Terakhir</option>
@@ -197,14 +189,12 @@
 				</select>
 			</div>
 
-			<div
-				class="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs shadow-xs"
-			>
+			<div class="bg-card flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs shadow-xs">
 				<FilterIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
-				<span class="font-semibold text-muted-foreground">Kecamatan:</span>
+				<span class="text-muted-foreground font-semibold">Kecamatan:</span>
 				<select
 					bind:value={kecamatanDipilih}
-					class="bg-transparent font-bold text-foreground focus:outline-hidden text-xs cursor-pointer"
+					class="text-foreground cursor-pointer bg-transparent text-xs font-bold focus:outline-hidden"
 				>
 					<option value="SEMUA">Seluruh Kecamatan (Kota Bandung)</option>
 					{#each data.kecamatanList as kec}
@@ -213,26 +203,19 @@
 				</select>
 			</div>
 
-			<Button
-				variant="default"
-				size="sm"
-				class="h-9 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white"
-				onclick={handleExportPdf}
-			>
+			<Button size="sm" class="h-9 text-xs font-semibold print:hidden" onclick={handleExportPdf}>
 				<PrinterIcon class="mr-1.5 size-3.5" />
 				Cetak PDF Laporan
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<!-- Baris 1: Kartu Metrik Utama KPI Eksekutif -->
-	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+	<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 		{#each kpiStats as stat (stat.title)}
-			<Card.Root
-				class="relative overflow-hidden border-border/80 shadow-sm transition-all hover:shadow-md"
-			>
+			<Card.Root class="stat-card hover-lift gap-3 py-5">
 				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+					<Card.Title class="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
 						{stat.title}
 					</Card.Title>
 					<div class={`flex size-8 items-center justify-center rounded-lg ${stat.badgeBg}`}>
@@ -247,11 +230,11 @@
 							{stat.value}
 						{/if}
 						{#if stat.unit}
-							<span class="text-xs font-semibold text-muted-foreground">{stat.unit}</span>
+							<span class="text-muted-foreground text-xs font-semibold">{stat.unit}</span>
 						{/if}
 					</div>
 					<div class="mt-2 flex items-center justify-between">
-						<span class="text-xs text-muted-foreground font-medium">{stat.subtitle}</span>
+						<span class="text-muted-foreground text-xs font-medium">{stat.subtitle}</span>
 						<span
 							class={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
 								stat.title === "Insiden Sampah Aktif"
@@ -289,7 +272,7 @@
 				</Card.Description>
 			</div>
 
-			<div class="flex items-center gap-1.5 rounded-lg border bg-muted/40 p-1 text-xs">
+			<div class="bg-muted/40 flex items-center gap-1.5 rounded-lg border p-1 text-xs">
 				<button
 					onclick={() => (chartMode = "mingguan")}
 					class={`rounded-md px-3 py-1 font-semibold transition-all ${
@@ -392,7 +375,7 @@
 
 	<!-- Baris 3: Leaderboard / Klasemen Kebersihan Kelurahan -->
 	<Card.Root class="border-border/80 shadow-md">
-		<Card.Header class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pb-3">
+		<Card.Header class="flex flex-col gap-4 pb-3 md:flex-row md:items-center md:justify-between">
 			<div>
 				<div class="flex items-center gap-2">
 					<TrophyIcon class="size-5 text-amber-500" />
@@ -400,7 +383,7 @@
 						Leaderboard &amp; Ranking Kebersihan Kelurahan
 					</Card.Title>
 				</div>
-				<Card.Description class="text-xs mt-0.5">
+				<Card.Description class="mt-0.5 text-xs">
 					Peringkat kebersihan kelurahan berdasarkan evaluasi durasi penanganan armada &amp;
 					akumulasi insiden.
 				</Card.Description>
@@ -409,20 +392,20 @@
 			<!-- Live Filter & Search input -->
 			<div class="flex flex-wrap items-center gap-2 print:hidden">
 				<div class="relative min-w-[200px]">
-					<SearchIcon class="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
+					<SearchIcon class="text-muted-foreground absolute top-2.5 left-2.5 size-3.5" />
 					<input
 						type="text"
 						placeholder="Cari kelurahan/kecamatan..."
 						bind:value={searchQuery}
-						class="w-full rounded-md border bg-background pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+						class="bg-background text-foreground placeholder:text-muted-foreground w-full rounded-md border py-1.5 pr-3 pl-8 text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-hidden"
 					/>
 				</div>
 
-				<div class="flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-xs">
+				<div class="bg-card flex items-center gap-1 rounded-md border px-2 py-1 text-xs">
 					<Building2Icon class="size-3.5 text-emerald-600 dark:text-emerald-400" />
 					<select
 						bind:value={kecamatanDipilih}
-						class="bg-transparent font-semibold text-foreground text-xs focus:outline-hidden cursor-pointer"
+						class="text-foreground cursor-pointer bg-transparent text-xs font-semibold focus:outline-hidden"
 					>
 						<option value="SEMUA">Semua Kecamatan</option>
 						{#each data.kecamatanList as kec}
@@ -448,22 +431,22 @@
 				<Table.Body>
 					{#if filteredLeaderboard.length === 0}
 						<Table.Row>
-							<Table.Cell colspan={6} class="text-center py-6 text-xs text-muted-foreground">
+							<Table.Cell colspan={6} class="text-muted-foreground py-6 text-center text-xs">
 								Tidak ada data kelurahan yang sesuai dengan filter pencarian.
 							</Table.Cell>
 						</Table.Row>
 					{:else}
 						{#each filteredLeaderboard as item (item.kecamatan + "|" + item.kabupatenKota)}
-							<Table.Row class="text-xs hover:bg-muted/40 transition-colors">
+							<Table.Row class="hover:bg-muted/40 text-xs transition-colors">
 								<Table.Cell class="text-center font-bold">
 									<span
 										class={`inline-flex size-6 items-center justify-center rounded-full text-xs ${
 											item.peringkat === 1
-												? "bg-amber-400 text-slate-950 font-extrabold"
+												? "bg-amber-400 font-extrabold text-slate-950"
 												: item.peringkat === 2
-													? "bg-slate-300 text-slate-900 font-bold"
+													? "bg-slate-300 font-bold text-slate-900"
 													: item.peringkat === 3
-														? "bg-amber-700/40 text-amber-200 font-bold"
+														? "bg-amber-700/40 font-bold text-amber-200"
 														: "bg-muted text-muted-foreground"
 										}`}
 									>
@@ -473,8 +456,8 @@
 
 								<Table.Cell>
 									<div class="flex flex-col">
-										<span class="font-bold text-foreground text-sm">{item.kelurahan}</span>
-										<span class="text-[11px] text-muted-foreground">
+										<span class="text-foreground text-sm font-bold">{item.kelurahan}</span>
+										<span class="text-muted-foreground text-[11px]">
 											Kec. {item.kecamatan}, {item.kabupatenKota}
 										</span>
 									</div>
@@ -488,7 +471,7 @@
 										>
 											{item.skorKebersihan} / 100
 										</Badge>
-										<div class="w-24 bg-muted h-1.5 rounded-full overflow-hidden">
+										<div class="bg-muted h-1.5 w-24 overflow-hidden rounded-full">
 											<div
 												class={`h-full ${
 													item.skorKebersihan >= 85
@@ -508,7 +491,7 @@
 								<Table.Cell class="text-center font-semibold">
 									<span
 										class={item.jumlahInsiden > 15
-											? "text-red-600 dark:text-red-400 font-extrabold"
+											? "font-extrabold text-red-600 dark:text-red-400"
 											: ""}
 									>
 										{item.jumlahInsiden} Insiden
@@ -536,7 +519,7 @@
 										</span>
 									{:else}
 										<span
-											class="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground"
+											class="text-muted-foreground inline-flex items-center gap-0.5 text-xs font-medium"
 										>
 											<MinusIcon class="size-3.5" />
 											Stabil
@@ -560,8 +543,8 @@
 					<Card.Title class="text-base font-bold">Wilayah Performa Terbaik</Card.Title>
 				</div>
 			</Card.Header>
-			<Card.Content class="text-xs space-y-1.5">
-				<p class="font-semibold text-foreground text-sm">Kelurahan Cihapit (Kec. Bandung Wetan)</p>
+			<Card.Content class="space-y-1.5 text-xs">
+				<p class="text-foreground text-sm font-semibold">Kelurahan Cihapit (Kec. Bandung Wetan)</p>
 				<p class="text-muted-foreground">
 					Skor kebersihan tertinggi <strong class="text-emerald-700 dark:text-emerald-400"
 						>94/100</strong
@@ -578,8 +561,8 @@
 					<Card.Title class="text-base font-bold">Wilayah Perlu Perhatian</Card.Title>
 				</div>
 			</Card.Header>
-			<Card.Content class="text-xs space-y-1.5">
-				<p class="font-semibold text-foreground text-sm">Kelurahan Malabar (Kec. Lengkong)</p>
+			<Card.Content class="space-y-1.5 text-xs">
+				<p class="text-foreground text-sm font-semibold">Kelurahan Malabar (Kec. Lengkong)</p>
 				<p class="text-muted-foreground">
 					Skor terendah <strong class="text-red-600 dark:text-red-400">52/100</strong> dengan
 					<strong>23 insiden</strong>
@@ -595,8 +578,8 @@
 					<Card.Title class="text-base font-bold">Rekomendasi Kebijakan DLH</Card.Title>
 				</div>
 			</Card.Header>
-			<Card.Content class="text-xs space-y-1.5">
-				<p class="font-semibold text-foreground text-sm">Optimasi Penambahan Armada</p>
+			<Card.Content class="space-y-1.5 text-xs">
+				<p class="text-foreground text-sm font-semibold">Optimasi Penambahan Armada</p>
 				<p class="text-muted-foreground">
 					Disarankan menambah <strong>2 unit truk pengangkut kontainer</strong> ke Kecamatan Lengkong
 					pada jam 06:00 - 09:00 WIB untuk menekan durasi pembuangan liar.

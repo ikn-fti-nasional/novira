@@ -1,5 +1,7 @@
 <script lang="ts">
 	import * as Table from "$lib/components/ui/table/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
+	import UsersIcon from "@lucide/svelte/icons/users";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
@@ -180,31 +182,36 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Manajemen Pengguna</h1>
-			<p class="text-muted-foreground">Kelola akun dan hak akses pengguna.</p>
-		</div>
-		<Button onclick={() => (createOpen = true)}>
-			<PlusIcon class="mr-2 size-4" />
-			Tambah Pengguna
-		</Button>
-	</div>
+	<PageHeader
+		title="Manajemen Pengguna"
+		eyebrow="Administrasi Sistem"
+		description="Kelola akun, peran, dan hak akses seluruh pengguna dasbor NOVIRA."
+		icon={UsersIcon}
+	>
+		{#snippet actions()}
+			<Button size="sm" class="h-9 text-xs font-semibold" onclick={() => (createOpen = true)}>
+				<PlusIcon class="mr-1.5 size-4" />
+				Tambah Pengguna
+			</Button>
+		{/snippet}
+	</PageHeader>
 
 	<!-- Toolbar -->
-	<div class="flex items-center gap-2">
-		<div class="relative max-w-sm flex-1">
-			<SearchIcon class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-			<Input placeholder="Cari pengguna..." class="pl-9" bind:value={search} />
+	<div class="bg-card flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:p-4">
+		<div class="relative w-full sm:max-w-sm">
+			<SearchIcon
+				class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+			/>
+			<Input placeholder="Cari pengguna..." class="h-9 pl-9" bind:value={search} />
 		</div>
-		<p class="text-muted-foreground text-sm">
-			{filtered.length} pengguna
+		<p class="text-muted-foreground text-xs font-medium">
+			<strong class="text-foreground">{filtered.length}</strong> pengguna
 		</p>
-		<div class="ml-auto flex items-center gap-2">
+		<div class="flex flex-wrap items-center gap-2 sm:ml-auto">
 			{#if selectedIds.size > 0}
 				<form method="POST" action="?/bulkDelete" use:enhance>
 					<input type="hidden" name="ids" value={[...selectedIds].join(",")} />
-					<Button variant="destructive" size="sm" type="submit">
+					<Button variant="destructive" size="sm" class="h-9" type="submit">
 						<TrashIcon class="mr-2 size-4" />
 						Hapus {selectedIds.size}
 					</Button>
@@ -213,29 +220,29 @@
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
-						<Button variant="outline" size="sm" {...props}>
+						<Button variant="outline" size="sm" class="h-9" {...props}>
 							<DownloadIcon class="mr-2 size-4" />
 							Ekspor
 						</Button>
 					{/snippet}
 				</DropdownMenu.Trigger>
-				<DropdownMenu.Content>
-					<DropdownMenu.Item onclick={() => handleExport("csv")}
-						>Ekspor sebagai CSV</DropdownMenu.Item
-					>
-					<DropdownMenu.Item onclick={() => handleExport("json")}
-						>Ekspor sebagai JSON</DropdownMenu.Item
-					>
+				<DropdownMenu.Content align="end">
+					<DropdownMenu.Item onclick={() => handleExport("csv")}>
+						Ekspor sebagai CSV
+					</DropdownMenu.Item>
+					<DropdownMenu.Item onclick={() => handleExport("json")}>
+						Ekspor sebagai JSON
+					</DropdownMenu.Item>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
 		</div>
 	</div>
 
 	<!-- Table -->
-	<div class="rounded-md border">
+	<div class="bg-card overflow-hidden rounded-xl border">
 		<Table.Root>
 			<Table.Header>
-				<Table.Row>
+				<Table.Row class="bg-muted/60 hover:bg-muted/60">
 					<Table.Head class="w-[100px]">Tindakan</Table.Head>
 					<Table.Head class="w-[40px]">
 						<input
@@ -249,7 +256,7 @@
 						{@const SortIcon = sortIcon(col.key)}
 						<Table.Head>
 							<button
-								class="flex items-center gap-1 text-left font-medium"
+								class="hover:text-foreground flex items-center gap-1 text-left transition-colors"
 								onclick={() => toggleSort(col.key)}
 							>
 								{col.label}

@@ -3,8 +3,6 @@
 	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
 	import VideoIcon from "@lucide/svelte/icons/video";
 	import AlertTriangleIcon from "@lucide/svelte/icons/alert-triangle";
-	import MapPinIcon from "@lucide/svelte/icons/map-pin";
-	import ActivityIcon from "@lucide/svelte/icons/activity";
 	import ClipboardListIcon from "@lucide/svelte/icons/clipboard-list";
 	import CameraIcon from "@lucide/svelte/icons/camera";
 	import UploadCloudIcon from "@lucide/svelte/icons/upload-cloud";
@@ -17,13 +15,10 @@
 	import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
 	import LogOutIcon from "@lucide/svelte/icons/log-out";
 	import UserIcon from "@lucide/svelte/icons/user";
-	import BellRingIcon from "@lucide/svelte/icons/bell-ring";
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
-	import * as Tooltip from "$lib/components/ui/tooltip/index.js";
-	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { canAccessRole } from "$lib/authorize.js";
 
 	type Props = {
@@ -40,7 +35,6 @@
 	let { user, notificationCount = 0, incidentCount = 0 }: Props = $props();
 
 	const isExecutive = $derived(user.role === "kepala_dinas" || user.role === "walikota");
-	const isAdmin = $derived(user.role === "admin");
 
 	const operationalNavigation: NavGroup[] = $derived([
 		{
@@ -61,7 +55,7 @@
 					url: "/dashboard/incidents",
 					icon: AlertTriangleIcon,
 					badge: incidentCount > 0 ? String(incidentCount) : undefined,
-					badgeVariant: "destructive" as const,
+					badgeTone: "danger" as const,
 				},
 				{ title: "Petugas Lapangan", url: "/dashboard/officers", icon: UserCheckIcon },
 				{
@@ -85,7 +79,7 @@
 					url: "/dashboard/notifications",
 					icon: BellIcon,
 					badge: notificationCount > 0 ? String(notificationCount) : undefined,
-					badgeVariant: "secondary" as const,
+					badgeTone: "neutral" as const,
 				},
 				{ title: "Pengaturan Sistem", url: "/dashboard/settings", icon: SettingsIcon },
 			],
@@ -112,7 +106,7 @@
 					url: "/dashboard/notifications",
 					icon: BellIcon,
 					badge: notificationCount > 0 ? String(notificationCount) : undefined,
-					badgeVariant: "secondary" as const,
+					badgeTone: "neutral" as const,
 				},
 				{ title: "Pengaturan Sistem", url: "/dashboard/settings", icon: SettingsIcon },
 			],
@@ -167,7 +161,7 @@
 		url: string;
 		icon: typeof LayoutDashboardIcon;
 		badge?: string;
-		badgeVariant?: "destructive" | "secondary" | "default";
+		badgeTone?: "danger" | "neutral";
 	};
 
 	type NavGroup = {
@@ -176,93 +170,67 @@
 	};
 </script>
 
-<Sidebar.Root
-	collapsible="offcanvas"
-	class="border-r border-sidebar-border bg-sidebar font-sans text-sidebar-foreground"
->
-	<!-- HEADER BRANDING: Presisi tinggi h-14/h-16 dan tanpa padding berlebih -->
-	<Sidebar.Header
-		class="flex h-14 items-center justify-center border-b border-sidebar-border/80 px-3 py-0"
-	>
-		<Sidebar.Menu class="w-full">
-			<Sidebar.MenuItem class="flex items-center justify-center">
-				<Sidebar.MenuButton size="lg" class="h-10 w-full rounded-lg p-0 hover:bg-sidebar-accent">
-					{#snippet child({ props })}
-						<a
-							href="/dashboard"
-							{...props}
-							onclick={handleNavigate}
-							class="flex w-full items-center gap-3 px-2"
-						>
-							<div
-								class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 p-1.5"
-							>
-								<img src="/novira-logo.png" alt="Logo NOVIRA" class="size-full object-contain" />
-							</div>
-
-							<div class="flex flex-col text-left">
-								<span class="text-sm font-bold tracking-tight leading-none text-sidebar-foreground"
-									>NOVIRA</span
-								>
-								<span
-									class="text-[10px] font-medium leading-tight text-emerald-600 dark:text-emerald-400 mt-0.5"
-								>
-									Sistem Pengawasan Lingkungan
-								</span>
-							</div>
-						</a>
-					{/snippet}
-				</Sidebar.MenuButton>
-			</Sidebar.MenuItem>
-		</Sidebar.Menu>
+<Sidebar.Root collapsible="offcanvas" class="text-sidebar-foreground font-sans">
+	<!-- BRANDING -->
+	<Sidebar.Header class="border-sidebar-border h-16 justify-center border-b px-3 py-0">
+		<a
+			href="/dashboard"
+			onclick={handleNavigate}
+			class="hover:bg-sidebar-accent flex items-center gap-3 rounded-lg px-1.5 py-1.5 transition-colors"
+		>
+			<div
+				class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 p-1.5 ring-1 ring-white/15 ring-inset"
+			>
+				<img src="/novira-logo.png" alt="Logo NOVIRA" class="size-full object-contain" />
+			</div>
+			<div class="flex min-w-0 flex-col text-left">
+				<span class="text-base leading-none font-extrabold tracking-tight">NOVIRA</span>
+				<span class="text-sidebar-label mt-1 truncate text-[10px] leading-tight font-medium">
+					Sistem Pengawasan Lingkungan
+				</span>
+			</div>
+		</a>
 	</Sidebar.Header>
 
-	<!-- NAVIGATION MENU -->
-	<Sidebar.Content class="px-2 py-3 overflow-y-auto">
+	<!-- NAVIGASI -->
+	<Sidebar.Content class="gap-0 overflow-y-auto px-2.5 py-4">
 		{#each navigation as group (group.label)}
-			<Sidebar.Group class="py-1.5">
+			<Sidebar.Group class="p-0 pb-5 last:pb-1">
 				<Sidebar.GroupLabel
-					class="px-2.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
+					class="text-sidebar-label h-auto px-2.5 pb-2 text-[10px] font-bold tracking-[0.12em] uppercase"
 				>
 					{group.label}
 				</Sidebar.GroupLabel>
 
-				<Sidebar.GroupContent class="mt-1">
-					<Sidebar.Menu class="space-y-1">
+				<Sidebar.GroupContent>
+					<Sidebar.Menu class="gap-1">
 						{#each group.items as item (item.title)}
 							{@const isActive = $page.url.pathname === item.url}
 							<Sidebar.MenuItem>
 								<a
 									href={item.url}
 									onclick={handleNavigate}
-									class="
-                                        group relative flex h-9 w-full items-center justify-between rounded-lg px-2.5 text-[13px] font-medium transition-all duration-150
-                                        {isActive
-										? '!bg-emerald-600 !text-white font-bold shadow-md'
-										: 'text-sidebar-foreground/80 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400'}
-                                    "
+									aria-current={isActive ? "page" : undefined}
+									class="nav-link group"
 								>
-									<div class="flex items-center gap-2.5 min-w-0">
+									<span class="flex min-w-0 items-center gap-2.5">
 										<item.icon
-											class="
-                                                size-4.5 shrink-0 transition-transform duration-150
-                                                {isActive
-												? '!text-white scale-110'
-												: 'text-sidebar-foreground/70 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'}
-                                            "
+											class="size-4 shrink-0 transition-transform duration-150 group-hover:scale-110"
 										/>
 										<span class="truncate">{item.title}</span>
-									</div>
+									</span>
 
 									{#if item.badge}
-										<Badge
-											variant={item.badgeVariant || "secondary"}
-											class="h-5 rounded-full px-2 text-[10px] font-semibold {isActive
-												? 'bg-white/20 text-white'
-												: ''}"
+										<span
+											class="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold
+											{isActive
+												? 'bg-black/15 text-current'
+												: item.badgeTone === 'danger'
+													? 'bg-red-500 text-white'
+													: 'text-sidebar-foreground bg-white/15'}"
 										>
 											{item.badge}
-										</Badge>
+										</span>
 									{/if}
 								</a>
 							</Sidebar.MenuItem>
@@ -273,43 +241,43 @@
 		{/each}
 	</Sidebar.Content>
 
-	<!-- USER FOOTER -->
-	<Sidebar.Footer class="border-t border-sidebar-border/80 p-2">
+	<!-- PENGGUNA -->
+	<Sidebar.Footer class="border-sidebar-border border-t p-2.5">
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger class="w-full">
 						{#snippet child({ props })}
-							<Sidebar.MenuButton
-								size="lg"
-								class="h-11 w-full rounded-lg px-2 transition-colors hover:bg-sidebar-accent"
+							<button
 								{...props}
+								class="flex w-full items-center gap-2.5 rounded-lg bg-white/5 p-2 text-left ring-1 ring-white/10 transition-colors ring-inset hover:bg-white/10"
 							>
-								<Avatar.Root class="size-7 shrink-0 rounded-lg border border-sidebar-border">
+								<Avatar.Root class="size-8 shrink-0 rounded-lg">
 									<Avatar.Fallback
-										class="rounded-lg bg-emerald-600 text-xs font-bold text-white shadow-sm"
+										class="bg-sidebar-primary text-sidebar-primary-foreground rounded-lg text-xs font-bold"
 									>
 										{getInitials(user.name)}
 									</Avatar.Fallback>
 								</Avatar.Root>
 
-								<div class="ml-1 flex flex-col min-w-0 flex-1 text-left leading-tight">
-									<span class="truncate text-xs font-semibold text-sidebar-foreground">
-										{user.name}
-									</span>
-									<span
-										class="truncate text-[10px] text-emerald-600 dark:text-emerald-400 font-medium"
-									>
+								<div class="flex min-w-0 flex-1 flex-col leading-tight">
+									<span class="truncate text-xs font-semibold">{user.name}</span>
+									<span class="text-sidebar-label truncate text-[10px] font-medium">
 										{getRoleTitle(user.role)}
 									</span>
 								</div>
 
-								<ChevronsUpDownIcon class="ml-auto size-4 shrink-0 text-sidebar-foreground/60" />
-							</Sidebar.MenuButton>
+								<ChevronsUpDownIcon class="text-sidebar-muted size-4 shrink-0" />
+							</button>
 						{/snippet}
 					</DropdownMenu.Trigger>
 
-					<DropdownMenu.Content class="w-56" align="end">
+					<DropdownMenu.Content class="w-56" align="end" side="top">
+						<div class="px-2 py-1.5">
+							<p class="truncate text-sm font-semibold">{user.name}</p>
+							<p class="text-muted-foreground truncate text-xs">{user.email}</p>
+						</div>
+						<DropdownMenu.Separator />
 						<DropdownMenu.Group>
 							<DropdownMenu.Item>
 								{#snippet child({ props })}
@@ -317,7 +285,7 @@
 										{...props}
 										href="/dashboard/settings"
 										onclick={handleNavigate}
-										class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+										class="data-[highlighted]:bg-accent flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none"
 									>
 										<UserIcon class="size-4" />
 										Profil Saya
@@ -333,7 +301,7 @@
 										<button
 											type="submit"
 											{...props}
-											class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent"
+											class="text-destructive data-[highlighted]:bg-destructive/10 flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none"
 										>
 											<LogOutIcon class="size-4" />
 											Keluar

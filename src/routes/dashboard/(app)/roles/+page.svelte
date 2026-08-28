@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
@@ -34,16 +35,16 @@
 		roleChangeOpen = true;
 	}
 
-	function roleColor(role: string) {
+	function roleIconTone(role: string) {
 		switch (role) {
 			case "admin":
-				return "border-primary/20 bg-primary/5";
+				return "bg-primary/10 text-primary ring-primary/15";
 			case "operator":
-				return "border-emerald-500/20 bg-emerald-500/5";
+				return "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-400";
 			case "kepala_seksi":
-				return "border-blue-500/20 bg-blue-500/5";
+				return "bg-blue-500/10 text-blue-600 ring-blue-500/20 dark:text-blue-400";
 			default:
-				return "border-muted";
+				return "bg-muted text-muted-foreground ring-border";
 		}
 	}
 
@@ -79,28 +80,34 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Peran & Hak Akses</h1>
-		<p class="text-muted-foreground">Konfigurasi peran dan kebijakan hak akses.</p>
-	</div>
+	<PageHeader
+		title="Peran &amp; Hak Akses"
+		eyebrow="Administrasi Sistem"
+		description="Konfigurasi peran, kebijakan hak akses, dan anggota pada setiap peran."
+		icon={ShieldIcon}
+	/>
 
-	<div class="grid gap-6">
+	<div class="grid gap-5 xl:grid-cols-2">
 		{#each data.roles as role (role.name)}
-			<Card.Root class={roleColor(role.name)}>
+			<Card.Root>
 				<Card.Header>
-					<div class="flex items-center justify-between">
-						<div class="flex items-center gap-3">
+					<div class="flex flex-wrap items-start justify-between gap-3">
+						<div class="flex min-w-0 items-center gap-3">
 							<div
-								class="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg"
+								class="flex size-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset {roleIconTone(
+									role.name
+								)}"
 							>
 								<ShieldIcon class="size-5" />
 							</div>
-							<div>
-								<Card.Title class="capitalize">{role.name}</Card.Title>
-								<Card.Description>{role.description}</Card.Description>
+							<div class="min-w-0">
+								<Card.Title class="text-base font-bold capitalize">
+									{role.name.replace(/_/g, " ")}
+								</Card.Title>
+								<Card.Description class="text-xs">{role.description}</Card.Description>
 							</div>
 						</div>
-						<Badge variant="secondary" class="gap-1">
+						<Badge variant="secondary" class="shrink-0 gap-1">
 							<UsersIcon class="size-3" />
 							{role.count} pengguna
 						</Badge>

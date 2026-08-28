@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import * as Table from "$lib/components/ui/table/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -40,8 +41,24 @@
 
 	function cetakPDF() {
 		terapkanFilter();
-		const headers = ["Provinsi", "Kabupaten/Kota", "Kecamatan", "Kelurahan", "Jumlah Insiden", "Durasi SLA (jam)", "Skor Kebersihan"];
-		const rows = skorWilayahTersaring.map((r) => [r.provinsi, r.kabupatenKota, r.kecamatan, r.kelurahan, r.jumlahInsiden, r.rataRataDurasiSampahJam, `${r.skorKebersihan}/100`]);
+		const headers = [
+			"Provinsi",
+			"Kabupaten/Kota",
+			"Kecamatan",
+			"Kelurahan",
+			"Jumlah Insiden",
+			"Durasi SLA (jam)",
+			"Skor Kebersihan",
+		];
+		const rows = skorWilayahTersaring.map((r) => [
+			r.provinsi,
+			r.kabupatenKota,
+			r.kecamatan,
+			r.kelurahan,
+			r.jumlahInsiden,
+			r.rataRataDurasiSampahJam,
+			`${r.skorKebersihan}/100`,
+		]);
 		triggerPdfReportPrint("Laporan Wilayah & Audit Kebersihan", "Operator", headers, rows);
 	}
 </script>
@@ -52,36 +69,29 @@
 
 <div class="space-y-6">
 	<!-- HEADER HALAMAN WEB (Disembunyikan saat dicetak) -->
-	<div
-		class="flex flex-col gap-4 border-b border-border/60 pb-4 print:hidden sm:flex-row sm:items-center sm:justify-between"
-	>
-		<div class="flex flex-col gap-1">
-			<div class="flex items-center gap-2">
-				<FileSpreadsheetIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-				<h1 class="text-3xl font-extrabold tracking-tight">
-					Laporan Wilayah &amp; Audit Bertingkat
-				</h1>
-				<Badge class="bg-emerald-600 text-xs font-semibold text-white"
-					>Tingkat Nasional &amp; Provinsi</Badge
+	<div class="print:hidden">
+		<PageHeader
+			title="Laporan Wilayah &amp; Audit Bertingkat"
+			eyebrow="Tata Kelola"
+			description="Laporan agregasi kebersihan wilayah bertingkat dari Provinsi, Kabupaten/Kota, Kecamatan hingga Kelurahan."
+			icon={FileSpreadsheetIcon}
+		>
+			{#snippet badges()}
+				<Badge
+					variant="outline"
+					class="border-emerald-600/40 bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
 				>
-			</div>
-			<p class="text-sm text-muted-foreground">
-				Laporan agregasi kebersihan wilayah bertingkat dari Provinsi, Kabupaten/Kota, Kecamatan
-				hingga Kelurahan.
-			</p>
-		</div>
+					Tingkat Nasional &amp; Provinsi
+				</Badge>
+			{/snippet}
 
-		<div class="flex items-center gap-2">
-			<Button
-				variant="default"
-				size="sm"
-				class="h-9 bg-emerald-600 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
-				onclick={cetakPDF}
-			>
-				<PrinterIcon class="mr-1.5 size-3.5" />
-				Cetak / Simpan PDF
-			</Button>
-		</div>
+			{#snippet actions()}
+				<Button size="sm" class="h-9 text-xs font-semibold" onclick={cetakPDF}>
+					<PrinterIcon class="mr-1.5 size-3.5" />
+					Cetak / Simpan PDF
+				</Button>
+			{/snippet}
+		</PageHeader>
 	</div>
 
 	<!-- HEADER DOKUMEN CETAK RESMI & MODERN -->
@@ -90,7 +100,7 @@
 			<div class="flex items-center gap-4">
 				<img src="/novira-logo.png" alt="Logo NOVIRA" class="h-12 w-auto object-contain" />
 				<div class="border-l-2 border-gray-300 pl-4">
-					<h2 class="text-base font-black uppercase tracking-tight text-gray-900 leading-tight">
+					<h2 class="text-base leading-tight font-black tracking-tight text-gray-900 uppercase">
 						LAPORAN EVALUASI &amp; AUDIT KEBERSIHAN WILAYAH
 					</h2>
 					<p class="text-[10px] font-medium text-gray-500">
@@ -100,7 +110,7 @@
 			</div>
 
 			<div
-				class="rounded border border-gray-200 bg-gray-50 p-2.5 text-right text-[10px] text-gray-600 leading-tight"
+				class="rounded border border-gray-200 bg-gray-50 p-2.5 text-right text-[10px] leading-tight text-gray-600"
 			>
 				<p><span class="font-bold text-gray-700">Provinsi:</span> {provinsiTerapan}</p>
 				<p><span class="font-bold text-gray-700">Kabupaten/Kota:</span> {kabupatenTerapan}</p>
@@ -117,7 +127,7 @@
 				<span class="text-xs font-bold">Pilih Provinsi:</span>
 				<select
 					bind:value={provinsiFilter}
-					class="h-9 rounded-md border bg-background px-3 py-1 text-xs font-semibold"
+					class="bg-background h-9 rounded-md border px-3 py-1 text-xs font-semibold"
 				>
 					<option value="SEMUA">Semua Provinsi (Nasional)</option>
 					{#each data.provinsiList as prov (prov.id)}
@@ -131,7 +141,7 @@
 				<span class="text-xs font-bold">Pilih Kabupaten/Kota:</span>
 				<select
 					bind:value={kabupatenFilter}
-					class="h-9 rounded-md border bg-background px-3 py-1 text-xs font-semibold"
+					class="bg-background h-9 rounded-md border px-3 py-1 text-xs font-semibold"
 				>
 					<option value="SEMUA">Semua Kabupaten/Kota</option>
 					{#each data.kabupatenKotaList as kab (kab.id)}
@@ -157,7 +167,7 @@
 			class="p-4 print:rounded-lg print:border print:border-gray-300 print:p-3 print:shadow-none"
 		>
 			<p
-				class="text-xs font-bold uppercase tracking-wider text-muted-foreground print:text-[9px] print:text-gray-500"
+				class="text-muted-foreground text-xs font-bold tracking-wider uppercase print:text-[9px] print:text-gray-500"
 			>
 				Total Wilayah Dipantau
 			</p>
@@ -176,7 +186,7 @@
 			class="p-4 print:rounded-lg print:border print:border-gray-300 print:p-3 print:shadow-none"
 		>
 			<p
-				class="text-xs font-bold uppercase tracking-wider text-muted-foreground print:text-[9px] print:text-gray-500"
+				class="text-muted-foreground text-xs font-bold tracking-wider uppercase print:text-[9px] print:text-gray-500"
 			>
 				Rata-Rata Kepatuhan SLA
 			</p>
@@ -185,7 +195,7 @@
 			>
 				94.2% <span class="text-xs font-normal text-gray-600">Tepat Waktu</span>
 			</div>
-			<p class="mt-0.5 text-xs text-muted-foreground print:text-[9px] print:text-gray-500">
+			<p class="text-muted-foreground mt-0.5 text-xs print:text-[9px] print:text-gray-500">
 				Pengangkutan &lt; 24 Jam
 			</p>
 		</Card.Root>
@@ -194,14 +204,14 @@
 			class="p-4 print:rounded-lg print:border print:border-gray-300 print:p-3 print:shadow-none"
 		>
 			<p
-				class="text-xs font-bold uppercase tracking-wider text-muted-foreground print:text-[9px] print:text-gray-500"
+				class="text-muted-foreground text-xs font-bold tracking-wider uppercase print:text-[9px] print:text-gray-500"
 			>
 				Pencapaian Adipura Wilayah
 			</p>
 			<div class="mt-1 text-2xl font-extrabold text-amber-500 print:text-base print:text-gray-900">
 				82.4 <span class="text-xs font-normal text-gray-600">/ 100</span>
 			</div>
-			<p class="mt-0.5 text-xs text-muted-foreground print:text-[9px] print:text-gray-500">
+			<p class="text-muted-foreground mt-0.5 text-xs print:text-[9px] print:text-gray-500">
 				Skor Rata-rata Kebersihan
 			</p>
 		</Card.Root>
@@ -216,7 +226,7 @@
 		>
 			<!-- JUDUL: Font diperbesar ke text-lg / text-base (Font-extrabold) -->
 			<Card.Title
-				class="text-base sm:text-lg font-extrabold tracking-tight text-emerald-950 dark:text-emerald-100 print:text-xs print:font-bold print:uppercase"
+				class="text-base font-extrabold tracking-tight text-emerald-950 sm:text-lg dark:text-emerald-100 print:text-xs print:font-bold print:uppercase"
 			>
 				Rincian Laporan Kebersihan Per-Kelurahan
 			</Card.Title>
@@ -230,31 +240,31 @@
 					<Table.Header>
 						<Table.Row class="border-none bg-emerald-800 hover:bg-emerald-800 print:bg-gray-100">
 							<Table.Head
-								class="py-3.5 pl-4 text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 pl-4 text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Provinsi</Table.Head
 							>
 							<Table.Head
-								class="py-3.5 text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Kabupaten / Kota</Table.Head
 							>
 							<Table.Head
-								class="py-3.5 text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Kecamatan</Table.Head
 							>
 							<Table.Head
-								class="py-3.5 text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Kelurahan</Table.Head
 							>
 							<Table.Head
-								class="py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 text-center text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Jumlah Insiden</Table.Head
 							>
 							<Table.Head
-								class="py-3.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 text-center text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Durasi Rata-rata SLA</Table.Head
 							>
 							<Table.Head
-								class="py-3.5 pr-4 text-center text-xs font-bold uppercase tracking-wider text-emerald-50 print:py-2 print:text-[10px] print:text-black print:font-bold"
+								class="py-3.5 pr-4 text-center text-xs font-bold tracking-wider text-emerald-50 uppercase print:py-2 print:text-[10px] print:font-bold print:text-black"
 								>Skor Kebersihan</Table.Head
 							>
 						</Table.Row>
@@ -262,27 +272,27 @@
 					<Table.Body>
 						{#each skorWilayahTersaring as row, idx (`${row.provinsi}-${row.kabupatenKota}-${row.kecamatan}-${row.kelurahan}`)}
 							<Table.Row
-								class="border-b border-border/50 text-xs transition-colors {idx % 2 === 0
-									? 'bg-white dark:bg-background'
+								class="border-border/50 border-b text-xs transition-colors {idx % 2 === 0
+									? 'dark:bg-background bg-white'
 									: 'bg-emerald-50/30 dark:bg-emerald-950/10'} hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 print:border-b print:border-gray-200 print:bg-white"
 							>
 								<!-- PROVINSI -->
 								<Table.Cell
-									class="py-3 pl-4 font-bold text-foreground print:py-1.5 print:text-[10px]"
+									class="text-foreground py-3 pl-4 font-bold print:py-1.5 print:text-[10px]"
 								>
 									{row.provinsi}
 								</Table.Cell>
 
 								<!-- KABUPATEN / KOTA -->
 								<Table.Cell
-									class="py-3 text-muted-foreground print:py-1.5 print:text-[10px] print:text-black"
+									class="text-muted-foreground py-3 print:py-1.5 print:text-[10px] print:text-black"
 								>
 									{row.kabupatenKota}
 								</Table.Cell>
 
 								<!-- KECAMATAN -->
 								<Table.Cell
-									class="py-3 text-muted-foreground print:py-1.5 print:text-[10px] print:text-black"
+									class="text-muted-foreground py-3 print:py-1.5 print:text-[10px] print:text-black"
 								>
 									{row.kecamatan}
 								</Table.Cell>
@@ -290,7 +300,7 @@
 								<!-- KELURAHAN (+ BADGE HIJAU SOF) -->
 								<Table.Cell class="py-3 print:py-1.5 print:text-[10px]">
 									<span
-										class="inline-block rounded-md bg-emerald-100/80 px-2 py-0.5 font-extrabold text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-300 print:bg-transparent print:p-0 print:text-black print:font-bold"
+										class="inline-block rounded-md bg-emerald-100/80 px-2 py-0.5 font-extrabold text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-300 print:bg-transparent print:p-0 print:font-bold print:text-black"
 									>
 										{row.kelurahan}
 									</span>
@@ -315,7 +325,7 @@
 
 								<!-- DURASI SLA -->
 								<Table.Cell
-									class="py-3 text-center font-mono font-medium text-foreground/80 print:py-1.5 print:text-[10px]"
+									class="text-foreground/80 py-3 text-center font-mono font-medium print:py-1.5 print:text-[10px]"
 								>
 									{row.rataRataDurasiSampahJam} jam
 								</Table.Cell>
@@ -324,19 +334,19 @@
 								<Table.Cell class="py-3 pr-4 text-center print:py-1.5 print:text-[10px]">
 									{#if row.skorKebersihan >= 80}
 										<span
-											class="inline-block rounded-md bg-emerald-600 px-2 py-0.5 font-black text-white dark:bg-emerald-500/20 dark:text-emerald-300 print:bg-transparent print:p-0 print:text-black print:font-bold"
+											class="inline-block rounded-md bg-emerald-600 px-2 py-0.5 font-black text-white dark:bg-emerald-500/20 dark:text-emerald-300 print:bg-transparent print:p-0 print:font-bold print:text-black"
 										>
 											{row.skorKebersihan} / 100
 										</span>
 									{:else if row.skorKebersihan >= 60}
 										<span
-											class="inline-block rounded-md bg-amber-500 px-2 py-0.5 font-black text-white dark:bg-amber-500/20 dark:text-amber-300 print:bg-transparent print:p-0 print:text-black print:font-bold"
+											class="inline-block rounded-md bg-amber-500 px-2 py-0.5 font-black text-white dark:bg-amber-500/20 dark:text-amber-300 print:bg-transparent print:p-0 print:font-bold print:text-black"
 										>
 											{row.skorKebersihan} / 100
 										</span>
 									{:else}
 										<span
-											class="inline-block rounded-md bg-red-600 px-2 py-0.5 font-black text-white dark:bg-red-500/20 dark:text-red-300 print:bg-transparent print:p-0 print:text-black print:font-bold"
+											class="inline-block rounded-md bg-red-600 px-2 py-0.5 font-black text-white dark:bg-red-500/20 dark:text-red-300 print:bg-transparent print:p-0 print:font-bold print:text-black"
 										>
 											{row.skorKebersihan} / 100
 										</span>
@@ -353,47 +363,47 @@
 
 <!-- CSS KHUSUS PRINT DOKUMEN -->
 <style>
-    @media print {
-        @page {
-            size: A4 portrait;
-            margin: 1cm; /* Memperkecil margin agar muat lebih banyak */
-        }
+	@media print {
+		@page {
+			size: A4 portrait;
+			margin: 1cm; /* Memperkecil margin agar muat lebih banyak */
+		}
 
-        /* Sembunyikan elemen luar */
-        :global(header),
-        :global(nav),
-        :global(aside) {
-            display: none !important;
-        }
+		/* Sembunyikan elemen luar */
+		:global(header),
+		:global(nav),
+		:global(aside) {
+			display: none !important;
+		}
 
-        :global(body) {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            background: white !important;
-            color: black !important;
-        }
+		:global(body) {
+			-webkit-print-color-adjust: exact !important;
+			print-color-adjust: exact !important;
+			background: white !important;
+			color: black !important;
+		}
 
-        /* CEGAH PAGE-BREAK BERMASALAH */
-        :global(.print\:border-none) {
-            break-inside: auto !important;
-            page-break-inside: auto !important;
-        }
+		/* CEGAH PAGE-BREAK BERMASALAH */
+		:global(.print\:border-none) {
+			break-inside: auto !important;
+			page-break-inside: auto !important;
+		}
 
-        /* Mencegah judul tabel terpisah sendiri di bawah halaman (Orphan Header) */
-        :global(.print-header-title) {
-            break-after: avoid !important;
-            page-break-after: avoid !important;
-        }
+		/* Mencegah judul tabel terpisah sendiri di bawah halaman (Orphan Header) */
+		:global(.print-header-title) {
+			break-after: avoid !important;
+			page-break-after: avoid !important;
+		}
 
-        /* Pastikan header tabel (TH) terulang otomatis jika tabel terpotong ke halaman 2 */
-        :global(thead) {
-            display: table-header-group;
-        }
+		/* Pastikan header tabel (TH) terulang otomatis jika tabel terpotong ke halaman 2 */
+		:global(thead) {
+			display: table-header-group;
+		}
 
-        /* Mencegah baris tabel terpotong di tengah-tengah teks */
-        :global(tr) {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-        }
-    }
+		/* Mencegah baris tabel terpotong di tengah-tengah teks */
+		:global(tr) {
+			break-inside: avoid !important;
+			page-break-inside: avoid !important;
+		}
+	}
 </style>

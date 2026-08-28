@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import * as Popover from "$lib/components/ui/popover/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -70,31 +71,34 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-col gap-1 border-b border-border/60 pb-4">
-		<div class="flex items-center gap-2">
-			<VideoIcon class="size-6 text-emerald-600 dark:text-emerald-400" />
-			<h1 class="text-3xl font-extrabold tracking-tight">Monitoring Real-time & Peta Rawan</h1>
-			<Badge class="bg-emerald-600 text-white text-xs font-semibold">
+	<PageHeader
+		title="Pemantauan Langsung &amp; Peta Rawan"
+		eyebrow="Ruang Kendali"
+		description="Pemantauan langsung kamera CCTV wilayah bersanding dengan analisis geospasial titik rawan."
+		icon={VideoIcon}
+	>
+		{#snippet badges()}
+			<Badge
+				variant="outline"
+				class="border-emerald-600/40 bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+			>
 				{slotTayang.size} / {MAX_SLOT} Slot Grid
 			</Badge>
-		</div>
-		<p class="text-sm text-muted-foreground">
-			Pemantauan langsung kamera CCTV wilayah bersanding dengan analisis geospasial titik rawan.
-		</p>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	<!-- TAMPILAN SIDE-BY-SIDE (CCTV & MAPS) -->
-	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 items-stretch">
+	<div class="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
 		<!-- KOLOM KIRI: PEMANTAUAN CCTV -->
 		<div class="flex h-full flex-col space-y-4">
 			<!-- FILTER KOTA & CCTV -->
-			<div class="flex flex-wrap items-end gap-3 rounded-xl border bg-muted/30 p-4">
-				<div class="space-y-1.5 flex-1 min-w-[140px]">
-					<label for="pilih-kota" class="text-xs font-medium text-muted-foreground">Kota</label>
+			<div class="bg-card flex flex-wrap items-end gap-3 rounded-xl border p-4">
+				<div class="min-w-[140px] flex-1 space-y-1.5">
+					<label for="pilih-kota" class="text-muted-foreground text-xs font-medium">Kota</label>
 					<select
 						id="pilih-kota"
 						bind:value={kotaDipilih}
-						class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+						class="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs focus-visible:ring-1 focus-visible:outline-hidden"
 					>
 						<option value="">-- Pilih Kota --</option>
 						{#each kotaList as kota (kota)}
@@ -103,8 +107,8 @@
 					</select>
 				</div>
 
-				<div class="space-y-1.5 flex-1 min-w-[160px]">
-					<span id="pilih-cctv-label" class="text-xs font-medium text-muted-foreground">CCTV</span>
+				<div class="min-w-[160px] flex-1 space-y-1.5">
+					<span id="pilih-cctv-label" class="text-muted-foreground text-xs font-medium">CCTV</span>
 					<Popover.Root bind:open={cctvPopoverOpen}>
 						<Popover.Trigger disabled={!kotaDipilih} class="w-full">
 							{#snippet child({ props })}
@@ -114,10 +118,10 @@
 									type="button"
 									aria-labelledby="pilih-cctv-label"
 									disabled={!kotaDipilih}
-									class="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+									class="border-input bg-background focus-visible:ring-ring flex h-9 w-full items-center justify-between gap-2 rounded-md border px-3 py-1 text-sm shadow-xs focus-visible:ring-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									<span class="truncate">{kameraDipilih?.nama ?? "-- Pilih CCTV --"}</span>
-									<ChevronsUpDownIcon class="size-4 shrink-0 text-muted-foreground" />
+									<ChevronsUpDownIcon class="text-muted-foreground size-4 shrink-0" />
 								</button>
 							{/snippet}
 						</Popover.Trigger>
@@ -138,7 +142,7 @@
 									<button
 										type="button"
 										onclick={() => pilihCctv(kam.id)}
-										class="w-full rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground {kam.id ===
+										class="hover:bg-accent hover:text-accent-foreground w-full rounded-sm px-2 py-1.5 text-left text-sm {kam.id ===
 										kameraKotaDipilih
 											? 'bg-accent/60 font-medium'
 											: ''}"
@@ -146,7 +150,7 @@
 										{kam.nama}
 									</button>
 								{:else}
-									<p class="px-2 py-1.5 text-sm text-muted-foreground">
+									<p class="text-muted-foreground px-2 py-1.5 text-sm">
 										Tidak ada CCTV yang cocok.
 									</p>
 								{/each}
@@ -167,15 +171,15 @@
 
 			<!-- GRID TAMPILAN STREAM -->
 			{#if slotTayang.size > 0}
-				<div class="grid flex-1 gap-4 grid-cols-1 sm:grid-cols-2 content-start">
+				<div class="grid flex-1 grid-cols-1 content-start gap-4 sm:grid-cols-2">
 					{#each [...slotTayang.values()] as kam (kam.id)}
-						<Card.Root class="overflow-hidden border-border/80 shadow-md">
+						<Card.Root class="border-border/80 overflow-hidden shadow-md">
 							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-3">
 								<div class="truncate pr-2">
-									<Card.Title class="text-sm font-bold tracking-tight truncate"
+									<Card.Title class="truncate text-sm font-bold tracking-tight"
 										>{kam.nama}</Card.Title
 									>
-									<Card.Description class="text-[11px] truncate">
+									<Card.Description class="truncate text-[11px]">
 										{kam.kabupatenKota}{kam.kecamatan ? `, ${kam.kecamatan}` : ""}
 									</Card.Description>
 								</div>
@@ -215,10 +219,10 @@
 				</div>
 			{:else}
 				<div
-					class="flex h-72 flex-col items-center justify-center gap-3 rounded-xl border border-dashed text-muted-foreground"
+					class="text-muted-foreground flex h-72 flex-col items-center justify-center gap-3 rounded-xl border border-dashed"
 				>
 					<VideoIcon class="size-10 stroke-1" />
-					<p class="text-sm text-center px-4">
+					<p class="px-4 text-center text-sm">
 						Pilih kota dan CCTV, lalu klik "Tampilkan" untuk memantau stream.
 					</p>
 				</div>
@@ -226,7 +230,9 @@
 		</div>
 
 		<!-- KOLOM KANAN: PETA TITIK RAWAN SAMPAH -->
-		<Card.Root class="shadow-sm flex h-full flex-col min-h-[520px] xl:min-h-[600px] 2xl:min-h-[680px]">
+		<Card.Root
+			class="flex h-full min-h-[520px] flex-col shadow-sm xl:min-h-[600px] 2xl:min-h-[680px]"
+		>
 			<Card.Header class="pb-3">
 				<div class="flex items-center gap-2">
 					<MapPinIcon class="size-5 text-emerald-600 dark:text-emerald-400" />
@@ -239,8 +245,8 @@
 				</div>
 			</Card.Header>
 
-			<Card.Content class="p-0 flex flex-1 min-h-[520px] flex-col rounded-b-xl overflow-hidden">
-				<div class="h-full w-full flex-1 min-h-[520px]">
+			<Card.Content class="flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-b-xl p-0">
+				<div class="h-full min-h-[520px] w-full flex-1">
 					<!-- MENGGUNAKAN FALLBACK (data.insidenList ?? []) AGAR TIDAK ERROR -->
 					<HotspotMap kameraList={data.kameraList} insidenList={data.insidenList ?? []} />
 				</div>

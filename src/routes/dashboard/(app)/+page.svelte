@@ -20,7 +20,10 @@
 	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 	import PrinterIcon from "@lucide/svelte/icons/printer";
 	import FilterIcon from "@lucide/svelte/icons/filter";
+	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
 
+	import PageHeader from "$lib/components/novira/page-header.svelte";
+	import StatCard from "$lib/components/novira/stat-card.svelte";
 	import CctvPlayer from "$lib/components/novira/cctv-player.svelte";
 	import IncidentTable from "$lib/components/novira/incident-table.svelte";
 	import HotspotMap from "$lib/components/novira/hotspot-map.svelte";
@@ -153,49 +156,55 @@
 			: Math.round((kameraOnlineTersaring / kameraTersaring.length) * 100)
 	);
 
+	const PERAN_LABEL: Record<string, string> = {
+		admin: "Akses Admin",
+		operator: "Akses Operator",
+		kepala_seksi: "Akses Kepala Seksi",
+		kepala_dinas: "Akses Kepala Dinas",
+		walikota: "Akses Wali Kota",
+		petugas_lapangan: "Akses Petugas Lapangan",
+	};
+	const peranLabel = $derived(PERAN_LABEL[data.user.role] ?? "Akses Pemantau");
+
 	const stats = $derived([
 		{
 			title: "Insiden Aktif",
 			value: insidenAktifTersaring,
 			subtitle: "Perlu penanganan petugas",
 			icon: AlertTriangleIcon,
-			badgeBg: "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400",
+			tone: "red" as const,
 			catatan: `${titikTerdampak} titik pantau terdampak`,
-			catatanBg: "bg-red-600/10 text-red-700 dark:text-red-400",
+			catatanTone: "red" as const,
 		},
 		{
 			title: "CCTV Online",
 			value: `${kameraOnlineTersaring}/${kameraTersaring.length}`,
 			subtitle: `${persenUptime}% umpan kamera dapat diakses`,
 			icon: VideoIcon,
-			badgeBg: "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400",
+			tone: "emerald" as const,
 			catatan: persenUptime >= 80 ? "Cakupan baik" : "Cakupan menurun",
-			catatanBg:
-				persenUptime >= 80
-					? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-					: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+			catatanTone: persenUptime >= 80 ? ("emerald" as const) : ("amber" as const),
 		},
 		{
 			title: "Terdeteksi Hari Ini",
 			value: insidenBaruHariIni,
 			subtitle: "Insiden baru dari siklus deteksi CCTV",
 			icon: ScanSearchIcon,
-			badgeBg: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400",
+			tone: "amber" as const,
 			catatan: `${data.kpi.insidenSelesaiHariIni} selesai hari ini`,
-			catatanBg: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+			catatanTone: "emerald" as const,
 		},
 		{
 			title: "Pelanggaran SLA (>24 Jam)",
 			value: slaTersaring,
 			subtitle: "Penanganan melewati batas waktu",
 			icon: ShieldAlertIcon,
-			badgeBg: "bg-red-600/15 border-red-600/30 text-red-700 dark:text-red-400",
+			tone: "red" as const,
 			catatan:
-				kecamatanKritis === 0 ? "Tidak ada kecamatan kritis" : `${kecamatanKritis} kecamatan kritis`,
-			catatanBg:
 				kecamatanKritis === 0
-					? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-					: "bg-red-600/15 text-red-700 dark:text-red-400",
+					? "Tidak ada kecamatan kritis"
+					: `${kecamatanKritis} kecamatan kritis`,
+			catatanTone: kecamatanKritis === 0 ? ("emerald" as const) : ("red" as const),
 		},
 	]);
 
@@ -304,7 +313,7 @@
 				: provinsiDipilih !== "SEMUA"
 					? provinsiDipilih
 					: "Nasional";
-		
+
 		const title = `Ringkasan Pemantauan Sampah ${cakupan}`;
 		triggerPdfReportPrint(title, data.user.name, headers, rows);
 	}
@@ -315,56 +324,36 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- Header dengan pemilih cakupan wilayah -->
-	<div
-		class="border-border/60 flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-center lg:justify-between"
-	>
-		<div>
-			{#if data.demoData}
-				<div
-					class="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
-				>
-					<AlertTriangleIcon class="mt-0.5 size-3.5 shrink-0" />
-					<p>
-						Instans ini berjalan dalam <strong>mode demo</strong> — data insiden, petugas, dan skor
-						wilayah adalah data contoh yang direset berkala.
-					</p>
-				</div>
-			{/if}
-			<div class="flex flex-wrap items-center gap-2">
-				<h1 class="text-foreground text-3xl font-extrabold tracking-tight">
-					{sapaan}, {data.user.name}
-				</h1>
-				<Badge
-					variant="outline"
-					class="border-emerald-600/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
-				>
-					<ShieldCheckIcon class="mr-1 size-3.5" />
-					{data.user.role === "admin"
-						? "Akses Admin"
-						: data.user.role === "operator"
-							? "Akses Operator"
-							: data.user.role === "kepala_seksi"
-								? "Akses Kepala Seksi"
-								: data.user.role === "kepala_dinas"
-									? "Akses Kepala Dinas"
-									: data.user.role === "walikota"
-										? "Akses Wali Kota"
-										: data.user.role === "petugas_lapangan"
-											? "Akses Petugas Lapangan"
-											: "Akses Pemantau"}
-				</Badge>
-			</div>
-			<p class="text-muted-foreground mt-1 text-sm">
-				Pemantauan sampah liar lewat CCTV, penugasan armada kebersihan, dan rekam jejak sistem.
+	{#if data.demoData}
+		<div
+			class="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-400"
+		>
+			<AlertTriangleIcon class="mt-0.5 size-4 shrink-0" />
+			<p>
+				Instans ini berjalan dalam <strong>mode demo</strong> — data insiden, petugas, dan skor wilayah
+				adalah data contoh yang direset berkala.
 			</p>
 		</div>
+	{/if}
 
-		<!-- Selector wilayah (provinsi & kabupaten/kota) -->
-		<div class="flex flex-wrap items-center gap-2">
-			<div
-				class="bg-card flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xs"
+	<PageHeader
+		title="{sapaan}, {data.user.name}"
+		eyebrow="Pusat Kendali NOVIRA"
+		description="Pemantauan sampah liar lewat CCTV, penugasan armada kebersihan, dan rekam jejak sistem."
+		icon={LayoutDashboardIcon}
+	>
+		{#snippet badges()}
+			<Badge
+				variant="outline"
+				class="border-emerald-600/40 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
 			>
+				<ShieldCheckIcon class="mr-1 size-3.5" />
+				{peranLabel}
+			</Badge>
+		{/snippet}
+
+		{#snippet actions()}
+			<div class="bg-card flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs shadow-xs">
 				<GlobeIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
 				<label for="filter-provinsi" class="text-muted-foreground font-semibold">Provinsi:</label>
 				<select
@@ -379,9 +368,7 @@
 				</select>
 			</div>
 
-			<div
-				class="bg-card flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xs"
-			>
+			<div class="bg-card flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs shadow-xs">
 				<FilterIcon class="size-4 text-emerald-600 dark:text-emerald-400" />
 				<label for="filter-kota" class="text-muted-foreground font-semibold">Kota:</label>
 				<select
@@ -396,70 +383,45 @@
 				</select>
 			</div>
 
-			<Button
-				variant="default"
-				size="sm"
-				class="h-9 text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800"
-				onclick={cetakRingkasan}
-			>
+			<Button size="sm" class="h-9 text-xs font-semibold" onclick={cetakRingkasan}>
 				<PrinterIcon class="mr-1.5 size-3.5" />
 				Cetak Laporan PDF
 			</Button>
-		</div>
-	</div>
+		{/snippet}
+	</PageHeader>
 
 	{#if adaFilter && kameraTersaring.length === 0}
 		<div
 			class="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-4 py-3 text-sm"
 		>
 			<AlertTriangleIcon class="size-4 shrink-0" />
-			Belum ada kamera CCTV terpasang pada cakupan wilayah ini — cakupan pemantauan saat ini hanya
-			Kota Bandung.
+			Belum ada kamera CCTV terpasang pada cakupan wilayah ini — cakupan pemantauan saat ini hanya Kota
+			Bandung.
 		</div>
 	{/if}
 
 	<!-- Baris 1: Kartu metrik utama -->
-	<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+	<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 		{#each stats as stat (stat.title)}
-			<Card.Root
-				class="border-border/80 relative overflow-hidden shadow-sm transition-all hover:shadow-md"
-			>
-				<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
-					<Card.Title class="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-						{stat.title}
-					</Card.Title>
-					<div class={`flex size-8 items-center justify-center rounded-lg ${stat.badgeBg}`}>
-						<stat.icon class="size-4" />
-					</div>
-				</Card.Header>
-				<Card.Content class="pt-1">
-					<div class="text-2xl font-extrabold tracking-tight">
-						{#if typeof stat.value === "number"}
-							<AnimatedCounter value={stat.value} />
-						{:else}
-							{stat.value}
-						{/if}
-					</div>
-					<div class="mt-2 flex flex-wrap items-center justify-between gap-1">
-						<span class="text-muted-foreground text-xs font-medium">{stat.subtitle}</span>
-						<span
-							class={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${stat.catatanBg}`}
-						>
-							{stat.catatan}
-						</span>
-					</div>
-				</Card.Content>
-			</Card.Root>
+			<StatCard
+				title={stat.title}
+				value={stat.value}
+				subtitle={stat.subtitle}
+				note={stat.catatan}
+				icon={stat.icon}
+				tone={stat.tone}
+				noteTone={stat.catatanTone}
+			/>
 		{/each}
 	</div>
 
 	<!-- Baris 2: Tayangan CCTV langsung + tren deteksi -->
 	<div class="grid items-stretch gap-6 lg:grid-cols-12">
-		<div class="min-w-0 lg:col-span-5 h-full flex flex-col">
+		<div class="flex h-full min-w-0 flex-col lg:col-span-5">
 			<CctvPlayer kameraList={kameraTersaring} />
 		</div>
 
-		<Card.Root class="border-border/80 min-w-0 shadow-md lg:col-span-7 h-full flex flex-col">
+		<Card.Root class="border-border/80 flex h-full min-w-0 flex-col shadow-md lg:col-span-7">
 			<Card.Header class="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0 pb-2">
 				<div class="min-w-0">
 					<div class="flex items-center gap-2">
@@ -474,7 +436,7 @@
 				</div>
 			</Card.Header>
 
-			<Card.Content class="flex-1 flex flex-col justify-center">
+			<Card.Content class="flex flex-1 flex-col justify-center">
 				<!-- Satu titik data tidak membentuk garis: AreaChart hanya menggambar
 				     satu dot di kanvas kosong, yang terbaca seperti grafik rusak.
 				     Di bawah 2 titik, tampilkan angkanya langsung. -->
@@ -484,7 +446,9 @@
 					>
 						<ActivityIcon class="text-muted-foreground size-8 stroke-1" />
 						{#if trendData.length === 0}
-							<p class="text-muted-foreground text-sm">Belum ada insiden yang terdeteksi hari ini.</p>
+							<p class="text-muted-foreground text-sm">
+								Belum ada insiden yang terdeteksi hari ini.
+							</p>
 							<p class="text-muted-foreground max-w-sm text-center text-xs">
 								Grafik ini terisi setelah siklus deteksi CCTV berjalan (otomatis 12:00 &amp; 15:00
 								WIB).
@@ -539,24 +503,49 @@
 					{/key}
 				{/if}
 				{#if insidenTersaring.length > 0}
-					<div class="border-t px-4 py-3 space-y-2">
-						<p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">10 Alert Terbaru (prioritas tertinggi)</p>
-						<div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+					<div class="space-y-2 border-t px-4 py-3">
+						<p class="text-muted-foreground text-xs font-bold tracking-wider uppercase">
+							10 Alert Terbaru (prioritas tertinggi)
+						</p>
+						<div class="max-h-[160px] space-y-1.5 overflow-y-auto pr-1">
 							{#each insidenTersaring.slice(0, 10) as ins (ins.id)}
-								<a href="/dashboard/incidents/{ins.id}" class="flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted/60 transition">
-									<span class="flex items-center gap-2 min-w-0">
-										<span class="size-2 rounded-full shrink-0 {ins.keparahan==='KRITIS' ? 'bg-red-600' : ins.keparahan==='TINGGI' ? 'bg-amber-500' : 'bg-blue-500'}"></span>
-										<span class="font-semibold truncate">{ins.lokasi}</span>
-										<span class="text-muted-foreground truncate hidden sm:inline">· {ins.labelSampah}</span>
+								<a
+									href="/dashboard/incidents/{ins.id}"
+									class="hover:bg-muted/60 flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs transition"
+								>
+									<span class="flex min-w-0 items-center gap-2">
+										<span
+											class="size-2 shrink-0 rounded-full {ins.keparahan === 'KRITIS'
+												? 'bg-red-600'
+												: ins.keparahan === 'TINGGI'
+													? 'bg-amber-500'
+													: 'bg-blue-500'}"
+										></span>
+										<span class="truncate font-semibold">{ins.lokasi}</span>
+										<span class="text-muted-foreground hidden truncate sm:inline"
+											>· {ins.labelSampah}</span
+										>
 									</span>
-									<span class="flex items-center gap-2 shrink-0">
-										<span class="font-mono font-bold {ins.skorPrioritas>=75 ? 'text-red-600' : ins.skorPrioritas>=55 ? 'text-amber-600' : 'text-muted-foreground'}">{ins.skorPrioritas}</span>
-										<Badge variant="outline" class="text-[10px] px-1 py-0">{ins.statusSla === 'MELANGGAR_SLA' ? 'SLA' : ins.keparahan}</Badge>
+									<span class="flex shrink-0 items-center gap-2">
+										<span
+											class="font-mono font-bold {ins.skorPrioritas >= 75
+												? 'text-red-600'
+												: ins.skorPrioritas >= 55
+													? 'text-amber-600'
+													: 'text-muted-foreground'}">{ins.skorPrioritas}</span
+										>
+										<Badge variant="outline" class="px-1 py-0 text-[10px]"
+											>{ins.statusSla === "MELANGGAR_SLA" ? "SLA" : ins.keparahan}</Badge
+										>
 									</span>
 								</a>
 							{/each}
 						</div>
-						<a href="/dashboard/incidents" class="text-xs font-semibold text-emerald-600 hover:underline">Lihat semua insiden →</a>
+						<a
+							href="/dashboard/incidents"
+							class="text-xs font-semibold text-emerald-600 hover:underline"
+							>Lihat semua insiden →</a
+						>
 					</div>
 				{/if}
 			</Card.Content>

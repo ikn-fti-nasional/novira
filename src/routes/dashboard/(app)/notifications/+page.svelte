@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
+	import PageHeader from "$lib/components/novira/page-header.svelte";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { enhance } from "$app/forms";
@@ -63,41 +64,55 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight">Notifikasi</h1>
-			<p class="text-muted-foreground">
-				{#if unreadCount > 0}
-					Anda memiliki {unreadCount} notifikasi belum dibaca.
-				{:else}
-					Semua sudah dibaca. Tidak ada notifikasi baru.
-				{/if}
-			</p>
-		</div>
-		{#if unreadCount > 0}
-			<form method="POST" action="?/markAllRead" use:enhance>
-				<Button variant="outline" type="submit">
-					<CheckIcon class="mr-2 size-4" />
-					Tandai Semua Dibaca
-				</Button>
-			</form>
-		{/if}
-	</div>
+	<PageHeader
+		title="Notifikasi Sistem"
+		eyebrow="Pusat Pemberitahuan"
+		description={unreadCount > 0
+			? `Anda memiliki ${unreadCount} notifikasi belum dibaca.`
+			: "Semua sudah dibaca. Tidak ada notifikasi baru."}
+		icon={BellIcon}
+	>
+		{#snippet badges()}
+			{#if unreadCount > 0}
+				<Badge variant="destructive" class="text-xs font-semibold">{unreadCount} baru</Badge>
+			{/if}
+		{/snippet}
+
+		{#snippet actions()}
+			{#if unreadCount > 0}
+				<form method="POST" action="?/markAllRead" use:enhance>
+					<Button variant="outline" size="sm" class="h-9 text-xs font-semibold" type="submit">
+						<CheckIcon class="mr-1.5 size-4" />
+						Tandai Semua Dibaca
+					</Button>
+				</form>
+			{/if}
+		{/snippet}
+	</PageHeader>
 
 	{#if data.notifications.length === 0}
 		<div
-			class="bg-muted/50 flex h-[300px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed"
+			class="bg-muted/30 flex h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed"
 		>
-			<BellIcon class="text-muted-foreground size-10" />
-			<p class="text-muted-foreground text-sm">Belum ada notifikasi</p>
+			<div class="bg-muted flex size-14 items-center justify-center rounded-2xl">
+				<BellIcon class="text-muted-foreground size-7" />
+			</div>
+			<p class="text-sm font-semibold">Belum ada notifikasi</p>
+			<p class="text-muted-foreground max-w-xs text-center text-xs">
+				Pemberitahuan insiden baru, pelanggaran SLA, dan aktivitas sistem akan muncul di sini.
+			</p>
 		</div>
 	{:else}
-		<div class="space-y-3">
+		<div class="space-y-2.5">
 			{#each data.notifications as notification (notification.id)}
 				{@const Icon = typeIcon(notification.type)}
-				<Card.Root class={!notification.read ? "border-primary/30 bg-primary/5" : ""}>
-					<Card.Content class="flex items-start gap-4 pt-6">
-						<div class={`mt-0.5 ${typeColor(notification.type)}`}>
+				<Card.Root class="gap-0 py-4 {!notification.read ? 'border-primary/30 bg-primary/5' : ''}">
+					<Card.Content class="flex items-start gap-4">
+						<div
+							class="bg-muted/70 flex size-10 shrink-0 items-center justify-center rounded-xl {typeColor(
+								notification.type
+							)}"
+						>
 							<Icon class="size-5" />
 						</div>
 						<div class="flex-1 space-y-1">

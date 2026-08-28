@@ -40,14 +40,17 @@
 		);
 	}
 
-	function getBreadcrumbs() {
+	const crumbs = $derived.by(() => {
 		const segments = page.url.pathname.split("/").filter(Boolean).slice(1);
 		if (segments.length === 0) return [{ label: "Beranda Dasbor", href: "/dashboard" }];
-		return segments.map((segment, i) => ({
-			label: labelFor(segment),
-			href: "/dashboard/" + segments.slice(0, i + 1).join("/"),
-		}));
-	}
+		return [
+			{ label: "Beranda Dasbor", href: "/dashboard" },
+			...segments.map((segment, i) => ({
+				label: labelFor(segment),
+				href: "/dashboard/" + segments.slice(0, i + 1).join("/"),
+			})),
+		];
+	});
 </script>
 
 <Sidebar.Provider>
@@ -56,21 +59,19 @@
 		notificationCount={data.unreadNotificationCount}
 		incidentCount={data.activeIncidentCount}
 	/>
-	<Sidebar.Inset class="min-w-0">
-		<header
-			class="bg-background sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b px-4"
-		>
-			<Sidebar.Trigger class="-ml-1" />
-			<Separator orientation="vertical" class="mr-2 !h-4" />
-			<Breadcrumb.Root>
-				<Breadcrumb.List>
-					{#each getBreadcrumbs() as crumb, i (crumb.href)}
+	<Sidebar.Inset class="bg-background min-w-0">
+		<header class="app-topbar sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 px-4 md:px-6">
+			<Sidebar.Trigger class="-ml-1.5 size-9" />
+			<Separator orientation="vertical" class="mx-1 !h-5 opacity-60" />
+			<Breadcrumb.Root class="min-w-0">
+				<Breadcrumb.List class="flex-nowrap">
+					{#each crumbs as crumb, i (crumb.href)}
 						{#if i > 0}
-							<Breadcrumb.Separator />
+							<Breadcrumb.Separator class="hidden sm:block" />
 						{/if}
-						<Breadcrumb.Item>
-							{#if i === getBreadcrumbs().length - 1}
-								<Breadcrumb.Page>{crumb.label}</Breadcrumb.Page>
+						<Breadcrumb.Item class={i < crumbs.length - 1 ? "hidden sm:flex" : "min-w-0"}>
+							{#if i === crumbs.length - 1}
+								<Breadcrumb.Page class="truncate font-semibold">{crumb.label}</Breadcrumb.Page>
 							{:else}
 								<Breadcrumb.Link href={crumb.href}>{crumb.label}</Breadcrumb.Link>
 							{/if}
@@ -89,7 +90,7 @@
 			</div>
 		</header>
 
-		<main class="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+		<main class="min-w-0 flex-1 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
 			<div class="mx-auto w-full max-w-[1600px] 2xl:max-w-[1800px]">
 				{@render children()}
 			</div>
